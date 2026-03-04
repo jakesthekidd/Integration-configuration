@@ -1,9 +1,9 @@
 using System.Diagnostics;
 using System.Text.Json;
-using FieldMappingApi.Models;
-using FieldMappingApi.Repositories;
+using Transflo.Platform.Transformer.Core.Models;
+using Transflo.Platform.Transformer.Core.Repositories;
 
-namespace FieldMappingApi.Services;
+namespace Transflo.Platform.Transformer.Core.Services;
 
 // Allows callers to pass optional metadata when triggering a transformation.
 public class TransformOptions

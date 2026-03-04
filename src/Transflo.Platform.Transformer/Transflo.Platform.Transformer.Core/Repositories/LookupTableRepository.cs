@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
-using FieldMappingApi.Data;
-using FieldMappingApi.Models;
+using Transflo.Platform.Transformer.Core.Data;
+using Transflo.Platform.Transformer.Core.Models;
 
-namespace FieldMappingApi.Repositories;
+namespace Transflo.Platform.Transformer.Core.Repositories;
 
 public interface ILookupTableRepository
 {

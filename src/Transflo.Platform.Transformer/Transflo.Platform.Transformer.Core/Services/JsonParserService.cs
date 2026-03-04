@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace FieldMappingApi.Services;
+namespace Transflo.Platform.Transformer.Core.Services;
 
 public interface IJsonParserService
 {

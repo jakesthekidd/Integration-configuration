@@ -1,4 +1,4 @@
-namespace FieldMappingApi.DTOs;
+namespace Transflo.Platform.Transformer.Core.DTOs;
 
 public class ApiResponse<T>
 {

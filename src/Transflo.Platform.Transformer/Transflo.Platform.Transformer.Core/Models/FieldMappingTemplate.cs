@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace FieldMappingApi.Models;
+namespace Transflo.Platform.Transformer.Core.Models;
 
 public enum TemplateStatus
 {

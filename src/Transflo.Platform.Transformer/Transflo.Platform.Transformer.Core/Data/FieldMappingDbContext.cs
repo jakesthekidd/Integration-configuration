@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
-using FieldMappingApi.Models;
+using Transflo.Platform.Transformer.Core.Models;
 
-namespace FieldMappingApi.Data;
+namespace Transflo.Platform.Transformer.Core.Data;
 
 public class FieldMappingDbContext : DbContext
 {

@@ -1,6 +1,6 @@
-using FieldMappingApi.Models;
+using Transflo.Platform.Transformer.Core.Models;
 
-namespace FieldMappingApi.DTOs;
+namespace Transflo.Platform.Transformer.Core.DTOs;
 
 public class CreateFieldMappingRequest
 {
