@@ -26,8 +26,7 @@ builder.Services.AddCors(options =>
 });
 
 // Configure PostgreSQL
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? "Host=localhost;Database=fieldmapping;Username=postgres;Password=postgres";
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
 builder.Services.AddDbContext<FieldMappingDbContext>(options =>
     options.UseNpgsql(connectionString));
