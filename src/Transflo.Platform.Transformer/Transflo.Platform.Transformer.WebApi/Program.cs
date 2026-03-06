@@ -2,6 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using Transflo.Platform.Transformer.Core.Data;
 using Transflo.Platform.Transformer.Core.Repositories;
 using Transflo.Platform.Transformer.Core.Services;
+using Transflo.Platform.Transformer.Core.Services.Interfaces;
+using Transflo.Platform.Transformer.Core.Services.TransformationStrategies;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -41,6 +43,17 @@ builder.Services.AddScoped<ITransformationLogRepository, TransformationLogReposi
 
 // Register services
 builder.Services.AddScoped<IJsonParserService, JsonParserService>();
+
+// Register transformation strategies (Strategy Pattern)
+builder.Services.AddScoped<ITransformationStrategy, DirectTransformationStrategy>();
+builder.Services.AddScoped<ITransformationStrategy, ConstantTransformationStrategy>();
+builder.Services.AddScoped<ITransformationStrategy, LookupTransformationStrategy>();
+builder.Services.AddScoped<ITransformationStrategy, ConcatTransformationStrategy>();
+builder.Services.AddScoped<ITransformationStrategy, DateFormatTransformationStrategy>();
+builder.Services.AddScoped<ITransformationStrategy, ArrayMapTransformationStrategy>();
+builder.Services.AddScoped<ITransformationStrategy, ArrayFlattenTransformationStrategy>();
+builder.Services.AddScoped<ITransformationStrategyFactory, TransformationStrategyFactory>();
+
 builder.Services.AddScoped<ITransformationService, TransformationService>();
 
 var app = builder.Build();

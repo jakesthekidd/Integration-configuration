@@ -82,7 +82,6 @@ public class JsonParserService : IJsonParserService
                         SampleValue = includeSampleValues ? $"[{element.GetArrayLength()} items]" : null
                     };
 
-                    // Extract fields from first array element
                     if (element.GetArrayLength() > 0)
                     {
                         var arrayItemPath = $"{currentPath}[0]";
@@ -182,14 +181,12 @@ public class JsonParserService : IJsonParserService
             {
                 if (current is Dictionary<string, object> dict)
                 {
-                    // Case-insensitive key lookup
                     var matchedKey = dict.Keys.FirstOrDefault(k =>
                         string.Equals(k, seg.Name, StringComparison.OrdinalIgnoreCase));
                     current = matchedKey != null ? dict[matchedKey] : null;
                 }
                 else if (current is JsonElement element && element.ValueKind == JsonValueKind.Object)
                 {
-                    // Case-insensitive property lookup
                     JsonElement? matched = null;
                     foreach (var p in element.EnumerateObject())
                     {
@@ -229,7 +226,6 @@ public class JsonParserService : IJsonParserService
 
             if (seg.IsArrayIndex)
             {
-                // current must already be a List<object> - navigate into the element
                 if (current is List<object> list)
                 {
                     EnsureListCapacity(list, seg.Index + 1);
@@ -244,7 +240,6 @@ public class JsonParserService : IJsonParserService
                 {
                     if (!dict.ContainsKey(seg.Name))
                     {
-                        // Create the right container for what follows
                         dict[seg.Name] = next.IsArrayIndex
                             ? (object)new List<object>()
                             : new Dictionary<string, object>();
@@ -254,7 +249,6 @@ public class JsonParserService : IJsonParserService
             }
         }
 
-        // Set the final value
         var last = segments[^1];
         if (last.IsArrayIndex)
         {
@@ -273,16 +267,8 @@ public class JsonParserService : IJsonParserService
         await Task.CompletedTask;
     }
 
-    // -------------------------------------------------------------------------
-    // Helpers
-    // -------------------------------------------------------------------------
-
     private record PathSegment(string Name, bool IsArrayIndex, int Index);
 
-    /// <summary>
-    /// Splits a dot-notation path (e.g. "stops[0].location.city") into individual
-    /// typed segments that distinguish property names from array indices.
-    /// </summary>
     private static List<PathSegment> ParsePathSegments(string jsonPath)
     {
         var segments = new List<PathSegment>();
@@ -298,11 +284,9 @@ public class JsonParserService : IJsonParserService
             }
             else
             {
-                // Property name before the bracket (e.g. "stops" in "stops[0]")
                 if (bracketPos > 0)
                     segments.Add(new PathSegment(part[..bracketPos], false, 0));
 
-                // Array index inside the bracket
                 var closeBracket = part.IndexOf(']', bracketPos);
                 if (closeBracket > bracketPos)
                 {
