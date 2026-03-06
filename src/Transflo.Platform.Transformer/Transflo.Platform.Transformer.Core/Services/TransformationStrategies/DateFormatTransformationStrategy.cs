@@ -28,10 +28,16 @@ public class DateFormatTransformationStrategy : ITransformationStrategy
 
     public object? ApplyDateFormat(object? rawValue, Dictionary<string, object>? config)
     {
-        if (rawValue == null) return null;
+        if (rawValue == null)
+        {
+            return null;
+        }
 
         var input = rawValue is JsonElement je ? je.GetString() : rawValue.ToString();
-        if (string.IsNullOrWhiteSpace(input)) return null;
+        if (string.IsNullOrWhiteSpace(input))
+        {
+            return null;
+        }
 
         var inputFormat = config?.TryGetValue("DateInputFormat", out var inf) == true ? inf?.ToString() : null;
         var outputFormat = config?.TryGetValue("DateOutputFormat", out var outf) == true
@@ -72,7 +78,10 @@ public class DateFormatTransformationStrategy : ITransformationStrategy
 
     private static Dictionary<string, object>? ParseConfig(string? configJson)
     {
-        if (string.IsNullOrWhiteSpace(configJson)) return null;
+        if (string.IsNullOrWhiteSpace(configJson))
+        {
+            return null;
+        }
         try { return JsonSerializer.Deserialize<Dictionary<string, object>>(configJson); }
         catch { return null; }
     }

@@ -158,7 +158,10 @@ public class JsonParserService : IJsonParserService
 
         foreach (var seg in segments)
         {
-            if (current == null) return null;
+            if (current == null)
+            {
+                return null;
+            }
 
             if (seg.IsArrayIndex)
             {
@@ -230,7 +233,9 @@ public class JsonParserService : IJsonParserService
                 {
                     EnsureListCapacity(list, seg.Index + 1);
                     if (list[seg.Index] is not Dictionary<string, object>)
+                    {
                         list[seg.Index] = new Dictionary<string, object>();
+                    }
                     current = list[seg.Index];
                 }
             }
@@ -261,7 +266,9 @@ public class JsonParserService : IJsonParserService
         else
         {
             if (current is Dictionary<string, object> lastDict)
+            {
                 lastDict[last.Name] = value;
+            }
         }
 
         await Task.CompletedTask;
@@ -275,7 +282,10 @@ public class JsonParserService : IJsonParserService
 
         foreach (var part in jsonPath.Split('.'))
         {
-            if (string.IsNullOrEmpty(part)) continue;
+            if (string.IsNullOrEmpty(part))
+            {
+                continue;
+            }
 
             var bracketPos = part.IndexOf('[');
             if (bracketPos < 0)
@@ -285,14 +295,18 @@ public class JsonParserService : IJsonParserService
             else
             {
                 if (bracketPos > 0)
+                {
                     segments.Add(new PathSegment(part[..bracketPos], false, 0));
+                }
 
                 var closeBracket = part.IndexOf(']', bracketPos);
                 if (closeBracket > bracketPos)
                 {
                     var indexStr = part[(bracketPos + 1)..closeBracket];
                     if (int.TryParse(indexStr, out var idx))
+                    {
                         segments.Add(new PathSegment(string.Empty, true, idx));
+                    }
                 }
             }
         }

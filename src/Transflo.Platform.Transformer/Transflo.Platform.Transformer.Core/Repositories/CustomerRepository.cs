@@ -34,7 +34,9 @@ public class CustomerRepository : ICustomerRepository
         var query = _context.Customers.AsQueryable();
 
         if (activeOnly.HasValue)
+        {
             query = query.Where(c => c.IsActive == activeOnly.Value);
+        }
 
         return await query
             .OrderBy(c => c.Name)

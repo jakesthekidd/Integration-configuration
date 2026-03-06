@@ -43,24 +43,34 @@ public class ArrayMapTransformationStrategy : ITransformationStrategy
         var result = new List<object>();
         foreach (var item in items)
         {
-            if (item == null) continue;
+            if (item == null)
+            {
+                continue;
+            }
             object? extracted = null;
 
             if (!string.IsNullOrEmpty(itemField))
             {
                 if (item is JsonElement elem && elem.ValueKind == JsonValueKind.Object)
+                {
                     extracted = elem.TryGetProperty(itemField, out var p)
                         ? p.ValueKind == JsonValueKind.String ? p.GetString() : (object?)p.GetRawText()
                         : null;
+                }
                 else if (item is Dictionary<string, object> d)
+                {
                     d.TryGetValue(itemField, out extracted);
+                }
             }
             else
             {
                 extracted = item;
             }
 
-            if (extracted != null) result.Add(extracted);
+            if (extracted != null)
+            {
+                result.Add(extracted);
+            }
         }
 
         return result.Count > 0 ? result : null;

@@ -31,7 +31,10 @@ public class ArrayFlattenTransformationStrategy : ITransformationStrategy
             }
         }
 
-        if (string.IsNullOrEmpty(arrayName)) return null;
+        if (string.IsNullOrEmpty(arrayName))
+        {
+            return null;
+        }
 
         var arrayValue = await _jsonParser.GetValueAtPathAsync(context.SourceData, arrayName);
 
@@ -48,24 +51,34 @@ public class ArrayFlattenTransformationStrategy : ITransformationStrategy
         var result = new List<object>();
         foreach (var item in items)
         {
-            if (item == null) continue;
+            if (item == null)
+            {
+                continue;
+            }
             object? val = null;
 
             if (!string.IsNullOrEmpty(itemField))
             {
                 if (item is JsonElement elem && elem.ValueKind == JsonValueKind.Object)
+                {
                     val = elem.TryGetProperty(itemField, out var p)
                         ? p.ValueKind == JsonValueKind.String ? (object?)p.GetString() : p.GetRawText()
                         : null;
+                }
                 else if (item is Dictionary<string, object> d)
+                {
                     d.TryGetValue(itemField, out val);
+                }
             }
             else
             {
                 val = item;
             }
 
-            if (val == null || filterEmpty && string.IsNullOrWhiteSpace(val.ToString())) continue;
+            if (val == null || filterEmpty && string.IsNullOrWhiteSpace(val.ToString()))
+            {
+                continue;
+            }
             result.Add(val);
         }
 
@@ -74,7 +87,10 @@ public class ArrayFlattenTransformationStrategy : ITransformationStrategy
 
     private static Dictionary<string, object>? ParseConfig(string? configJson)
     {
-        if (string.IsNullOrWhiteSpace(configJson)) return null;
+        if (string.IsNullOrWhiteSpace(configJson))
+        {
+            return null;
+        }
         try { return JsonSerializer.Deserialize<Dictionary<string, object>>(configJson); }
         catch { return null; }
     }
