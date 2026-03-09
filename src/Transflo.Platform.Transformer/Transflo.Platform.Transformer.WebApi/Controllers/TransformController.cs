@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Transflo.Platform.Transformer.Core.DTOs;
-using Transflo.Platform.Transformer.Core.Services;
 using Transflo.Platform.Transformer.Core.Services.Interfaces;
+using Transflo.Platform.Transformer.TransformationService.DTOs;
 
 namespace Transflo.Platform.Transformer.WebApi.Controllers;
 
@@ -10,18 +10,18 @@ namespace Transflo.Platform.Transformer.WebApi.Controllers;
 [Tags("Transformation")]
 public class TransformController : ControllerBase
 {
-    private readonly ITransformationService _service;
+    private readonly ITransformationCoordinator _coordinator;
 
-    public TransformController(ITransformationService service)
+    public TransformController(ITransformationCoordinator coordinator)
     {
-        _service = service;
+        _coordinator = coordinator;
     }
 
     [HttpPost]
     [ProducesResponseType(typeof(ApiResponse<TransformationResult>), StatusCodes.Status200OK)]
     public async Task<IActionResult> Transform([FromBody] TransformRequest request)
     {
-        var result = await _service.TransformAsync(request.SourceJson, request.TemplateId, request.Version);
+        var result = await _coordinator.TransformAsync(request.SourceJson, request.TemplateId, request.Version);
         // Always return 200 with the full result so the client can display ALL errors/warnings at once
         return Ok(ApiResponse<TransformationResult>.SuccessResponse(result));
     }
@@ -30,7 +30,7 @@ public class TransformController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<TransformationResult>), StatusCodes.Status200OK)]
     public async Task<IActionResult> Preview([FromBody] TransformRequest request)
     {
-        var result = await _service.PreviewTransformationAsync(request.SourceJson, request.TemplateId, request.Version);
+        var result = await _coordinator.PreviewTransformationAsync(request.SourceJson, request.TemplateId, request.Version);
         return Ok(ApiResponse<TransformationResult>.SuccessResponse(result));
     }
 
@@ -40,9 +40,11 @@ public class TransformController : ControllerBase
     public async Task<IActionResult> Batch([FromBody] BatchTransformRequest request)
     {
         if (request.Records == null || request.Records.Count == 0)
+        {
             return BadRequest(ApiResponse<object>.ErrorResponse("'records' must be a non-empty array."));
+        }
 
-        var result = await _service.TransformBatchAsync(
+        var result = await _coordinator.TransformBatchAsync(
             request.TemplateId,
             request.Records,
             request.Version,

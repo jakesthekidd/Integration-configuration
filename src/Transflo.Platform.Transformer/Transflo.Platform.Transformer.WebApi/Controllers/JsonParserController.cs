@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Transflo.Platform.Transformer.Core.DTOs;
-using Transflo.Platform.Transformer.Core.Services;
+using Transflo.Platform.Transformer.TransformationService.Services.Interfaces;
 
 namespace Transflo.Platform.Transformer.WebApi.Controllers;
 

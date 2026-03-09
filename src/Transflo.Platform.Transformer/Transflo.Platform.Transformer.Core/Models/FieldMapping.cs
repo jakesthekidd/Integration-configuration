@@ -1,22 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using ServiceModels = Transflo.Platform.Transformer.TransformationService.Models;
 
 namespace Transflo.Platform.Transformer.Core.Models;
-
-public enum TransformationType
-{
-    Direct,
-    Concat,
-    Lookup,
-    Conditional,
-    ArrayMap,
-    ArrayFlatten,
-    DateFormat,
-    Math,
-    Substring,
-    Constant,
-    Template
-}
 
 [Table("field_mappings")]
 public class FieldMapping
@@ -42,7 +28,7 @@ public class FieldMapping
 
     [Column("transformation_type")]
     [MaxLength(50)]
-    public TransformationType TransformationType { get; set; } = TransformationType.Direct;
+    public ServiceModels.TransformationType TransformationType { get; set; } = ServiceModels.TransformationType.Direct;
 
     [Column("transformation_config", TypeName = "jsonb")]
     public string? TransformationConfig { get; set; }
@@ -65,7 +51,6 @@ public class FieldMapping
     [Column("updated_at")]
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
-    // Foreign key (Note: using string reference to TemplateId, not int Id)
     [NotMapped]
     public virtual FieldMappingTemplate? Template { get; set; }
 }
