@@ -3,21 +3,10 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Transflo.Platform.Transformer.Core.Models;
 
-public enum TemplateStatus
-{
-    Draft,
-    Published,
-    Archived
-}
 
 [Table("field_mapping_templates")]
-public class FieldMappingTemplate
+public class FieldMappingTemplate : BaseEntity
 {
-    [Key]
-    [Column("id")]
-    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-    public int Id { get; set; }
-
     [Column("template_id")]
     [Required]
     [MaxLength(100)]
@@ -47,16 +36,6 @@ public class FieldMappingTemplate
 
     [Column("target_schema", TypeName = "jsonb")]
     public string? TargetSchema { get; set; }
-
-    [Column("created_by")]
-    [MaxLength(100)]
-    public string? CreatedBy { get; set; }
-
-    [Column("created_at")]
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-
-    [Column("updated_at")]
-    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
     [Column("published_at")]
     public DateTime? PublishedAt { get; set; }

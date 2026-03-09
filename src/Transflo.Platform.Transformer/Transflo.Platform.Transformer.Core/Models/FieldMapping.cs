@@ -19,11 +19,11 @@ public enum TransformationType
 }
 
 [Table("field_mappings")]
-public class FieldMapping
+public class FieldMapping : BaseEntity
 {
-    [Key]
-    [Column("id")]
-    public string Id { get; set; } = Guid.NewGuid().ToString();
+    [Column("template_version_id")]
+    [MaxLength(100)]
+    public string? TemplateVersionId { get; set; }
 
     [Column("template_id")]
     [Required]
@@ -58,12 +58,6 @@ public class FieldMapping
 
     [Column("validation_rules", TypeName = "jsonb")]
     public string? ValidationRules { get; set; }
-
-    [Column("created_at")]
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-
-    [Column("updated_at")]
-    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
     // Foreign key (Note: using string reference to TemplateId, not int Id)
     [NotMapped]

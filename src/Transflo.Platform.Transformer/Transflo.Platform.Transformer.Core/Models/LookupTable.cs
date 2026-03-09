@@ -4,11 +4,11 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace Transflo.Platform.Transformer.Core.Models;
 
 [Table("lookup_tables")]
-public class LookupTable
+public class LookupTable : BaseEntity
 {
-    [Key]
-    [Column("id")]
-    public string Id { get; set; } = Guid.NewGuid().ToString();
+    [Column("partner_id")]
+    [MaxLength(100)]
+    public string? PartnerId { get; set; }
 
     [Column("tms_system_id")]
     [Required]
@@ -38,15 +38,9 @@ public class LookupTable
     [Column("is_case_sensitive")]
     public bool IsCaseSensitive { get; set; }
 
-    [Column("created_at")]
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-
-    [Column("updated_at")]
-    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
-
-    [Column("created_by")]
-    [MaxLength(100)]
-    public string? CreatedBy { get; set; }
+    // Navigation property
+    [ForeignKey(nameof(PartnerId))]
+    public virtual Partner? Partner { get; set; }
 
     // Foreign key
     [ForeignKey(nameof(TmsSystemId))]
