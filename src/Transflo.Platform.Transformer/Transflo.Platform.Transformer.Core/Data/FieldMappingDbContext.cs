@@ -86,7 +86,7 @@ public class FieldMappingDbContext : DbContext
         {
             entity.HasIndex(e => e.TemplateId);
             entity.HasOne(e => e.Template)
-                .WithMany(t => t.Versions)
+                .WithMany(t => t.TemplateVersions)
                 .HasForeignKey(e => e.TemplateId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
@@ -99,7 +99,7 @@ public class FieldMappingDbContext : DbContext
             entity.HasIndex(e => e.TargetPartnerId);
 
             entity.HasOne(e => e.TemplateVersion)
-                .WithMany(v => v.Assignments)
+                .WithMany(v => v.TemplateAssignments)
                 .HasForeignKey(e => e.TemplateVersionId)
                 .OnDelete(DeleteBehavior.Cascade);
 

@@ -25,5 +25,5 @@ public class Template : BaseEntity
     public string? TargetSchema { get; set; }
 
     // Navigation properties
-    public virtual ICollection<TemplateVersion> Versions { get; set; } = new List<TemplateVersion>();
+    public virtual ICollection<TemplateVersion> TemplateVersions { get; set; } = new List<TemplateVersion>();
 }
