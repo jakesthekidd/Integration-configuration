@@ -53,12 +53,12 @@ public class FieldMappingDbContext : DbContext
                 .HasConversion<string>();
 
             entity.HasOne(e => e.TmsSystem)
-                .WithMany(t => t.Templates)
+                .WithMany(t => t.FieldMappingTemplates)
                 .HasForeignKey(e => e.TmsSystemId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasOne(e => e.Customer)
-                .WithMany(c => c.Templates)
+                .WithMany(c => c.FieldMappingTemplates)
                 .HasForeignKey(e => e.CustomerId)
                 .OnDelete(DeleteBehavior.SetNull)
                 .IsRequired(false);

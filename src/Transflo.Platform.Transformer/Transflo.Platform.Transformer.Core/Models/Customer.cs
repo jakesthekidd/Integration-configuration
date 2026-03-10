@@ -32,5 +32,5 @@ public class Customer : BaseEntity
     // Navigation property – templates that belong to this customer
 
     // Navigation property – templates that belong to this customer
-    public virtual ICollection<FieldMappingTemplate> Templates { get; set; } = new List<FieldMappingTemplate>();
+    public virtual ICollection<FieldMappingTemplate> FieldMappingTemplates { get; set; } = new List<FieldMappingTemplate>();
 }

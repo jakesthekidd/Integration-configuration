@@ -35,6 +35,6 @@ public class TmsSystem : BaseEntity
     public string? Metadata { get; set; }
 
     // Navigation properties
-    public virtual ICollection<FieldMappingTemplate> Templates { get; set; } = new List<FieldMappingTemplate>();
+    public virtual ICollection<FieldMappingTemplate> FieldMappingTemplates { get; set; } = new List<FieldMappingTemplate>();
     public virtual ICollection<LookupTable> LookupTables { get; set; } = new List<LookupTable>();
 }
