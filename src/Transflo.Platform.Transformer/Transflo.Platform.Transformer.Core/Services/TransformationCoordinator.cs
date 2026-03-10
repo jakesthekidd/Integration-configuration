@@ -1,11 +1,11 @@
 using System.Text.Json;
-using ServiceModels = Transflo.Platform.Transformer.TransformationService.Models;
-using Transflo.Platform.Transformer.TransformationService.DTOs;
-using Transflo.Platform.Transformer.TransformationService.Services.Interfaces;
 using Transflo.Platform.Transformer.Core.DTOs;
 using Transflo.Platform.Transformer.Core.Models;
 using Transflo.Platform.Transformer.Core.Repositories;
 using Transflo.Platform.Transformer.Core.Services.Interfaces;
+using Transflo.Platform.Transformer.TransformationService.DTOs;
+using Transflo.Platform.Transformer.TransformationService.Services.Interfaces;
+using ServiceModels = Transflo.Platform.Transformer.TransformationService.Models;
 
 namespace Transflo.Platform.Transformer.Core.Services;
 
