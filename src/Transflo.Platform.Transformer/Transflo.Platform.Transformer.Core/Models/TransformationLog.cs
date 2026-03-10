@@ -1,15 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Transflo.Platform.Transformer.TransformationService.DTOs;
 
 namespace Transflo.Platform.Transformer.Core.Models;
-
-public enum TransformationStatus
-{
-    Success,
-    Error,
-    Warning,
-    PartialSuccess
-}
 
 [Table("transformation_logs")]
 public class TransformationLog
@@ -54,5 +47,5 @@ public class TransformationLog
     public string? Source { get; set; }
 
     [Column("expires_at")]
-    public DateTime? ExpiresAt { get; set; } // 90 days from creation
+    public DateTime? ExpiresAt { get; set; }
 }
