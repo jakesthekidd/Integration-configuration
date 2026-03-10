@@ -53,7 +53,9 @@ public class DateFormatTransformationStrategyTests
     {
         var config = new Dictionary<string, object> { ["DateOutputFormat"] = outputFormat };
         if (inputFormat != null)
+        {
             config["DateInputFormat"] = inputFormat;
+        }
 
         var result = _sut.ApplyDateFormat(input, config);
         Assert.Equal(expected, result);
