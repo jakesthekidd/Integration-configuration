@@ -6,11 +6,11 @@ namespace Transflo.Platform.Transformer.Core.Repositories;
 
 public interface ICustomerRepository
 {
-    Task<Customer?> GetByIdAsync(string id);
+    Task<Customer?> GetByIdAsync(Guid id);
     Task<List<Customer>> GetAllAsync(bool? activeOnly = null);
     Task<Customer> CreateAsync(Customer customer);
     Task<Customer> UpdateAsync(Customer customer);
-    Task DeleteAsync(string id);
+    Task DeleteAsync(Guid id);
 }
 
 public class CustomerRepository : ICustomerRepository
@@ -24,7 +24,7 @@ public class CustomerRepository : ICustomerRepository
         _logger = logger;
     }
 
-    public async Task<Customer?> GetByIdAsync(string id)
+    public async Task<Customer?> GetByIdAsync(Guid id)
     {
         return await _context.Customers.FindAsync(id);
     }
@@ -66,7 +66,7 @@ public class CustomerRepository : ICustomerRepository
         return customer;
     }
 
-    public async Task DeleteAsync(string id)
+    public async Task DeleteAsync(Guid id)
     {
         var customer = await GetByIdAsync(id);
         if (customer != null)

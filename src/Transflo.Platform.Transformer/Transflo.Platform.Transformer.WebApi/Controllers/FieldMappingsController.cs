@@ -19,11 +19,11 @@ public class FieldMappingsController : ControllerBase
 
     [HttpGet]
     [ProducesResponseType(typeof(ApiResponse<FieldMappingListResponse>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetAll([FromQuery] string? templateId = null)
+    public async Task<IActionResult> GetAll([FromQuery] Guid? templateId = null)
     {
-        var mappings = string.IsNullOrEmpty(templateId)
+        var mappings = !templateId.HasValue
             ? new List<FieldMapping>() // Return empty if no template specified
-            : await _repo.GetByTemplateIdOrderedAsync(templateId);
+            : await _repo.GetByTemplateIdOrderedAsync(templateId.Value);
 
         var response = new FieldMappingListResponse
         {
@@ -51,7 +51,7 @@ public class FieldMappingsController : ControllerBase
     [HttpGet("{id}")]
     [ProducesResponseType(typeof(ApiResponse<FieldMappingResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<FieldMappingResponse>), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetById(string id)
+    public async Task<IActionResult> GetById(Guid id)
     {
         var mapping = await _repo.GetByIdAsync(id);
         if (mapping == null)
@@ -119,7 +119,7 @@ public class FieldMappingsController : ControllerBase
     [HttpPut("{id}")]
     [ProducesResponseType(typeof(ApiResponse<FieldMappingResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<FieldMappingResponse>), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Update(string id, [FromBody] UpdateFieldMappingRequest request)
+    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateFieldMappingRequest request)
     {
         var existing = await _repo.GetByIdAsync(id);
         if (existing == null)
@@ -160,7 +160,7 @@ public class FieldMappingsController : ControllerBase
     [HttpDelete("{id}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Delete(string id)
+    public async Task<IActionResult> Delete(Guid id)
     {
         var existing = await _repo.GetByIdAsync(id);
         if (existing == null)

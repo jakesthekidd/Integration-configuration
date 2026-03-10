@@ -6,14 +6,14 @@ namespace Transflo.Platform.Transformer.Core.Repositories;
 
 public interface IFieldMappingRepository
 {
-    Task<FieldMapping?> GetByIdAsync(string id);
-    Task<List<FieldMapping>> GetByTemplateIdAsync(string templateId);
-    Task<List<FieldMapping>> GetByTemplateIdOrderedAsync(string templateId);
+    Task<FieldMapping?> GetByIdAsync(Guid id);
+    Task<List<FieldMapping>> GetByTemplateIdAsync(Guid templateId);
+    Task<List<FieldMapping>> GetByTemplateIdOrderedAsync(Guid templateId);
     Task<FieldMapping> CreateAsync(FieldMapping mapping);
     Task<List<FieldMapping>> CreateBulkAsync(List<FieldMapping> mappings);
     Task<FieldMapping> UpdateAsync(FieldMapping mapping);
-    Task DeleteAsync(string id);
-    Task DeleteByTemplateIdAsync(string templateId);
+    Task DeleteAsync(Guid id);
+    Task DeleteByTemplateIdAsync(Guid templateId);
 }
 
 public class FieldMappingRepository : IFieldMappingRepository
@@ -27,19 +27,19 @@ public class FieldMappingRepository : IFieldMappingRepository
         _logger = logger;
     }
 
-    public async Task<FieldMapping?> GetByIdAsync(string id)
+    public async Task<FieldMapping?> GetByIdAsync(Guid id)
     {
         return await _context.FieldMappings.FindAsync(id);
     }
 
-    public async Task<List<FieldMapping>> GetByTemplateIdAsync(string templateId)
+    public async Task<List<FieldMapping>> GetByTemplateIdAsync(Guid templateId)
     {
         return await _context.FieldMappings
             .Where(m => m.TemplateId == templateId)
             .ToListAsync();
     }
 
-    public async Task<List<FieldMapping>> GetByTemplateIdOrderedAsync(string templateId)
+    public async Task<List<FieldMapping>> GetByTemplateIdOrderedAsync(Guid templateId)
     {
         return await _context.FieldMappings
             .Where(m => m.TemplateId == templateId)
@@ -86,7 +86,7 @@ public class FieldMappingRepository : IFieldMappingRepository
         return mapping;
     }
 
-    public async Task DeleteAsync(string id)
+    public async Task DeleteAsync(Guid id)
     {
         var mapping = await GetByIdAsync(id);
         if (mapping != null)
@@ -97,7 +97,7 @@ public class FieldMappingRepository : IFieldMappingRepository
         }
     }
 
-    public async Task DeleteByTemplateIdAsync(string templateId)
+    public async Task DeleteByTemplateIdAsync(Guid templateId)
     {
         var mappings = await GetByTemplateIdAsync(templateId);
         _context.FieldMappings.RemoveRange(mappings);

@@ -2,8 +2,8 @@ namespace Transflo.Platform.Transformer.TransformationService.Models;
 
 public class FieldMapping
 {
-    public string Id { get; set; } = Guid.NewGuid().ToString();
-    public string TemplateId { get; set; } = string.Empty;
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid TemplateId { get; set; }
     public string SourcePath { get; set; } = string.Empty;
     public string TargetPath { get; set; } = string.Empty;
     public TransformationType TransformationType { get; set; } = TransformationType.Direct;

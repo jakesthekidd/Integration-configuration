@@ -12,7 +12,7 @@ using Transflo.Platform.Transformer.Core.Data;
 namespace Transflo.Platform.Transformer.Core.Migrations
 {
     [DbContext(typeof(FieldMappingDbContext))]
-    [Migration("20260309210934_InitialCreate")]
+    [Migration("20260310204209_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -27,9 +27,9 @@ namespace Transflo.Platform.Transformer.Core.Migrations
 
             modelBuilder.Entity("Transflo.Platform.Transformer.Core.Models.Customer", b =>
                 {
-                    b.Property<string>("Id")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
                         .HasColumnName("id");
 
                     b.Property<string>("Code")
@@ -107,9 +107,9 @@ namespace Transflo.Platform.Transformer.Core.Migrations
 
             modelBuilder.Entity("Transflo.Platform.Transformer.Core.Models.FieldMapping", b =>
                 {
-                    b.Property<string>("Id")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
                         .HasColumnName("id");
 
                     b.Property<DateTime>("CreatedAt")
@@ -158,15 +158,12 @@ namespace Transflo.Platform.Transformer.Core.Migrations
                         .HasColumnType("character varying(500)")
                         .HasColumnName("target_path");
 
-                    b.Property<string>("TemplateId")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
+                    b.Property<Guid>("TemplateId")
+                        .HasColumnType("uuid")
                         .HasColumnName("template_id");
 
-                    b.Property<string>("TemplateVersionId")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
+                    b.Property<Guid?>("TemplateVersionId")
+                        .HasColumnType("uuid")
                         .HasColumnName("template_version_id");
 
                     b.Property<string>("TransformationConfig")
@@ -205,9 +202,9 @@ namespace Transflo.Platform.Transformer.Core.Migrations
 
             modelBuilder.Entity("Transflo.Platform.Transformer.Core.Models.FieldMappingTemplate", b =>
                 {
-                    b.Property<string>("Id")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
                         .HasColumnName("id");
 
                     b.Property<DateTime>("CreatedAt")
@@ -219,9 +216,8 @@ namespace Transflo.Platform.Transformer.Core.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("created_by");
 
-                    b.Property<string>("CustomerId")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
+                    b.Property<Guid?>("CustomerId")
+                        .HasColumnType("uuid")
                         .HasColumnName("customer_id");
 
                     b.Property<DateTime?>("DeletedAt")
@@ -273,16 +269,12 @@ namespace Transflo.Platform.Transformer.Core.Migrations
                         .HasColumnType("jsonb")
                         .HasColumnName("target_schema");
 
-                    b.Property<string>("TemplateId")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
+                    b.Property<Guid>("TemplateId")
+                        .HasColumnType("uuid")
                         .HasColumnName("template_id");
 
-                    b.Property<string>("TmsSystemId")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
+                    b.Property<Guid>("TmsSystemId")
+                        .HasColumnType("uuid")
                         .HasColumnName("tms_system_id");
 
                     b.Property<DateTime>("UpdatedAt")
@@ -316,9 +308,9 @@ namespace Transflo.Platform.Transformer.Core.Migrations
 
             modelBuilder.Entity("Transflo.Platform.Transformer.Core.Models.LookupTable", b =>
                 {
-                    b.Property<string>("Id")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
                         .HasColumnName("id");
 
                     b.Property<DateTime>("CreatedAt")
@@ -367,9 +359,8 @@ namespace Transflo.Platform.Transformer.Core.Migrations
                         .HasColumnType("character varying(200)")
                         .HasColumnName("name");
 
-                    b.Property<string>("PartnerId")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
+                    b.Property<Guid?>("PartnerId")
+                        .HasColumnType("uuid")
                         .HasColumnName("partner_id");
 
                     b.Property<int>("Revision")
@@ -377,10 +368,8 @@ namespace Transflo.Platform.Transformer.Core.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("revision");
 
-                    b.Property<string>("TmsSystemId")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
+                    b.Property<Guid>("TmsSystemId")
+                        .HasColumnType("uuid")
                         .HasColumnName("tms_system_id");
 
                     b.Property<DateTime>("UpdatedAt")
@@ -405,9 +394,9 @@ namespace Transflo.Platform.Transformer.Core.Migrations
 
             modelBuilder.Entity("Transflo.Platform.Transformer.Core.Models.Partner", b =>
                 {
-                    b.Property<string>("Id")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
                         .HasColumnName("id");
 
                     b.Property<DateTime>("CreatedAt")
@@ -456,9 +445,9 @@ namespace Transflo.Platform.Transformer.Core.Migrations
 
             modelBuilder.Entity("Transflo.Platform.Transformer.Core.Models.Template", b =>
                 {
-                    b.Property<string>("Id")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
                         .HasColumnName("id");
 
                     b.Property<DateTime>("CreatedAt")
@@ -524,9 +513,9 @@ namespace Transflo.Platform.Transformer.Core.Migrations
 
             modelBuilder.Entity("Transflo.Platform.Transformer.Core.Models.TemplateAssignment", b =>
                 {
-                    b.Property<string>("Id")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
                         .HasColumnName("id");
 
                     b.Property<DateTime>("CreatedAt")
@@ -551,22 +540,16 @@ namespace Transflo.Platform.Transformer.Core.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("revision");
 
-                    b.Property<string>("SourcePartnerId")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
+                    b.Property<Guid>("SourcePartnerId")
+                        .HasColumnType("uuid")
                         .HasColumnName("source_partner_id");
 
-                    b.Property<string>("TargetPartnerId")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
+                    b.Property<Guid>("TargetPartnerId")
+                        .HasColumnType("uuid")
                         .HasColumnName("target_partner_id");
 
-                    b.Property<string>("TemplateVersionId")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
+                    b.Property<Guid>("TemplateVersionId")
+                        .HasColumnType("uuid")
                         .HasColumnName("template_version_id");
 
                     b.Property<DateTime>("UpdatedAt")
@@ -599,9 +582,9 @@ namespace Transflo.Platform.Transformer.Core.Migrations
 
             modelBuilder.Entity("Transflo.Platform.Transformer.Core.Models.TemplateVersion", b =>
                 {
-                    b.Property<string>("Id")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
                         .HasColumnName("id");
 
                     b.Property<DateTime>("CreatedAt")
@@ -626,10 +609,8 @@ namespace Transflo.Platform.Transformer.Core.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("revision");
 
-                    b.Property<string>("TemplateId")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
+                    b.Property<Guid>("TemplateId")
+                        .HasColumnType("uuid")
                         .HasColumnName("template_id");
 
                     b.Property<DateTime>("UpdatedAt")
@@ -658,9 +639,9 @@ namespace Transflo.Platform.Transformer.Core.Migrations
 
             modelBuilder.Entity("Transflo.Platform.Transformer.Core.Models.TmsSystem", b =>
                 {
-                    b.Property<string>("Id")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
                         .HasColumnName("id");
 
                     b.Property<string>("ConnectionConfig")
@@ -740,36 +721,37 @@ namespace Transflo.Platform.Transformer.Core.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "tms-truckmate-001",
-                            CreatedAt = new DateTime(2026, 3, 9, 21, 9, 34, 454, DateTimeKind.Utc).AddTicks(8648),
+                            Id = new Guid("00000000-0000-0000-0000-000000000001"),
+                            CreatedAt = new DateTime(2026, 3, 10, 20, 42, 9, 286, DateTimeKind.Utc).AddTicks(1237),
                             CreatedBy = "System",
                             Description = "TruckMate Transportation Management System",
                             DisplayName = "TruckMate TMS",
                             IsActive = true,
                             Name = "TruckMate",
                             Revision = 1,
-                            UpdatedAt = new DateTime(2026, 3, 9, 21, 9, 34, 454, DateTimeKind.Utc).AddTicks(8648),
+                            UpdatedAt = new DateTime(2026, 3, 10, 20, 42, 9, 286, DateTimeKind.Utc).AddTicks(1237),
                             Version = "1.0"
                         },
                         new
                         {
-                            Id = "tms-mcleod-001",
-                            CreatedAt = new DateTime(2026, 3, 9, 21, 9, 34, 454, DateTimeKind.Utc).AddTicks(8648),
+                            Id = new Guid("00000000-0000-0000-0000-000000000002"),
+                            CreatedAt = new DateTime(2026, 3, 10, 20, 42, 9, 286, DateTimeKind.Utc).AddTicks(1237),
                             CreatedBy = "System",
                             Description = "McLeod Transportation Management System",
                             DisplayName = "McLeod Software",
                             IsActive = true,
                             Name = "McLeod",
                             Revision = 1,
-                            UpdatedAt = new DateTime(2026, 3, 9, 21, 9, 34, 454, DateTimeKind.Utc).AddTicks(8648),
+                            UpdatedAt = new DateTime(2026, 3, 10, 20, 42, 9, 286, DateTimeKind.Utc).AddTicks(1237),
                             Version = "1.0"
                         });
                 });
 
             modelBuilder.Entity("Transflo.Platform.Transformer.Core.Models.TransformationLog", b =>
                 {
-                    b.Property<string>("Id")
-                        .HasColumnType("text")
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
                         .HasColumnName("id");
 
                     b.Property<string>("Errors")
@@ -807,20 +789,16 @@ namespace Transflo.Platform.Transformer.Core.Migrations
                         .HasColumnType("character varying(50)")
                         .HasColumnName("status");
 
-                    b.Property<string>("TemplateId")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
+                    b.Property<Guid>("TemplateId")
+                        .HasColumnType("uuid")
                         .HasColumnName("template_id");
 
                     b.Property<DateTime>("Timestamp")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("timestamp");
 
-                    b.Property<string>("UserId")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("user_id");
+                    b.Property<Guid?>("UserId")
+                        .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
@@ -894,7 +872,7 @@ namespace Transflo.Platform.Transformer.Core.Migrations
                         .IsRequired();
 
                     b.HasOne("Transflo.Platform.Transformer.Core.Models.TemplateVersion", "TemplateVersion")
-                        .WithMany("Assignments")
+                        .WithMany("TemplateAssignments")
                         .HasForeignKey("TemplateVersionId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -909,7 +887,7 @@ namespace Transflo.Platform.Transformer.Core.Migrations
             modelBuilder.Entity("Transflo.Platform.Transformer.Core.Models.TemplateVersion", b =>
                 {
                     b.HasOne("Transflo.Platform.Transformer.Core.Models.Template", "Template")
-                        .WithMany("Versions")
+                        .WithMany("TemplateVersions")
                         .HasForeignKey("TemplateId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -929,14 +907,14 @@ namespace Transflo.Platform.Transformer.Core.Migrations
 
             modelBuilder.Entity("Transflo.Platform.Transformer.Core.Models.Template", b =>
                 {
-                    b.Navigation("Versions");
+                    b.Navigation("TemplateVersions");
                 });
 
             modelBuilder.Entity("Transflo.Platform.Transformer.Core.Models.TemplateVersion", b =>
                 {
-                    b.Navigation("Assignments");
-
                     b.Navigation("FieldMappings");
+
+                    b.Navigation("TemplateAssignments");
                 });
 
             modelBuilder.Entity("Transflo.Platform.Transformer.Core.Models.TmsSystem", b =>

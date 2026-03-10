@@ -25,8 +25,8 @@ public class TransformationCoordinatorTests
     // Core EF entities used by repository mocks
     private static readonly FieldMappingTemplate DefaultEfTemplate = new()
     {
-        TemplateId = "tmpl-1",
-        TmsSystemId = "sys-1",
+        TemplateId = new Guid("00000000-0000-0000-0000-000000000005"),
+        TmsSystemId = new Guid("00000000-0000-0000-0000-000000000006"),
         Name = "Test Template",
         Version = 1
     };
@@ -53,11 +53,12 @@ public class TransformationCoordinatorTests
     [Fact]
     public async Task TransformAsync_ReturnsError_WhenTemplateNotFound()
     {
+        var templateId = new Guid("00000000-0000-0000-0000-000000000007");
         _templateRepoMock
-            .Setup(r => r.GetLatestVersionAsync("tmpl-missing"))
+            .Setup(r => r.GetLatestVersionAsync(templateId))
             .ReturnsAsync((FieldMappingTemplate?)null);
 
-        var result = await _sut.TransformAsync("{}", "tmpl-missing");
+        var result = await _sut.TransformAsync("{}", templateId);
 
         Assert.False(result.Success);
         Assert.Single(result.Errors);
@@ -67,11 +68,12 @@ public class TransformationCoordinatorTests
     [Fact]
     public async Task TransformAsync_ReturnsError_WhenSpecificVersionNotFound()
     {
+        var templateId = new Guid("00000000-0000-0000-0000-000000000005");
         _templateRepoMock
-            .Setup(r => r.GetByIdAsync("tmpl-1", 99))
+            .Setup(r => r.GetByIdAsync(templateId, 99))
             .ReturnsAsync((FieldMappingTemplate?)null);
 
-        var result = await _sut.TransformAsync("{}", "tmpl-1", version: 99);
+        var result = await _sut.TransformAsync("{}", templateId, version: 99);
 
         Assert.False(result.Success);
         Assert.Equal("TEMPLATE_NOT_FOUND", result.Errors[0].ErrorCode);
@@ -80,14 +82,15 @@ public class TransformationCoordinatorTests
     [Fact]
     public async Task TransformAsync_ReturnsError_WhenNoMappingsFound()
     {
+        var templateId = new Guid("00000000-0000-0000-0000-000000000005");
         _templateRepoMock
-            .Setup(r => r.GetLatestVersionAsync("tmpl-1"))
+            .Setup(r => r.GetLatestVersionAsync(templateId))
             .ReturnsAsync(DefaultEfTemplate);
         _mappingRepoMock
-            .Setup(r => r.GetByTemplateIdOrderedAsync("tmpl-1"))
+            .Setup(r => r.GetByTemplateIdOrderedAsync(templateId))
             .ReturnsAsync(new List<FieldMapping>());
 
-        var result = await _sut.TransformAsync("{}", "tmpl-1");
+        var result = await _sut.TransformAsync("{}", templateId);
 
         Assert.False(result.Success);
         Assert.Equal("NO_MAPPINGS", result.Errors[0].ErrorCode);
@@ -96,7 +99,8 @@ public class TransformationCoordinatorTests
     [Fact]
     public async Task TransformAsync_DelegatesTo_TransformationService()
     {
-        SetupResolve();
+        var templateId = new Guid("00000000-0000-0000-0000-000000000005");
+        SetupResolve(templateId);
         var serviceResult = new TransformationResult { Success = true, FieldsMapped = 1 };
         _serviceMock
             .Setup(s => s.TransformAsync(
@@ -105,7 +109,7 @@ public class TransformationCoordinatorTests
                 It.IsAny<List<ServiceModels.FieldMapping>>()))
             .ReturnsAsync(serviceResult);
 
-        var result = await _sut.TransformAsync("{}", "tmpl-1");
+        var result = await _sut.TransformAsync("{}", templateId);
 
         Assert.True(result.Success);
         Assert.Equal(1, result.FieldsMapped);
@@ -114,7 +118,8 @@ public class TransformationCoordinatorTests
     [Fact]
     public async Task TransformAsync_PersistsLog()
     {
-        SetupResolve();
+        var templateId = new Guid("00000000-0000-0000-0000-000000000005");
+        SetupResolve(templateId);
         _serviceMock
             .Setup(s => s.TransformAsync(
                 It.IsAny<string>(),
@@ -122,7 +127,7 @@ public class TransformationCoordinatorTests
                 It.IsAny<List<ServiceModels.FieldMapping>>()))
             .ReturnsAsync(new TransformationResult { Success = true });
 
-        await _sut.TransformAsync("{}", "tmpl-1");
+        await _sut.TransformAsync("{}", templateId);
 
         _logRepoMock.Verify(r => r.CreateAsync(It.IsAny<TransformationLog>()), Times.Once);
     }
@@ -130,7 +135,8 @@ public class TransformationCoordinatorTests
     [Fact]
     public async Task PreviewTransformationAsync_DoesNotPersistLog()
     {
-        SetupResolve();
+        var templateId = new Guid("00000000-0000-0000-0000-000000000005");
+        SetupResolve(templateId);
         _serviceMock
             .Setup(s => s.TransformAsync(
                 It.IsAny<string>(),
@@ -138,7 +144,7 @@ public class TransformationCoordinatorTests
                 It.IsAny<List<ServiceModels.FieldMapping>>()))
             .ReturnsAsync(new TransformationResult { Success = true });
 
-        await _sut.PreviewTransformationAsync("{}", "tmpl-1");
+        await _sut.PreviewTransformationAsync("{}", templateId);
 
         _logRepoMock.Verify(r => r.CreateAsync(It.IsAny<TransformationLog>()), Times.Never);
     }
@@ -146,8 +152,9 @@ public class TransformationCoordinatorTests
     [Fact]
     public async Task TransformBatchAsync_ReturnsError_WhenTemplateNotFound()
     {
+        var templateId = new Guid("00000000-0000-0000-0000-000000000007");
         _templateRepoMock
-            .Setup(r => r.GetLatestVersionAsync("tmpl-missing"))
+            .Setup(r => r.GetLatestVersionAsync(templateId))
             .ReturnsAsync((FieldMappingTemplate?)null);
 
         var records = new List<JsonElement>
@@ -156,7 +163,7 @@ public class TransformationCoordinatorTests
             JsonDocument.Parse("{}").RootElement
         };
 
-        var result = await _sut.TransformBatchAsync("tmpl-missing", records);
+        var result = await _sut.TransformBatchAsync(templateId, records);
 
         Assert.Equal(2, result.TotalRecords);
         Assert.Equal(2, result.ErrorCount);
@@ -166,10 +173,11 @@ public class TransformationCoordinatorTests
     [Fact]
     public async Task TransformBatchAsync_PersistsSingleSummaryLog()
     {
-        SetupResolve();
+        var templateId = new Guid("00000000-0000-0000-0000-000000000005");
+        SetupResolve(templateId);
         var batchResult = new BatchTransformResult
         {
-            TemplateId = "tmpl-1",
+            TemplateId = templateId,
             TotalRecords = 2,
             SuccessCount = 2,
             Results = new List<BatchRecordResult>
@@ -191,18 +199,18 @@ public class TransformationCoordinatorTests
             JsonDocument.Parse("{}").RootElement
         };
 
-        await _sut.TransformBatchAsync("tmpl-1", records);
+        await _sut.TransformBatchAsync(templateId, records);
 
         _logRepoMock.Verify(r => r.CreateAsync(It.IsAny<TransformationLog>()), Times.Once);
     }
 
-    private void SetupResolve()
+    private void SetupResolve(Guid templateId)
     {
         _templateRepoMock
-            .Setup(r => r.GetLatestVersionAsync("tmpl-1"))
+            .Setup(r => r.GetLatestVersionAsync(templateId))
             .ReturnsAsync(DefaultEfTemplate);
         _mappingRepoMock
-            .Setup(r => r.GetByTemplateIdOrderedAsync("tmpl-1"))
+            .Setup(r => r.GetByTemplateIdOrderedAsync(templateId))
             .ReturnsAsync(DefaultEfMappings);
     }
 }

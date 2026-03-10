@@ -9,12 +9,11 @@ public class TransformationLog
 {
     [Key]
     [Column("id")]
-    public string Id { get; set; } = Guid.NewGuid().ToString();
+    public Guid Id { get; set; } = Guid.NewGuid();
 
     [Column("template_id")]
     [Required]
-    [MaxLength(100)]
-    public string TemplateId { get; set; } = string.Empty;
+    public Guid TemplateId { get; set; } = Guid.Empty;
 
     [Column("timestamp")]
     public DateTime Timestamp { get; set; } = DateTime.UtcNow;
@@ -38,9 +37,7 @@ public class TransformationLog
     [Column("record_count")]
     public int RecordCount { get; set; }
 
-    [Column("user_id")]
-    [MaxLength(100)]
-    public string? UserId { get; set; }
+    public Guid? UserId { get; set; }
 
     [Column("source")]
     [MaxLength(200)]

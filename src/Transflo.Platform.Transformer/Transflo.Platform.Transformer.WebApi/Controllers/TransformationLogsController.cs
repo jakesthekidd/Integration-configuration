@@ -18,10 +18,10 @@ public class TransformationLogsController : ControllerBase
 
     [HttpGet]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetAll([FromQuery] string? templateId = null, [FromQuery] string? status = null, [FromQuery] int limit = 100)
+    public async Task<IActionResult> GetAll([FromQuery] Guid? templateId = null, [FromQuery] string? status = null, [FromQuery] int limit = 100)
     {
-        var logs = templateId != null
-            ? await _repo.GetByTemplateIdAsync(templateId, limit)
+        var logs = templateId.HasValue
+            ? await _repo.GetByTemplateIdAsync(templateId.Value, limit)
             : await _repo.GetAllAsync(limit);
 
         if (status != null)
@@ -48,7 +48,7 @@ public class TransformationLogsController : ControllerBase
     [HttpGet("{id}")]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetById(string id)
+    public async Task<IActionResult> GetById(Guid id)
     {
         var log = await _repo.GetByIdAsync(id);
         if (log == null) return NotFound(ApiResponse<object>.ErrorResponse("Log entry not found"));

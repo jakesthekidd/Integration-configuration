@@ -36,8 +36,9 @@ public class LookupTransformationStrategy : ITransformationStrategy
             return sourceValue;
         }
 
-        var lookupTableId = config["LookupTableId"]?.ToString();
-        if (string.IsNullOrEmpty(lookupTableId))
+        if (!config.TryGetValue("LookupTableId", out var lookupTableIdRaw) || 
+            lookupTableIdRaw == null || 
+            !Guid.TryParse(lookupTableIdRaw.ToString(), out var lookupTableId))
         {
             return sourceValue;
         }

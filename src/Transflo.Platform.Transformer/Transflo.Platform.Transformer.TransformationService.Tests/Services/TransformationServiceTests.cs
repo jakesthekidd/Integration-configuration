@@ -15,13 +15,15 @@ public class TransformationServiceTests
     private readonly Mock<ILogger<TransSvc.TransformationService>> _loggerMock = new();
     private readonly TransSvc.TransformationService _sut;
 
-    private static readonly FieldMappingTemplate DefaultTemplate = new()
+    private FieldMappingTemplate CreateDefaultTemplate()
     {
-        TemplateId = "tmpl-1",
-        TmsSystemId = "sys-1",
-        Name = "Test Template",
-        Version = 1
-    };
+        return new FieldMappingTemplate
+        {
+            TemplateId = Guid.NewGuid(),
+            TmsSystemId = Guid.NewGuid(),
+            Name = "Test Template"
+        };
+    }
 
     public TransformationServiceTests()
     {
@@ -36,7 +38,7 @@ public class TransformationServiceTests
     {
         var mappings = new List<FieldMapping> { new() { SourcePath = "a", TargetPath = "b" } };
 
-        var result = await _sut.TransformAsync("not-valid-json", DefaultTemplate, mappings);
+        var result = await _sut.TransformAsync("not-valid-json", CreateDefaultTemplate(), mappings);
 
         Assert.False(result.Success);
         Assert.Equal("TRANSFORMATION_ERROR", result.Errors[0].ErrorCode);
@@ -47,20 +49,20 @@ public class TransformationServiceTests
     {
         var mappings = new List<FieldMapping> { new() { SourcePath = "a", TargetPath = "b" } };
 
-        var result = await _sut.TransformAsync("null", DefaultTemplate, mappings);
+        var result = await _sut.TransformAsync("null", CreateDefaultTemplate(), mappings);
 
         Assert.False(result.Success);
         Assert.Equal("INVALID_JSON", result.Errors[0].ErrorCode);
     }
 
     [Fact]
-    public async Task TransformAsync_ReturnsSuccess_WithMappedFields()
+    public async Task TransformAsync_WithValidInput_ReturnsSuccess()
     {
-        var mapping = new FieldMapping
+        // Arrange
+        var template = CreateDefaultTemplate();
+        var mappings = new List<FieldMapping>
         {
-            SourcePath = "name",
-            TargetPath = "fullName",
-            TransformationType = TransformationType.Direct
+            new() { Id = Guid.NewGuid(), TemplateId = template.TemplateId, SourcePath = "$.firstName", TargetPath = "FirstName", TransformationType = TransformationType.Direct }
         };
 
         var strategyMock = new Mock<ITransformationStrategy>();
@@ -72,7 +74,7 @@ public class TransformationServiceTests
             .Setup(p => p.SetValueAtPathAsync(It.IsAny<Dictionary<string, object>>(), "fullName", "John Doe"))
             .Returns(Task.CompletedTask);
 
-        var result = await _sut.TransformAsync("""{"name":"John Doe"}""", DefaultTemplate, new List<FieldMapping> { mapping });
+        var result = await _sut.TransformAsync("""{"name":"John Doe"}""", template, mappings);
 
         Assert.True(result.Success);
         Assert.Equal(1, result.FieldsMapped);
@@ -83,8 +85,11 @@ public class TransformationServiceTests
     [Fact]
     public async Task TransformAsync_ReturnsFailure_WhenRequiredFieldMissing()
     {
+        var template = CreateDefaultTemplate();
         var mapping = new FieldMapping
         {
+            Id = Guid.NewGuid(),
+            TemplateId = template.TemplateId,
             SourcePath = "requiredField",
             TargetPath = "target",
             TransformationType = TransformationType.Direct,
@@ -97,7 +102,7 @@ public class TransformationServiceTests
             .Setup(f => f.GetStrategy(TransformationType.Direct))
             .Returns(strategyMock.Object);
 
-        var result = await _sut.TransformAsync("""{"otherField":"value"}""", DefaultTemplate, new List<FieldMapping> { mapping });
+        var result = await _sut.TransformAsync("""{"otherField":"value"}""", template, new List<FieldMapping> { mapping });
 
         Assert.False(result.Success);
         Assert.Contains(result.Errors, e => e.ErrorCode == "REQUIRED_FIELD_MISSING");
@@ -106,8 +111,11 @@ public class TransformationServiceTests
     [Fact]
     public async Task TransformAsync_UsesDefaultValue_WhenStrategyReturnsNull()
     {
+        var template = CreateDefaultTemplate();
         var mapping = new FieldMapping
         {
+            Id = Guid.NewGuid(),
+            TemplateId = template.TemplateId,
             SourcePath = "optionalField",
             TargetPath = "target",
             TransformationType = TransformationType.Direct,
@@ -124,7 +132,7 @@ public class TransformationServiceTests
             .Setup(p => p.SetValueAtPathAsync(It.IsAny<Dictionary<string, object>>(), "target", "fallback-value"))
             .Returns(Task.CompletedTask);
 
-        var result = await _sut.TransformAsync("""{"otherField":"value"}""", DefaultTemplate, new List<FieldMapping> { mapping });
+        var result = await _sut.TransformAsync("""{"otherField":"value"}""", template, new List<FieldMapping> { mapping });
 
         Assert.True(result.Success);
         Assert.Equal(1, result.FieldsMapped);
@@ -136,8 +144,11 @@ public class TransformationServiceTests
     [Fact]
     public async Task TransformAsync_FallsBackToDirect_WhenStrategyNotFound()
     {
+        var template = CreateDefaultTemplate();
         var mapping = new FieldMapping
         {
+            Id = Guid.NewGuid(),
+            TemplateId = template.TemplateId,
             SourcePath = "someField",
             TargetPath = "target",
             TransformationType = TransformationType.Math
@@ -153,7 +164,7 @@ public class TransformationServiceTests
             .Setup(p => p.SetValueAtPathAsync(It.IsAny<Dictionary<string, object>>(), "target", "rawValue"))
             .Returns(Task.CompletedTask);
 
-        var result = await _sut.TransformAsync("""{"someField":"rawValue"}""", DefaultTemplate, new List<FieldMapping> { mapping });
+        var result = await _sut.TransformAsync("""{"someField":"rawValue"}""", template, new List<FieldMapping> { mapping });
 
         Assert.True(result.Success);
         Assert.Single(result.Warnings);
@@ -164,8 +175,11 @@ public class TransformationServiceTests
     [Fact]
     public async Task TransformAsync_AddsWarning_WhenOptionalFieldMissing()
     {
+        var template = CreateDefaultTemplate();
         var mapping = new FieldMapping
         {
+            Id = Guid.NewGuid(),
+            TemplateId = template.TemplateId,
             SourcePath = "optionalField",
             TargetPath = "target",
             TransformationType = TransformationType.Direct,
@@ -178,7 +192,7 @@ public class TransformationServiceTests
             .Setup(f => f.GetStrategy(TransformationType.Direct))
             .Returns(strategyMock.Object);
 
-        var result = await _sut.TransformAsync("{}", DefaultTemplate, new List<FieldMapping> { mapping });
+        var result = await _sut.TransformAsync("{}", template, new List<FieldMapping> { mapping });
 
         Assert.True(result.Success);
         Assert.Equal(0, result.FieldsMapped);
@@ -189,8 +203,11 @@ public class TransformationServiceTests
     [Fact]
     public async Task TransformAsync_NoWarning_ForConstantType_WhenValueIsNull()
     {
+        var template = CreateDefaultTemplate();
         var mapping = new FieldMapping
         {
+            Id = Guid.NewGuid(),
+            TemplateId = template.TemplateId,
             SourcePath = "",
             TargetPath = "target",
             TransformationType = TransformationType.Constant,
@@ -203,7 +220,7 @@ public class TransformationServiceTests
             .Setup(f => f.GetStrategy(TransformationType.Constant))
             .Returns(strategyMock.Object);
 
-        var result = await _sut.TransformAsync("{}", DefaultTemplate, new List<FieldMapping> { mapping });
+        var result = await _sut.TransformAsync("{}", template, new List<FieldMapping> { mapping });
 
         Assert.DoesNotContain(result.Warnings, w => w.Code == "FIELD_VALUE_MISSING");
     }
@@ -211,8 +228,11 @@ public class TransformationServiceTests
     [Fact]
     public async Task TransformBatchAsync_ProcessesAllRecords()
     {
+        var template = CreateDefaultTemplate();
         var mapping = new FieldMapping
         {
+            Id = Guid.NewGuid(),
+            TemplateId = template.TemplateId,
             SourcePath = "id",
             TargetPath = "recordId",
             TransformationType = TransformationType.Direct
@@ -234,7 +254,7 @@ public class TransformationServiceTests
             JsonDocument.Parse("""{"id":"r3"}""").RootElement
         };
 
-        var batchResult = await _sut.TransformBatchAsync(DefaultTemplate, new List<FieldMapping> { mapping }, records);
+        var batchResult = await _sut.TransformBatchAsync(template, new List<FieldMapping> { mapping }, records);
 
         Assert.Equal(3, batchResult.TotalRecords);
         Assert.Equal(3, batchResult.Results.Count);
@@ -245,8 +265,11 @@ public class TransformationServiceTests
     [Fact]
     public async Task TransformBatchAsync_DoesNotPersistLog()
     {
+        var template = CreateDefaultTemplate();
         var mapping = new FieldMapping
         {
+            Id = Guid.NewGuid(),
+            TemplateId = template.TemplateId,
             SourcePath = "id",
             TargetPath = "recordId",
             TransformationType = TransformationType.Direct
@@ -267,7 +290,7 @@ public class TransformationServiceTests
             JsonDocument.Parse("""{"id":"r2"}""").RootElement
         };
 
-        await _sut.TransformBatchAsync(DefaultTemplate, new List<FieldMapping> { mapping }, records);
+        await _sut.TransformBatchAsync(template, new List<FieldMapping> { mapping }, records);
 
         _jsonParserMock.Verify(
             p => p.SetValueAtPathAsync(It.IsAny<Dictionary<string, object>>(), "recordId", "val"),

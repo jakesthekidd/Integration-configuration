@@ -8,18 +8,15 @@ public class TemplateAssignment : BaseEntity
 {
     [Column("template_version_id")]
     [Required]
-    [MaxLength(100)]
-    public string TemplateVersionId { get; set; } = string.Empty;
+    public Guid TemplateVersionId { get; set; } = Guid.Empty;
 
     [Column("source_partner_id")]
     [Required]
-    [MaxLength(100)]
-    public string SourcePartnerId { get; set; } = string.Empty;
+    public Guid SourcePartnerId { get; set; } = Guid.Empty;
 
     [Column("target_partner_id")]
     [Required]
-    [MaxLength(100)]
-    public string TargetPartnerId { get; set; } = string.Empty;
+    public Guid TargetPartnerId { get; set; } = Guid.Empty;
 
     [Column("valid_from")]
     public DateTimeOffset? ValidFrom { get; set; }

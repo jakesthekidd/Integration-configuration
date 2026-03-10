@@ -7,13 +7,11 @@ namespace Transflo.Platform.Transformer.Core.Models;
 public class LookupTable : BaseEntity
 {
     [Column("partner_id")]
-    [MaxLength(100)]
-    public string? PartnerId { get; set; }
+    public Guid? PartnerId { get; set; }
 
     [Column("tms_system_id")]
     [Required]
-    [MaxLength(100)]
-    public string TmsSystemId { get; set; } = string.Empty;
+    public Guid TmsSystemId { get; set; } = Guid.Empty;
 
     [Column("field_name")]
     [Required]

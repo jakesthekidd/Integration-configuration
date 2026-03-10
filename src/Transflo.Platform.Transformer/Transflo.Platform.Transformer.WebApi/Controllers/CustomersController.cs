@@ -47,7 +47,7 @@ public class CustomersController : ControllerBase
     [HttpGet("{id}")]
     [ProducesResponseType(typeof(ApiResponse<CustomerResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<CustomerResponse>), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetById(string id)
+    public async Task<IActionResult> GetById(Guid id)
     {
         var customer = await _repo.GetByIdAsync(id);
         if (customer == null)
@@ -107,7 +107,7 @@ public class CustomersController : ControllerBase
     [HttpPut("{id}")]
     [ProducesResponseType(typeof(ApiResponse<CustomerResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<CustomerResponse>), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Update(string id, [FromBody] UpdateCustomerRequest request)
+    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateCustomerRequest request)
     {
         var existing = await _repo.GetByIdAsync(id);
         if (existing == null)
@@ -142,7 +142,7 @@ public class CustomersController : ControllerBase
     [HttpDelete("{id}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Delete(string id)
+    public async Task<IActionResult> Delete(Guid id)
     {
         var existing = await _repo.GetByIdAsync(id);
         if (existing == null)

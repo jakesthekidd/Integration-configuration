@@ -17,7 +17,7 @@ namespace Transflo.Platform.Transformer.Core.Migrations
                 name: "customers",
                 columns: table => new
                 {
-                    id = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    id = table.Column<Guid>(type: "uuid", nullable: false),
                     name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     code = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
                     contact_email = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
@@ -41,7 +41,7 @@ namespace Transflo.Platform.Transformer.Core.Migrations
                 name: "partners",
                 columns: table => new
                 {
-                    id = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    id = table.Column<Guid>(type: "uuid", nullable: false),
                     name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
@@ -60,7 +60,7 @@ namespace Transflo.Platform.Transformer.Core.Migrations
                 name: "templates",
                 columns: table => new
                 {
-                    id = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    id = table.Column<Guid>(type: "uuid", nullable: false),
                     name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     description = table.Column<string>(type: "text", nullable: true),
                     status = table.Column<string>(type: "text", nullable: false),
@@ -83,7 +83,7 @@ namespace Transflo.Platform.Transformer.Core.Migrations
                 name: "tms_systems",
                 columns: table => new
                 {
-                    id = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    id = table.Column<Guid>(type: "uuid", nullable: false),
                     name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     display_name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     description = table.Column<string>(type: "text", nullable: true),
@@ -108,8 +108,8 @@ namespace Transflo.Platform.Transformer.Core.Migrations
                 name: "transformation_logs",
                 columns: table => new
                 {
-                    id = table.Column<string>(type: "text", nullable: false),
-                    template_id = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    id = table.Column<Guid>(type: "uuid", nullable: false),
+                    template_id = table.Column<Guid>(type: "uuid", nullable: false),
                     timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     status = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     input_data = table.Column<string>(type: "jsonb", nullable: true),
@@ -117,7 +117,7 @@ namespace Transflo.Platform.Transformer.Core.Migrations
                     errors = table.Column<string>(type: "jsonb", nullable: true),
                     execution_time_ms = table.Column<long>(type: "bigint", nullable: false),
                     record_count = table.Column<int>(type: "integer", nullable: false),
-                    user_id = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: true),
                     source = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
                     expires_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
@@ -130,8 +130,8 @@ namespace Transflo.Platform.Transformer.Core.Migrations
                 name: "template_versions",
                 columns: table => new
                 {
-                    id = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    template_id = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    id = table.Column<Guid>(type: "uuid", nullable: false),
+                    template_id = table.Column<Guid>(type: "uuid", nullable: false),
                     version = table.Column<int>(type: "integer", nullable: false),
                     validation_rules = table.Column<string>(type: "jsonb", nullable: true),
                     created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
@@ -157,10 +157,10 @@ namespace Transflo.Platform.Transformer.Core.Migrations
                 name: "field_mapping_templates",
                 columns: table => new
                 {
-                    id = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    template_id = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    id = table.Column<Guid>(type: "uuid", nullable: false),
+                    template_id = table.Column<Guid>(type: "uuid", nullable: false),
                     version = table.Column<int>(type: "integer", nullable: false),
-                    tms_system_id = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    tms_system_id = table.Column<Guid>(type: "uuid", nullable: false),
                     name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     description = table.Column<string>(type: "text", nullable: true),
                     status = table.Column<string>(type: "text", nullable: false),
@@ -170,7 +170,7 @@ namespace Transflo.Platform.Transformer.Core.Migrations
                     published_by = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
                     sample_input_json = table.Column<string>(type: "jsonb", nullable: true),
                     metadata = table.Column<string>(type: "jsonb", nullable: true),
-                    customer_id = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    customer_id = table.Column<Guid>(type: "uuid", nullable: true),
                     created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     deleted_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
@@ -199,9 +199,9 @@ namespace Transflo.Platform.Transformer.Core.Migrations
                 name: "lookup_tables",
                 columns: table => new
                 {
-                    id = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    partner_id = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
-                    tms_system_id = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    id = table.Column<Guid>(type: "uuid", nullable: false),
+                    partner_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    tms_system_id = table.Column<Guid>(type: "uuid", nullable: false),
                     field_name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     description = table.Column<string>(type: "text", nullable: true),
@@ -237,9 +237,9 @@ namespace Transflo.Platform.Transformer.Core.Migrations
                 name: "field_mappings",
                 columns: table => new
                 {
-                    id = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    template_version_id = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
-                    template_id = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    id = table.Column<Guid>(type: "uuid", nullable: false),
+                    template_version_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    template_id = table.Column<Guid>(type: "uuid", nullable: false),
                     source_path = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
                     target_path = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
                     transformation_type = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
@@ -271,10 +271,10 @@ namespace Transflo.Platform.Transformer.Core.Migrations
                 name: "template_assignments",
                 columns: table => new
                 {
-                    id = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    template_version_id = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    source_partner_id = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    target_partner_id = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    id = table.Column<Guid>(type: "uuid", nullable: false),
+                    template_version_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    source_partner_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    target_partner_id = table.Column<Guid>(type: "uuid", nullable: false),
                     valid_from = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     valid_to = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
@@ -313,8 +313,8 @@ namespace Transflo.Platform.Transformer.Core.Migrations
                 columns: new[] { "id", "connection_config", "created_at", "created_by", "deleted_at", "description", "display_name", "is_active", "metadata", "name", "revision", "sample_json_schema", "updated_at", "updated_by", "version" },
                 values: new object[,]
                 {
-                    { "tms-mcleod-001", null, new DateTime(2026, 3, 9, 21, 9, 34, 454, DateTimeKind.Utc).AddTicks(8648), "System", null, "McLeod Transportation Management System", "McLeod Software", true, null, "McLeod", 1, null, new DateTime(2026, 3, 9, 21, 9, 34, 454, DateTimeKind.Utc).AddTicks(8648), null, "1.0" },
-                    { "tms-truckmate-001", null, new DateTime(2026, 3, 9, 21, 9, 34, 454, DateTimeKind.Utc).AddTicks(8648), "System", null, "TruckMate Transportation Management System", "TruckMate TMS", true, null, "TruckMate", 1, null, new DateTime(2026, 3, 9, 21, 9, 34, 454, DateTimeKind.Utc).AddTicks(8648), null, "1.0" }
+                    { new Guid("00000000-0000-0000-0000-000000000001"), null, new DateTime(2026, 3, 10, 20, 42, 9, 286, DateTimeKind.Utc).AddTicks(1237), "System", null, "TruckMate Transportation Management System", "TruckMate TMS", true, null, "TruckMate", 1, null, new DateTime(2026, 3, 10, 20, 42, 9, 286, DateTimeKind.Utc).AddTicks(1237), null, "1.0" },
+                    { new Guid("00000000-0000-0000-0000-000000000002"), null, new DateTime(2026, 3, 10, 20, 42, 9, 286, DateTimeKind.Utc).AddTicks(1237), "System", null, "McLeod Transportation Management System", "McLeod Software", true, null, "McLeod", 1, null, new DateTime(2026, 3, 10, 20, 42, 9, 286, DateTimeKind.Utc).AddTicks(1237), null, "1.0" }
                 });
 
             migrationBuilder.CreateIndex(

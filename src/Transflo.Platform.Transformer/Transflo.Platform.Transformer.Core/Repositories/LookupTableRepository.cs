@@ -6,13 +6,13 @@ namespace Transflo.Platform.Transformer.Core.Repositories;
 
 public interface ILookupTableRepository
 {
-    Task<LookupTable?> GetByIdAsync(string id);
-    Task<List<LookupTable>> GetByTmsSystemIdAsync(string tmsSystemId);
-    Task<LookupTable?> GetByTmsAndFieldAsync(string tmsSystemId, string fieldName);
+    Task<LookupTable?> GetByIdAsync(Guid id);
+    Task<List<LookupTable>> GetByTmsSystemIdAsync(Guid tmsSystemId);
+    Task<LookupTable?> GetByTmsAndFieldAsync(Guid tmsSystemId, string fieldName);
     Task<List<LookupTable>> GetAllAsync();
     Task<LookupTable> CreateAsync(LookupTable lookupTable);
     Task<LookupTable> UpdateAsync(LookupTable lookupTable);
-    Task DeleteAsync(string id);
+    Task DeleteAsync(Guid id);
 }
 
 public class LookupTableRepository : ILookupTableRepository
@@ -26,12 +26,12 @@ public class LookupTableRepository : ILookupTableRepository
         _logger = logger;
     }
 
-    public async Task<LookupTable?> GetByIdAsync(string id)
+    public async Task<LookupTable?> GetByIdAsync(Guid id)
     {
         return await _context.LookupTables.FindAsync(id);
     }
 
-    public async Task<List<LookupTable>> GetByTmsSystemIdAsync(string tmsSystemId)
+    public async Task<List<LookupTable>> GetByTmsSystemIdAsync(Guid tmsSystemId)
     {
         return await _context.LookupTables
             .Where(l => l.TmsSystemId == tmsSystemId)
@@ -39,7 +39,7 @@ public class LookupTableRepository : ILookupTableRepository
             .ToListAsync();
     }
 
-    public async Task<LookupTable?> GetByTmsAndFieldAsync(string tmsSystemId, string fieldName)
+    public async Task<LookupTable?> GetByTmsAndFieldAsync(Guid tmsSystemId, string fieldName)
     {
         return await _context.LookupTables
             .FirstOrDefaultAsync(l => l.TmsSystemId == tmsSystemId && l.FieldName == fieldName);
@@ -76,7 +76,7 @@ public class LookupTableRepository : ILookupTableRepository
         return lookupTable;
     }
 
-    public async Task DeleteAsync(string id)
+    public async Task DeleteAsync(Guid id)
     {
         var lookupTable = await GetByIdAsync(id);
         if (lookupTable != null)

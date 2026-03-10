@@ -9,16 +9,14 @@ public class FieldMappingTemplate : BaseEntity
 {
     [Column("template_id")]
     [Required]
-    [MaxLength(100)]
-    public string TemplateId { get; set; } = Guid.NewGuid().ToString();
+    public Guid TemplateId { get; set; } = Guid.NewGuid();
 
     [Column("version")]
     public int Version { get; set; } = 1;
 
     [Column("tms_system_id")]
     [Required]
-    [MaxLength(100)]
-    public string TmsSystemId { get; set; } = string.Empty;
+    public Guid TmsSystemId { get; set; } = Guid.Empty;
 
     [Column("name")]
     [Required]
@@ -51,8 +49,7 @@ public class FieldMappingTemplate : BaseEntity
     public string? Metadata { get; set; }
 
     [Column("customer_id")]
-    [MaxLength(100)]
-    public string? CustomerId { get; set; }
+    public Guid? CustomerId { get; set; }
 
     // Foreign keys / navigation
     [ForeignKey(nameof(TmsSystemId))]

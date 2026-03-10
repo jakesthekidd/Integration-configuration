@@ -2,7 +2,7 @@ namespace Transflo.Platform.Transformer.Core.DTOs;
 
 public sealed record CustomerResponse
 {
-    public string Id { get; set; } = string.Empty;
+    public Guid Id { get; set; }
     public string Name { get; set; } = string.Empty;
     public string? Code { get; set; }
     public string? ContactEmail { get; set; }

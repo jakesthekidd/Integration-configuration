@@ -19,11 +19,11 @@ public class LookupTablesController : ControllerBase
 
     [HttpGet]
     [ProducesResponseType(typeof(ApiResponse<LookupTableListResponse>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetAll([FromQuery] string? tmsSystemId = null)
+    public async Task<IActionResult> GetAll([FromQuery] Guid? tmsSystemId = null)
     {
-        var lookupTables = string.IsNullOrEmpty(tmsSystemId)
+        var lookupTables = !tmsSystemId.HasValue
             ? await _repo.GetAllAsync()
-            : await _repo.GetByTmsSystemIdAsync(tmsSystemId);
+            : await _repo.GetByTmsSystemIdAsync(tmsSystemId.Value);
 
         var response = new LookupTableListResponse
         {
@@ -50,7 +50,7 @@ public class LookupTablesController : ControllerBase
     [HttpGet("{id}")]
     [ProducesResponseType(typeof(ApiResponse<LookupTableResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<LookupTableResponse>), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetById(string id)
+    public async Task<IActionResult> GetById(Guid id)
     {
         var lookupTable = await _repo.GetByIdAsync(id);
         if (lookupTable == null)
@@ -114,7 +114,7 @@ public class LookupTablesController : ControllerBase
     [HttpPut("{id}")]
     [ProducesResponseType(typeof(ApiResponse<LookupTableResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<LookupTableResponse>), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Update(string id, [FromBody] UpdateLookupTableRequest request)
+    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateLookupTableRequest request)
     {
         var existing = await _repo.GetByIdAsync(id);
         if (existing == null)
@@ -152,7 +152,7 @@ public class LookupTablesController : ControllerBase
     [HttpDelete("{id}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Delete(string id)
+    public async Task<IActionResult> Delete(Guid id)
     {
         var existing = await _repo.GetByIdAsync(id);
         if (existing == null)

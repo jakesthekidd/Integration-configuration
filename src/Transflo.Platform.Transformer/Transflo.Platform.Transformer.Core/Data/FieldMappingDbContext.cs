@@ -175,7 +175,7 @@ public class FieldMappingDbContext : DbContext
         modelBuilder.Entity<TmsSystem>().HasData(
             new TmsSystem
             {
-                Id = "tms-truckmate-001",
+                Id = Guid.Parse("00000000-0000-0000-0000-000000000001"),
                 Name = "TruckMate",
                 DisplayName = "TruckMate TMS",
                 Description = "TruckMate Transportation Management System",
@@ -187,7 +187,7 @@ public class FieldMappingDbContext : DbContext
             },
             new TmsSystem
             {
-                Id = "tms-mcleod-001",
+                Id = Guid.Parse("00000000-0000-0000-0000-000000000002"),
                 Name = "McLeod",
                 DisplayName = "McLeod Software",
                 Description = "McLeod Transportation Management System",

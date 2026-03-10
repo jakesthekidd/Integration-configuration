@@ -8,8 +8,7 @@ public class TemplateVersion : BaseEntity
 {
     [Column("template_id")]
     [Required]
-    [MaxLength(100)]
-    public string TemplateId { get; set; } = string.Empty;
+    public Guid TemplateId { get; set; } = Guid.Empty;
 
     [Column("version")]
     public int Version { get; set; } = 1;

@@ -35,13 +35,13 @@ public class LookupTransformationStrategyTests
         {
             SourcePath = "status",
             TargetPath = "statusCode",
-            TransformationConfig = """{"LookupTableId":"tbl-1"}"""
+            TransformationConfig = """{"LookupTableId":"00000000-0000-0000-0000-000000000001"}"""
         };
         _jsonParserMock
             .Setup(p => p.GetValueAtPathAsync(sourceData, "status"))
             .ReturnsAsync("ACTIVE");
         _lookupProviderMock
-            .Setup(p => p.GetAsync("tbl-1"))
+            .Setup(p => p.GetAsync(new Guid("00000000-0000-0000-0000-000000000001")))
             .ReturnsAsync(new LookupData
             {
                 Mappings = """{"ACTIVE":"A","INACTIVE":"I"}""",
@@ -61,13 +61,13 @@ public class LookupTransformationStrategyTests
         {
             SourcePath = "status",
             TargetPath = "statusCode",
-            TransformationConfig = """{"LookupTableId":"tbl-1"}"""
+            TransformationConfig = """{"LookupTableId":"00000000-0000-0000-0000-000000000001"}"""
         };
         _jsonParserMock
             .Setup(p => p.GetValueAtPathAsync(sourceData, "status"))
             .ReturnsAsync("UNKNOWN");
         _lookupProviderMock
-            .Setup(p => p.GetAsync("tbl-1"))
+            .Setup(p => p.GetAsync(new Guid("00000000-0000-0000-0000-000000000001")))
             .ReturnsAsync(new LookupData
             {
                 Mappings = """{"ACTIVE":"A"}""",
@@ -88,13 +88,13 @@ public class LookupTransformationStrategyTests
         {
             SourcePath = "status",
             TargetPath = "statusCode",
-            TransformationConfig = """{"LookupTableId":"tbl-1"}"""
+            TransformationConfig = """{"LookupTableId":"00000000-0000-0000-0000-000000000001"}"""
         };
         _jsonParserMock
             .Setup(p => p.GetValueAtPathAsync(sourceData, "status"))
             .ReturnsAsync("UNKNOWN");
         _lookupProviderMock
-            .Setup(p => p.GetAsync("tbl-1"))
+            .Setup(p => p.GetAsync(new Guid("00000000-0000-0000-0000-000000000001")))
             .ReturnsAsync(new LookupData
             {
                 Mappings = """{"ACTIVE":"A"}""",
@@ -115,7 +115,7 @@ public class LookupTransformationStrategyTests
         {
             SourcePath = "status",
             TargetPath = "statusCode",
-            TransformationConfig = """{"LookupTableId":"tbl-1"}"""
+            TransformationConfig = """{"LookupTableId":"00000000-0000-0000-0000-000000000001"}"""
         };
         _jsonParserMock
             .Setup(p => p.GetValueAtPathAsync(sourceData, "status"))
@@ -124,7 +124,7 @@ public class LookupTransformationStrategyTests
         var result = await _sut.ApplyAsync(new TransformationContext { SourceData = sourceData, Mapping = mapping });
 
         Assert.Null(result);
-        _lookupProviderMock.Verify(p => p.GetAsync(It.IsAny<string>()), Times.Never);
+        _lookupProviderMock.Verify(p => p.GetAsync(It.IsAny<Guid>()), Times.Never);
     }
 
     [Fact]
@@ -154,13 +154,13 @@ public class LookupTransformationStrategyTests
         {
             SourcePath = "status",
             TargetPath = "statusCode",
-            TransformationConfig = """{"LookupTableId":"missing-tbl"}"""
+            TransformationConfig = """{"LookupTableId":"00000000-0000-0000-0000-000000000002"}"""
         };
         _jsonParserMock
             .Setup(p => p.GetValueAtPathAsync(sourceData, "status"))
             .ReturnsAsync("ACTIVE");
         _lookupProviderMock
-            .Setup(p => p.GetAsync("missing-tbl"))
+            .Setup(p => p.GetAsync(new Guid("00000000-0000-0000-0000-000000000002")))
             .ReturnsAsync((LookupData?)null);
 
         var result = await _sut.ApplyAsync(new TransformationContext { SourceData = sourceData, Mapping = mapping });
@@ -176,13 +176,13 @@ public class LookupTransformationStrategyTests
         {
             SourcePath = "status",
             TargetPath = "statusCode",
-            TransformationConfig = """{"LookupTableId":"tbl-cs"}"""
+            TransformationConfig = """{"LookupTableId":"00000000-0000-0000-0000-000000000003"}"""
         };
         _jsonParserMock
             .Setup(p => p.GetValueAtPathAsync(sourceData, "status"))
             .ReturnsAsync("active");
         _lookupProviderMock
-            .Setup(p => p.GetAsync("tbl-cs"))
+            .Setup(p => p.GetAsync(new Guid("00000000-0000-0000-0000-000000000003")))
             .ReturnsAsync(new LookupData
             {
                 Mappings = """{"ACTIVE":"A"}""",
@@ -203,13 +203,13 @@ public class LookupTransformationStrategyTests
         {
             SourcePath = "status",
             TargetPath = "statusCode",
-            TransformationConfig = """{"LookupTableId":"tbl-ci"}"""
+            TransformationConfig = """{"LookupTableId":"00000000-0000-0000-0000-000000000004"}"""
         };
         _jsonParserMock
             .Setup(p => p.GetValueAtPathAsync(sourceData, "status"))
             .ReturnsAsync("active");
         _lookupProviderMock
-            .Setup(p => p.GetAsync("tbl-ci"))
+            .Setup(p => p.GetAsync(new Guid("00000000-0000-0000-0000-000000000004")))
             .ReturnsAsync(new LookupData
             {
                 Mappings = """{"ACTIVE":"A"}""",

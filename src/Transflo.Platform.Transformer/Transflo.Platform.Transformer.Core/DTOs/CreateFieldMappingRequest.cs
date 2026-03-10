@@ -5,7 +5,8 @@ namespace Transflo.Platform.Transformer.Core.DTOs;
 
 public sealed record CreateFieldMappingRequest
 {
-    public string TemplateId { get; set; } = string.Empty;
+    public Guid TemplateId { get; set; }
+    public Guid? TemplateVersionId { get; set; }
     public string SourcePath { get; set; } = string.Empty;
     public string TargetPath { get; set; } = string.Empty;
     public TransformationType TransformationType { get; set; } = TransformationType.Direct;

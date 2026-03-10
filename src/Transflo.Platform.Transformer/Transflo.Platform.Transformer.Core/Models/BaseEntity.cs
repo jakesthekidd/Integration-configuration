@@ -7,8 +7,7 @@ public abstract class BaseEntity
 {
     [Key]
     [Column("id")]
-    [MaxLength(100)]
-    public string Id { get; set; } = Guid.NewGuid().ToString();
+    public Guid Id { get; set; } = Guid.NewGuid();
 
     [Column("created_at")]
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

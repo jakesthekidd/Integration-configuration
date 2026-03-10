@@ -8,13 +8,11 @@ namespace Transflo.Platform.Transformer.Core.Models;
 public class FieldMapping : BaseEntity
 {
     [Column("template_version_id")]
-    [MaxLength(100)]
-    public string? TemplateVersionId { get; set; }
+    public Guid? TemplateVersionId { get; set; }
 
     [Column("template_id")]
     [Required]
-    [MaxLength(100)]
-    public string TemplateId { get; set; } = string.Empty;
+    public Guid TemplateId { get; set; } = Guid.Empty;
 
     [Column("source_path")]
     [Required]

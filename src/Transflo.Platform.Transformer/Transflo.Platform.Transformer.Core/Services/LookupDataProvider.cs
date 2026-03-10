@@ -13,7 +13,7 @@ public class LookupDataProvider : ILookupDataProvider
         _repository = repository;
     }
 
-    public async Task<LookupData?> GetAsync(string lookupTableId)
+    public async Task<LookupData?> GetAsync(Guid lookupTableId)
     {
         var table = await _repository.GetByIdAsync(lookupTableId);
         if (table == null)
