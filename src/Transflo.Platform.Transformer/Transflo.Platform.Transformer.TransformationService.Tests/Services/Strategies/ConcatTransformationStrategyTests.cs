@@ -24,15 +24,16 @@ public class ConcatTransformationStrategyTests
     [Fact]
     public async Task ApplyAsync_ConcatenatesFields_WithDefaultSeparator()
     {
+        // fm-mcleod-044: driver full name from first + last name with space separator
         var sourceData = new Dictionary<string, object>();
         var mapping = new FieldMapping
         {
             SourcePath = "",
-            TargetPath = "fullName",
-            TransformationConfig = """{"Fields":["firstName","lastName"]}"""
+            TargetPath = "carrier.driverName",
+            TransformationConfig = """{"Fields":["movement[0].driver_first_name","movement[0].driver_last_name"]}"""
         };
-        _jsonParserMock.Setup(p => p.GetValueAtPathAsync(sourceData, "firstName")).ReturnsAsync("John");
-        _jsonParserMock.Setup(p => p.GetValueAtPathAsync(sourceData, "lastName")).ReturnsAsync("Doe");
+        _jsonParserMock.Setup(p => p.GetValueAtPathAsync(sourceData, "movement[0].driver_first_name")).ReturnsAsync("John");
+        _jsonParserMock.Setup(p => p.GetValueAtPathAsync(sourceData, "movement[0].driver_last_name")).ReturnsAsync("Doe");
 
         var result = await _sut.ApplyAsync(new TransformationContext { SourceData = sourceData, Mapping = mapping });
 
@@ -42,38 +43,40 @@ public class ConcatTransformationStrategyTests
     [Fact]
     public async Task ApplyAsync_ConcatenatesFields_WithCustomSeparator()
     {
+        // fm-mcleod-034: customer address from address1 + address2 with ", " separator
         var sourceData = new Dictionary<string, object>();
         var mapping = new FieldMapping
         {
             SourcePath = "",
-            TargetPath = "fullName",
-            TransformationConfig = """{"Fields":["firstName","lastName"],"Separator":", "}"""
+            TargetPath = "customer.address",
+            TransformationConfig = """{"Fields":["customer.address1","customer.address2"],"Separator":", "}"""
         };
-        _jsonParserMock.Setup(p => p.GetValueAtPathAsync(sourceData, "firstName")).ReturnsAsync("Doe");
-        _jsonParserMock.Setup(p => p.GetValueAtPathAsync(sourceData, "lastName")).ReturnsAsync("John");
+        _jsonParserMock.Setup(p => p.GetValueAtPathAsync(sourceData, "customer.address1")).ReturnsAsync("100 Commerce Blvd");
+        _jsonParserMock.Setup(p => p.GetValueAtPathAsync(sourceData, "customer.address2")).ReturnsAsync("Suite 200");
 
         var result = await _sut.ApplyAsync(new TransformationContext { SourceData = sourceData, Mapping = mapping });
 
-        Assert.Equal("Doe, John", result);
+        Assert.Equal("100 Commerce Blvd, Suite 200", result);
     }
 
     [Fact]
     public async Task ApplyAsync_SkipsEmptyValues_WhenSkipEmptyIsTrue()
     {
+        // fm-mcleod-034: address2 is empty/null and should be omitted from the result
         var sourceData = new Dictionary<string, object>();
         var mapping = new FieldMapping
         {
             SourcePath = "",
-            TargetPath = "address",
-            TransformationConfig = """{"Fields":["line1","line2","city"],"Separator":", ","SkipEmpty":"true"}"""
+            TargetPath = "customer.address",
+            TransformationConfig = """{"Fields":["customer.address1","customer.address2","customer.city"],"Separator":", ","SkipEmpty":"true"}"""
         };
-        _jsonParserMock.Setup(p => p.GetValueAtPathAsync(sourceData, "line1")).ReturnsAsync("123 Main St");
-        _jsonParserMock.Setup(p => p.GetValueAtPathAsync(sourceData, "line2")).ReturnsAsync((object?)null);
-        _jsonParserMock.Setup(p => p.GetValueAtPathAsync(sourceData, "city")).ReturnsAsync("Springfield");
+        _jsonParserMock.Setup(p => p.GetValueAtPathAsync(sourceData, "customer.address1")).ReturnsAsync("100 Commerce Blvd");
+        _jsonParserMock.Setup(p => p.GetValueAtPathAsync(sourceData, "customer.address2")).ReturnsAsync((object?)null);
+        _jsonParserMock.Setup(p => p.GetValueAtPathAsync(sourceData, "customer.city")).ReturnsAsync("Atlanta");
 
         var result = await _sut.ApplyAsync(new TransformationContext { SourceData = sourceData, Mapping = mapping });
 
-        Assert.Equal("123 Main St, Springfield", result);
+        Assert.Equal("100 Commerce Blvd, Atlanta", result);
     }
 
     [Fact]
@@ -83,22 +86,22 @@ public class ConcatTransformationStrategyTests
         var mapping = new FieldMapping
         {
             SourcePath = "",
-            TargetPath = "code",
-            TransformationConfig = """{"Fields":["part1","part2","part3"],"Separator":"-","SkipEmpty":"false"}"""
+            TargetPath = "customer.address",
+            TransformationConfig = """{"Fields":["customer.address1","customer.address2","customer.city"],"Separator":", ","SkipEmpty":"false"}"""
         };
-        _jsonParserMock.Setup(p => p.GetValueAtPathAsync(sourceData, "part1")).ReturnsAsync("A");
-        _jsonParserMock.Setup(p => p.GetValueAtPathAsync(sourceData, "part2")).ReturnsAsync((object?)null);
-        _jsonParserMock.Setup(p => p.GetValueAtPathAsync(sourceData, "part3")).ReturnsAsync("C");
+        _jsonParserMock.Setup(p => p.GetValueAtPathAsync(sourceData, "customer.address1")).ReturnsAsync("100 Commerce Blvd");
+        _jsonParserMock.Setup(p => p.GetValueAtPathAsync(sourceData, "customer.address2")).ReturnsAsync((object?)null);
+        _jsonParserMock.Setup(p => p.GetValueAtPathAsync(sourceData, "customer.city")).ReturnsAsync("Atlanta");
 
         var result = await _sut.ApplyAsync(new TransformationContext { SourceData = sourceData, Mapping = mapping });
 
-        Assert.Equal("A-C", result);
+        Assert.Equal("100 Commerce Blvd, Atlanta", result);
     }
 
     [Fact]
     public async Task ApplyAsync_ReturnsNull_WhenConfigIsNull()
     {
-        var mapping = new FieldMapping { SourcePath = "", TargetPath = "fullName", TransformationConfig = null };
+        var mapping = new FieldMapping { SourcePath = "", TargetPath = "carrier.driverName", TransformationConfig = null };
         var result = await _sut.ApplyAsync(new TransformationContext
         {
             SourceData = new Dictionary<string, object>(),
@@ -114,7 +117,7 @@ public class ConcatTransformationStrategyTests
         var mapping = new FieldMapping
         {
             SourcePath = "",
-            TargetPath = "fullName",
+            TargetPath = "carrier.driverName",
             TransformationConfig = """{"Separator":" "}"""
         };
         var result = await _sut.ApplyAsync(new TransformationContext
@@ -133,11 +136,11 @@ public class ConcatTransformationStrategyTests
         var mapping = new FieldMapping
         {
             SourcePath = "",
-            TargetPath = "fullName",
-            TransformationConfig = """{"Fields":["firstName","lastName"]}"""
+            TargetPath = "carrier.driverName",
+            TransformationConfig = """{"Fields":["movement[0].driver_first_name","movement[0].driver_last_name"]}"""
         };
-        _jsonParserMock.Setup(p => p.GetValueAtPathAsync(sourceData, "firstName")).ReturnsAsync((object?)null);
-        _jsonParserMock.Setup(p => p.GetValueAtPathAsync(sourceData, "lastName")).ReturnsAsync((object?)null);
+        _jsonParserMock.Setup(p => p.GetValueAtPathAsync(sourceData, "movement[0].driver_first_name")).ReturnsAsync((object?)null);
+        _jsonParserMock.Setup(p => p.GetValueAtPathAsync(sourceData, "movement[0].driver_last_name")).ReturnsAsync((object?)null);
 
         var result = await _sut.ApplyAsync(new TransformationContext { SourceData = sourceData, Mapping = mapping });
 

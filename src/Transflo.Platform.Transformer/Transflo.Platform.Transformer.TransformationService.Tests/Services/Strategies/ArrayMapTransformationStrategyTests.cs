@@ -27,44 +27,46 @@ public class ArrayMapTransformationStrategyTests
     [Fact]
     public async Task ApplyAsync_ExtractsFieldFromEachArrayElement()
     {
+        // fm-mcleod-021: movement[*].movement_id → movementNumbers array
         var sourceData = new Dictionary<string, object>();
         var mapping = new FieldMapping
         {
-            SourcePath = "movements[*].movement_id",
-            TargetPath = "ids"
+            SourcePath = "movement[*].movement_id",
+            TargetPath = "movementNumbers"
         };
 
-        var json = """[{"movement_id":"M1"},{"movement_id":"M2"},{"movement_id":"M3"}]""";
+        var json = """[{"movement_id":"MOV-9050-1"},{"movement_id":"MOV-9050-2"},{"movement_id":"MOV-9050-3"}]""";
         var arrayElement = JsonDocument.Parse(json).RootElement;
 
         _jsonParserMock
-            .Setup(p => p.GetValueAtPathAsync(sourceData, "movements"))
+            .Setup(p => p.GetValueAtPathAsync(sourceData, "movement"))
             .ReturnsAsync(arrayElement);
 
         var result = await _sut.ApplyAsync(new TransformationContext { SourceData = sourceData, Mapping = mapping });
 
         var list = Assert.IsType<List<object>>(result);
         Assert.Equal(3, list.Count);
-        Assert.Equal("M1", list[0]);
-        Assert.Equal("M2", list[1]);
-        Assert.Equal("M3", list[2]);
+        Assert.Equal("MOV-9050-1", list[0]);
+        Assert.Equal("MOV-9050-2", list[1]);
+        Assert.Equal("MOV-9050-3", list[2]);
     }
 
     [Fact]
     public async Task ApplyAsync_ReturnsWholeElements_WhenNoItemField()
     {
+        // stops[*] without a sub-field returns full stop objects
         var sourceData = new Dictionary<string, object>();
         var mapping = new FieldMapping
         {
-            SourcePath = "tags[*]",
-            TargetPath = "allTags"
+            SourcePath = "stops[*]",
+            TargetPath = "allStops"
         };
 
-        var json = """["alpha","beta","gamma"]""";
+        var json = """[{"stop_type":"PU","city":"Memphis"},{"stop_type":"SO","city":"Dallas"},{"stop_type":"SO","city":"Atlanta"}]""";
         var arrayElement = JsonDocument.Parse(json).RootElement;
 
         _jsonParserMock
-            .Setup(p => p.GetValueAtPathAsync(sourceData, "tags"))
+            .Setup(p => p.GetValueAtPathAsync(sourceData, "stops"))
             .ReturnsAsync(arrayElement);
 
         var result = await _sut.ApplyAsync(new TransformationContext { SourceData = sourceData, Mapping = mapping });
@@ -77,7 +79,7 @@ public class ArrayMapTransformationStrategyTests
     public async Task ApplyAsync_ReturnsNull_WhenSourcePathHasNoWildcard()
     {
         var sourceData = new Dictionary<string, object>();
-        var mapping = new FieldMapping { SourcePath = "movements.movement_id", TargetPath = "ids" };
+        var mapping = new FieldMapping { SourcePath = "movement.movement_id", TargetPath = "movementNumbers" };
 
         var result = await _sut.ApplyAsync(new TransformationContext { SourceData = sourceData, Mapping = mapping });
 
@@ -88,10 +90,10 @@ public class ArrayMapTransformationStrategyTests
     public async Task ApplyAsync_ReturnsNull_WhenArrayIsEmpty()
     {
         var sourceData = new Dictionary<string, object>();
-        var mapping = new FieldMapping { SourcePath = "items[*].id", TargetPath = "ids" };
+        var mapping = new FieldMapping { SourcePath = "movement[*].movement_id", TargetPath = "movementNumbers" };
 
         _jsonParserMock
-            .Setup(p => p.GetValueAtPathAsync(sourceData, "items"))
+            .Setup(p => p.GetValueAtPathAsync(sourceData, "movement"))
             .ReturnsAsync(JsonDocument.Parse("[]").RootElement);
 
         var result = await _sut.ApplyAsync(new TransformationContext { SourceData = sourceData, Mapping = mapping });
@@ -103,10 +105,10 @@ public class ArrayMapTransformationStrategyTests
     public async Task ApplyAsync_ReturnsNull_WhenArrayValueIsNull()
     {
         var sourceData = new Dictionary<string, object>();
-        var mapping = new FieldMapping { SourcePath = "items[*].id", TargetPath = "ids" };
+        var mapping = new FieldMapping { SourcePath = "movement[*].movement_id", TargetPath = "movementNumbers" };
 
         _jsonParserMock
-            .Setup(p => p.GetValueAtPathAsync(sourceData, "items"))
+            .Setup(p => p.GetValueAtPathAsync(sourceData, "movement"))
             .ReturnsAsync((object?)null);
 
         var result = await _sut.ApplyAsync(new TransformationContext { SourceData = sourceData, Mapping = mapping });
@@ -117,21 +119,22 @@ public class ArrayMapTransformationStrategyTests
     [Fact]
     public async Task ApplyAsync_SkipsNullItems_InArray()
     {
+        // stops[*].company_name extracts names, skipping null stop entries
         var sourceData = new Dictionary<string, object>();
-        var mapping = new FieldMapping { SourcePath = "items[*].id", TargetPath = "ids" };
+        var mapping = new FieldMapping { SourcePath = "stops[*].company_name", TargetPath = "locationNames" };
 
-        var json = """[{"id":"A"},null,{"id":"C"}]""";
+        var json = """[{"company_name":"Origin Warehouse"},null,{"company_name":"Destination DC"}]""";
         var arrayElement = JsonDocument.Parse(json).RootElement;
 
         _jsonParserMock
-            .Setup(p => p.GetValueAtPathAsync(sourceData, "items"))
+            .Setup(p => p.GetValueAtPathAsync(sourceData, "stops"))
             .ReturnsAsync(arrayElement);
 
         var result = await _sut.ApplyAsync(new TransformationContext { SourceData = sourceData, Mapping = mapping });
 
         var list = Assert.IsType<List<object>>(result);
         Assert.Equal(2, list.Count);
-        Assert.Equal("A", list[0]);
-        Assert.Equal("C", list[1]);
+        Assert.Equal("Origin Warehouse", list[0]);
+        Assert.Equal("Destination DC", list[1]);
     }
 }

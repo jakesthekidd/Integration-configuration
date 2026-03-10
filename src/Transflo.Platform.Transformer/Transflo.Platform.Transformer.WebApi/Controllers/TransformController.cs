@@ -40,9 +40,7 @@ public class TransformController : ControllerBase
     public async Task<IActionResult> Batch([FromBody] BatchTransformRequest request)
     {
         if (request.Records == null || request.Records.Count == 0)
-        {
             return BadRequest(ApiResponse<object>.ErrorResponse("'records' must be a non-empty array."));
-        }
 
         var result = await _coordinator.TransformBatchAsync(
             request.TemplateId,
