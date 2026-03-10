@@ -1,6 +1,6 @@
 namespace Transflo.Platform.Transformer.Core.DTOs;
 
-public class ApiResponse<T>
+public sealed record ApiResponse<T>
 {
     public bool Success { get; set; }
     public T? Data { get; set; }

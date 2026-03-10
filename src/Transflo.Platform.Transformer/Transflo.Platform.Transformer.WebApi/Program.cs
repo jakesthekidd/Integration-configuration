@@ -3,7 +3,9 @@ using Transflo.Platform.Transformer.Core.Data;
 using Transflo.Platform.Transformer.Core.Repositories;
 using Transflo.Platform.Transformer.Core.Services;
 using Transflo.Platform.Transformer.Core.Services.Interfaces;
-using Transflo.Platform.Transformer.Core.Services.TransformationStrategies;
+using Transflo.Platform.Transformer.TransformationService.Services;
+using Transflo.Platform.Transformer.TransformationService.Services.Interfaces;
+using Transflo.Platform.Transformer.TransformationService.Services.Strategies;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -43,6 +45,7 @@ builder.Services.AddScoped<ITransformationLogRepository, TransformationLogReposi
 
 // Register services
 builder.Services.AddScoped<IJsonParserService, JsonParserService>();
+builder.Services.AddScoped<ILookupDataProvider, LookupDataProvider>();
 
 // Register transformation strategies (Strategy Pattern)
 builder.Services.AddScoped<ITransformationStrategy, DirectTransformationStrategy>();
@@ -55,6 +58,7 @@ builder.Services.AddScoped<ITransformationStrategy, ArrayFlattenTransformationSt
 builder.Services.AddScoped<ITransformationStrategyFactory, TransformationStrategyFactory>();
 
 builder.Services.AddScoped<ITransformationService, TransformationService>();
+builder.Services.AddScoped<ITransformationCoordinator, TransformationCoordinator>();
 
 var app = builder.Build();
 
