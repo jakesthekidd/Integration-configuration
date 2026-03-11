@@ -2,8 +2,8 @@ namespace Transflo.Platform.Transformer.Core.DTOs;
 
 public sealed record FieldMappingResponse
 {
-    public string Id { get; set; } = string.Empty;
-    public string TemplateId { get; set; } = string.Empty;
+    public Guid Id { get; set; }
+    public Guid TemplateId { get; set; }
     public string SourcePath { get; set; } = string.Empty;
     public string TargetPath { get; set; } = string.Empty;
     public string TransformationType { get; set; } = string.Empty;

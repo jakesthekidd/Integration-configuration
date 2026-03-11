@@ -2,11 +2,11 @@ namespace Transflo.Platform.Transformer.Core.DTOs;
 
 public sealed record TemplateResponse
 {
-    public string TemplateId { get; set; } = string.Empty;
+    public Guid TemplateId { get; set; }
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
-    public string TmsSystemId { get; set; } = string.Empty;
-    public string? CustomerId { get; set; }
+    public Guid TmsSystemId { get; set; }
+    public Guid? CustomerId { get; set; }
     public int Version { get; set; }
     public string Status { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }

@@ -4,13 +4,8 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace Transflo.Platform.Transformer.Core.Models;
 
 [Table("customers")]
-public class Customer
+public class Customer : BaseEntity
 {
-    [Key]
-    [Column("id")]
-    [MaxLength(100)]
-    public string Id { get; set; } = Guid.NewGuid().ToString();
-
     [Column("name")]
     [Required]
     [MaxLength(200)]
@@ -34,16 +29,8 @@ public class Customer
     [Column("notes")]
     public string? Notes { get; set; }
 
-    [Column("created_at")]
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-
-    [Column("updated_at")]
-    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
-
-    [Column("created_by")]
-    [MaxLength(100)]
-    public string? CreatedBy { get; set; }
+    // Navigation property – templates that belong to this customer
 
     // Navigation property – templates that belong to this customer
-    public virtual ICollection<FieldMappingTemplate> Templates { get; set; } = new List<FieldMappingTemplate>();
+    public virtual ICollection<FieldMappingTemplate> FieldMappingTemplates { get; set; } = new List<FieldMappingTemplate>();
 }

@@ -3,33 +3,20 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Transflo.Platform.Transformer.Core.Models;
 
-public enum TemplateStatus
-{
-    Draft,
-    Published,
-    Archived
-}
 
 [Table("field_mapping_templates")]
-public class FieldMappingTemplate
+public class FieldMappingTemplate : BaseEntity
 {
-    [Key]
-    [Column("id")]
-    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-    public int Id { get; set; }
-
     [Column("template_id")]
     [Required]
-    [MaxLength(100)]
-    public string TemplateId { get; set; } = Guid.NewGuid().ToString();
+    public Guid TemplateId { get; set; } = Guid.NewGuid();
 
     [Column("version")]
     public int Version { get; set; } = 1;
 
     [Column("tms_system_id")]
     [Required]
-    [MaxLength(100)]
-    public string TmsSystemId { get; set; } = string.Empty;
+    public Guid TmsSystemId { get; set; } = Guid.Empty;
 
     [Column("name")]
     [Required]
@@ -48,16 +35,6 @@ public class FieldMappingTemplate
     [Column("target_schema", TypeName = "jsonb")]
     public string? TargetSchema { get; set; }
 
-    [Column("created_by")]
-    [MaxLength(100)]
-    public string? CreatedBy { get; set; }
-
-    [Column("created_at")]
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-
-    [Column("updated_at")]
-    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
-
     [Column("published_at")]
     public DateTime? PublishedAt { get; set; }
 
@@ -72,8 +49,7 @@ public class FieldMappingTemplate
     public string? Metadata { get; set; }
 
     [Column("customer_id")]
-    [MaxLength(100)]
-    public string? CustomerId { get; set; }
+    public Guid? CustomerId { get; set; }
 
     // Foreign keys / navigation
     [ForeignKey(nameof(TmsSystemId))]

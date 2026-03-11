@@ -5,16 +5,11 @@ using ServiceModels = Transflo.Platform.Transformer.TransformationService.Models
 namespace Transflo.Platform.Transformer.Core.Models;
 
 [Table("field_mappings")]
-public class FieldMapping
+public class FieldMapping : BaseEntity
 {
-    [Key]
-    [Column("id")]
-    public string Id { get; set; } = Guid.NewGuid().ToString();
-
-    [Column("template_id")]
+    [Column("template_version_id")]
     [Required]
-    [MaxLength(100)]
-    public string TemplateId { get; set; } = string.Empty;
+    public Guid TemplateVersionId { get; set; }
 
     [Column("source_path")]
     [Required]
@@ -45,12 +40,7 @@ public class FieldMapping
     [Column("validation_rules", TypeName = "jsonb")]
     public string? ValidationRules { get; set; }
 
-    [Column("created_at")]
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-
-    [Column("updated_at")]
-    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
-
-    [NotMapped]
-    public virtual FieldMappingTemplate? Template { get; set; }
+    // Navigation properties
+    [ForeignKey(nameof(TemplateVersionId))]
+    public virtual TemplateVersion? TemplateVersion { get; set; }
 }

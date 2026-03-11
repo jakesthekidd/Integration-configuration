@@ -4,12 +4,8 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace Transflo.Platform.Transformer.Core.Models;
 
 [Table("tms_systems")]
-public class TmsSystem
+public class TmsSystem : BaseEntity
 {
-    [Key]
-    [Column("id")]
-    public string Id { get; set; } = Guid.NewGuid().ToString();
-
     [Column("name")]
     [Required]
     [MaxLength(100)]
@@ -35,20 +31,10 @@ public class TmsSystem
     [Column("connection_config", TypeName = "jsonb")]
     public string? ConnectionConfig { get; set; }
 
-    [Column("created_at")]
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-
-    [Column("updated_at")]
-    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
-
-    [Column("created_by")]
-    [MaxLength(100)]
-    public string? CreatedBy { get; set; }
-
     [Column("metadata", TypeName = "jsonb")]
     public string? Metadata { get; set; }
 
     // Navigation properties
-    public virtual ICollection<FieldMappingTemplate> Templates { get; set; } = new List<FieldMappingTemplate>();
+    public virtual ICollection<FieldMappingTemplate> FieldMappingTemplates { get; set; } = new List<FieldMappingTemplate>();
     public virtual ICollection<LookupTable> LookupTables { get; set; } = new List<LookupTable>();
 }

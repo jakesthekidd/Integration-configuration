@@ -19,11 +19,11 @@ public class TemplatesController : ControllerBase
 
     [HttpGet]
     [ProducesResponseType(typeof(ApiResponse<TemplateListResponse>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetAll([FromQuery] string? tmsSystemId = null)
+    public async Task<IActionResult> GetAll([FromQuery] Guid? tmsSystemId = null)
     {
-        var templates = string.IsNullOrEmpty(tmsSystemId)
+        var templates = !tmsSystemId.HasValue
             ? await _repo.GetAllAsync()
-            : await _repo.GetByTmsSystemIdAsync(tmsSystemId);
+            : await _repo.GetByTmsSystemIdAsync(tmsSystemId.Value);
 
         var response = new TemplateListResponse
         {
@@ -51,7 +51,7 @@ public class TemplatesController : ControllerBase
     [HttpGet("{templateId}")]
     [ProducesResponseType(typeof(ApiResponse<TemplateResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<TemplateResponse>), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetById(string templateId, [FromQuery] int? version = null)
+    public async Task<IActionResult> GetById(Guid templateId, [FromQuery] int? version = null)
     {
         var template = await _repo.GetByIdAsync(templateId, version);
         if (template == null)
@@ -84,7 +84,7 @@ public class TemplatesController : ControllerBase
     {
         var template = new FieldMappingTemplate
         {
-            TemplateId = Guid.NewGuid().ToString(),
+            TemplateId = Guid.NewGuid(),
             Name = request.Name,
             Description = request.Description,
             TmsSystemId = request.TmsSystemId,
@@ -120,7 +120,7 @@ public class TemplatesController : ControllerBase
     [HttpPut("{templateId}")]
     [ProducesResponseType(typeof(ApiResponse<TemplateResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<TemplateResponse>), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Update(string templateId, [FromBody] UpdateTemplateRequest request)
+    public async Task<IActionResult> Update(Guid templateId, [FromBody] UpdateTemplateRequest request)
     {
         var existing = await _repo.GetLatestVersionAsync(templateId);
         if (existing == null)
@@ -166,7 +166,7 @@ public class TemplatesController : ControllerBase
     [HttpDelete("{templateId}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Delete(string templateId, [FromQuery] int? version = null)
+    public async Task<IActionResult> Delete(Guid templateId, [FromQuery] int? version = null)
     {
         var existing = version.HasValue
             ? await _repo.GetByIdAsync(templateId, version)
@@ -184,7 +184,7 @@ public class TemplatesController : ControllerBase
     [HttpPost("{templateId}/duplicate")]
     [ProducesResponseType(typeof(ApiResponse<TemplateResponse>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ApiResponse<TemplateResponse>), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Duplicate(string templateId, [FromServices] IFieldMappingRepository mappingRepo)
+    public async Task<IActionResult> Duplicate(Guid templateId, [FromServices] IFieldMappingRepository mappingRepo)
     {
         var source = await _repo.GetLatestVersionAsync(templateId);
         if (source == null)
@@ -195,7 +195,7 @@ public class TemplatesController : ControllerBase
         // Create the duplicate template with a new identity
         var copy = new FieldMappingTemplate
         {
-            TemplateId = Guid.NewGuid().ToString(),
+            TemplateId = Guid.NewGuid(),
             Name = $"{source.Name} - Copy",
             Description = source.Description,
             TmsSystemId = source.TmsSystemId,
@@ -209,13 +209,13 @@ public class TemplatesController : ControllerBase
         var createdTemplate = await _repo.CreateAsync(copy);
 
         // Copy all field mappings from the source template
-        var sourceMappings = await mappingRepo.GetByTemplateIdOrderedAsync(templateId);
+        var sourceMappings = await mappingRepo.GetByTemplateVersionIdOrderedAsync(source.Id);
         if (sourceMappings.Count > 0)
         {
             var copiedMappings = sourceMappings.Select(m => new FieldMapping
             {
-                Id = Guid.NewGuid().ToString(),
-                TemplateId = createdTemplate.TemplateId,
+                Id = Guid.NewGuid(),
+                TemplateVersionId = createdTemplate.Id,
                 SourcePath = m.SourcePath,
                 TargetPath = m.TargetPath,
                 TransformationType = m.TransformationType,

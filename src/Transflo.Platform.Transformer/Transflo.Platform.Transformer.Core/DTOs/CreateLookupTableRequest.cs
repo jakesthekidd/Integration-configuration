@@ -2,7 +2,7 @@ namespace Transflo.Platform.Transformer.Core.DTOs;
 
 public sealed record CreateLookupTableRequest
 {
-    public string TmsSystemId { get; set; } = string.Empty;
+    public Guid TmsSystemId { get; set; }
     public string FieldName { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }

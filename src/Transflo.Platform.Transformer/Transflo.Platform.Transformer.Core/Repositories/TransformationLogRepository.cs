@@ -1,14 +1,17 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using System.Text.Json;
 using Transflo.Platform.Transformer.Core.Data;
 using Transflo.Platform.Transformer.Core.Models;
+using Transflo.Platform.Transformer.Core.DTOs;
 
 namespace Transflo.Platform.Transformer.Core.Repositories;
 
 public interface ITransformationLogRepository
 {
     Task<TransformationLog> CreateAsync(TransformationLog log);
-    Task<TransformationLog?> GetByIdAsync(string id);
-    Task<List<TransformationLog>> GetByTemplateIdAsync(string templateId, int limit = 50);
+    Task<TransformationLog?> GetByIdAsync(Guid id);
+    Task<List<TransformationLog>> GetByTemplateIdAsync(Guid templateId, int limit = 50);
     Task<List<TransformationLog>> GetAllAsync(int limit = 100);
 }
 
@@ -23,7 +26,7 @@ public class TransformationLogRepository : ITransformationLogRepository
         _logger = logger;
     }
 
-    public async Task<TransformationLog?> GetByIdAsync(string id)
+    public async Task<TransformationLog?> GetByIdAsync(Guid id)
     {
         return await _context.TransformationLogs.FindAsync(id);
     }
@@ -36,7 +39,7 @@ public class TransformationLogRepository : ITransformationLogRepository
         return log;
     }
 
-    public async Task<List<TransformationLog>> GetByTemplateIdAsync(string templateId, int limit = 50)
+    public async Task<List<TransformationLog>> GetByTemplateIdAsync(Guid templateId, int limit = 50)
     {
         return await _context.TransformationLogs
             .Where(l => l.TemplateId == templateId)

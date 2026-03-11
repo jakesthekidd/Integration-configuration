@@ -33,7 +33,7 @@ public class TransformationCoordinator : ITransformationCoordinator
 
     public async Task<TransformationResult> TransformAsync(
         string sourceJson,
-        string templateId,
+        Guid templateId,
         int? version = null,
         TransformOptions? options = null)
     {
@@ -50,7 +50,7 @@ public class TransformationCoordinator : ITransformationCoordinator
 
     public async Task<TransformationResult> PreviewTransformationAsync(
         string sourceJson,
-        string templateId,
+        Guid templateId,
         int? version = null)
     {
         _logger.LogInformation("Previewing transformation with template: {TemplateId}", templateId);
@@ -65,7 +65,7 @@ public class TransformationCoordinator : ITransformationCoordinator
     }
 
     public async Task<BatchTransformResult> TransformBatchAsync(
-        string templateId,
+        Guid templateId,
         List<JsonElement> records,
         int? version = null,
         TransformOptions? options = null)
@@ -108,7 +108,7 @@ public class TransformationCoordinator : ITransformationCoordinator
     }
 
     private async Task<(ServiceModels.FieldMappingTemplate? template, List<ServiceModels.FieldMapping>? mappings, TransformationResult? earlyResult)> ResolveAsync(
-        string templateId,
+        Guid templateId,
         int? version)
     {
         var efTemplate = version.HasValue
@@ -126,7 +126,7 @@ public class TransformationCoordinator : ITransformationCoordinator
             return (null, null, error);
         }
 
-        var efMappings = await _mappingRepository.GetByTemplateIdOrderedAsync(templateId);
+        var efMappings = await _mappingRepository.GetByTemplateVersionIdOrderedAsync(efTemplate.Id);
         if (efMappings.Count == 0)
         {
             var error = new TransformationResult { Success = false };
@@ -157,7 +157,7 @@ public class TransformationCoordinator : ITransformationCoordinator
         new()
         {
             Id = ef.Id,
-            TemplateId = ef.TemplateId,
+            TemplateId = ef.TemplateVersionId,
             SourcePath = ef.SourcePath,
             TargetPath = ef.TargetPath,
             TransformationType = ef.TransformationType,
@@ -170,7 +170,7 @@ public class TransformationCoordinator : ITransformationCoordinator
 
     private async Task PersistLogAsync(
         string sourceJson,
-        string templateId,
+        Guid templateId,
         TransformationResult result,
         TransformOptions? options)
     {
@@ -180,7 +180,7 @@ public class TransformationCoordinator : ITransformationCoordinator
 
             var log = new TransformationLog
             {
-                Id = Guid.NewGuid().ToString(),
+                Id = Guid.NewGuid(),
                 TemplateId = templateId,
                 Timestamp = DateTime.UtcNow,
                 Status = status,

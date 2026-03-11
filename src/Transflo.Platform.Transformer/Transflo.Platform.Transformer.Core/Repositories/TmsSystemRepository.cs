@@ -6,13 +6,13 @@ namespace Transflo.Platform.Transformer.Core.Repositories;
 
 public interface ITmsSystemRepository
 {
-    Task<TmsSystem?> GetByIdAsync(string id);
+    Task<TmsSystem?> GetByIdAsync(Guid id);
     Task<TmsSystem?> GetByNameAsync(string name);
     Task<List<TmsSystem>> GetAllAsync();
     Task<List<TmsSystem>> GetActiveSystemsAsync();
     Task<TmsSystem> CreateAsync(TmsSystem tmsSystem);
     Task<TmsSystem> UpdateAsync(TmsSystem tmsSystem);
-    Task DeleteAsync(string id);
+    Task DeleteAsync(Guid id);
 }
 
 public class TmsSystemRepository : ITmsSystemRepository
@@ -26,7 +26,7 @@ public class TmsSystemRepository : ITmsSystemRepository
         _logger = logger;
     }
 
-    public async Task<TmsSystem?> GetByIdAsync(string id)
+    public async Task<TmsSystem?> GetByIdAsync(Guid id)
     {
         return await _context.TmsSystems.FindAsync(id);
     }
@@ -69,7 +69,7 @@ public class TmsSystemRepository : ITmsSystemRepository
         return tmsSystem;
     }
 
-    public async Task DeleteAsync(string id)
+    public async Task DeleteAsync(Guid id)
     {
         var tmsSystem = await GetByIdAsync(id);
         if (tmsSystem != null)

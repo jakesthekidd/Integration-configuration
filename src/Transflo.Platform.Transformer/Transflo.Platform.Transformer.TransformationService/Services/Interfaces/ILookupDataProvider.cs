@@ -4,5 +4,5 @@ namespace Transflo.Platform.Transformer.TransformationService.Services.Interface
 
 public interface ILookupDataProvider
 {
-    Task<LookupData?> GetAsync(string lookupTableId);
+    Task<LookupData?> GetAsync(Guid lookupTableId);
 }

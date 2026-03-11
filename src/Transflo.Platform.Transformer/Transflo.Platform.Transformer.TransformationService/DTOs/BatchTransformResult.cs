@@ -2,7 +2,7 @@ namespace Transflo.Platform.Transformer.TransformationService.DTOs;
 
 public sealed record BatchTransformResult
 {
-    public string TemplateId { get; set; } = string.Empty;
+    public Guid TemplateId { get; set; }
     public int TotalRecords { get; set; }
     public int SuccessCount { get; set; }
     public int WarningCount { get; set; }

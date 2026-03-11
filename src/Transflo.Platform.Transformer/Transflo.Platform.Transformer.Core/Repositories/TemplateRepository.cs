@@ -6,13 +6,13 @@ namespace Transflo.Platform.Transformer.Core.Repositories;
 
 public interface ITemplateRepository
 {
-    Task<FieldMappingTemplate?> GetByIdAsync(string templateId, int? version = null);
-    Task<FieldMappingTemplate?> GetLatestVersionAsync(string templateId);
-    Task<List<FieldMappingTemplate>> GetByTmsSystemIdAsync(string tmsSystemId);
+    Task<FieldMappingTemplate?> GetByIdAsync(Guid templateId, int? version = null);
+    Task<FieldMappingTemplate?> GetLatestVersionAsync(Guid templateId);
+    Task<List<FieldMappingTemplate>> GetByTmsSystemIdAsync(Guid tmsSystemId);
     Task<List<FieldMappingTemplate>> GetAllAsync();
     Task<FieldMappingTemplate> CreateAsync(FieldMappingTemplate template);
     Task<FieldMappingTemplate> UpdateAsync(FieldMappingTemplate template);
-    Task DeleteAsync(string templateId, int? version = null);
+    Task DeleteAsync(Guid templateId, int? version = null);
 }
 
 public class TemplateRepository : ITemplateRepository
@@ -26,7 +26,7 @@ public class TemplateRepository : ITemplateRepository
         _logger = logger;
     }
 
-    public async Task<FieldMappingTemplate?> GetByIdAsync(string templateId, int? version = null)
+    public async Task<FieldMappingTemplate?> GetByIdAsync(Guid templateId, int? version = null)
     {
         if (version.HasValue)
         {
@@ -37,7 +37,7 @@ public class TemplateRepository : ITemplateRepository
         return await GetLatestVersionAsync(templateId);
     }
 
-    public async Task<FieldMappingTemplate?> GetLatestVersionAsync(string templateId)
+    public async Task<FieldMappingTemplate?> GetLatestVersionAsync(Guid templateId)
     {
         return await _context.FieldMappingTemplates
             .Where(t => t.TemplateId == templateId)
@@ -45,7 +45,7 @@ public class TemplateRepository : ITemplateRepository
             .FirstOrDefaultAsync();
     }
 
-    public async Task<List<FieldMappingTemplate>> GetByTmsSystemIdAsync(string tmsSystemId)
+    public async Task<List<FieldMappingTemplate>> GetByTmsSystemIdAsync(Guid tmsSystemId)
     {
         return await _context.FieldMappingTemplates
             .Where(t => t.TmsSystemId == tmsSystemId)
@@ -83,16 +83,24 @@ public class TemplateRepository : ITemplateRepository
         return template;
     }
 
-    public async Task DeleteAsync(string templateId, int? version = null)
+    public async Task DeleteAsync(Guid templateId, int? version = null)
     {
-        if (version.HasValue)
+        var templatesToDelete = version.HasValue
+            ? await _context.FieldMappingTemplates.Where(t => t.TemplateId == templateId && t.Version == version.Value).ToListAsync()
+            : await _context.FieldMappingTemplates.Where(t => t.TemplateId == templateId).ToListAsync();
+
+        if (templatesToDelete.Any())
         {
-            var template = await GetByIdAsync(templateId, version);
-            if (template != null)
+            _context.FieldMappingTemplates.RemoveRange(templatesToDelete);
+            await _context.SaveChangesAsync();
+
+            if (version.HasValue)
             {
-                _context.FieldMappingTemplates.Remove(template);
-                await _context.SaveChangesAsync();
                 _logger.LogInformation($"Deleted template: {templateId} v{version}");
+            }
+            else
+            {
+                _logger.LogInformation($"Deleted all versions of template: {templateId}");
             }
         }
         else

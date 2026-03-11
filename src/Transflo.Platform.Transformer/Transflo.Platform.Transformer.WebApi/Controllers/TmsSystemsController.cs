@@ -51,7 +51,7 @@ public class TmsSystemsController : ControllerBase
     [HttpGet("{id}")]
     [ProducesResponseType(typeof(ApiResponse<TmsSystemResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<TmsSystemResponse>), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetById(string id)
+    public async Task<IActionResult> GetById(Guid id)
     {
         var system = await _repo.GetByIdAsync(id);
         if (system == null)
@@ -127,7 +127,7 @@ public class TmsSystemsController : ControllerBase
     [HttpPut("{id}")]
     [ProducesResponseType(typeof(ApiResponse<TmsSystemResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<TmsSystemResponse>), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Update(string id, [FromBody] UpdateTmsSystemRequest request)
+    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateTmsSystemRequest request)
     {
         var existing = await _repo.GetByIdAsync(id);
         if (existing == null)
@@ -167,7 +167,7 @@ public class TmsSystemsController : ControllerBase
     [HttpDelete("{id}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Delete(string id)
+    public async Task<IActionResult> Delete(Guid id)
     {
         var existing = await _repo.GetByIdAsync(id);
         if (existing == null)
