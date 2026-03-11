@@ -17,8 +17,8 @@ public class TransformationServiceTests
 
     private static readonly FieldMappingTemplate DefaultTemplate = new()
     {
-        TemplateId = "tmpl-mcleod-wfai-001",
-        TmsSystemId = "tms-mcleod-001",
+        TemplateId = new Guid("00000000-0000-0000-0000-000000000001"),
+        TmsSystemId = new Guid("00000000-0000-0000-0000-000000000002"),
         Name = "McLeod to WFAI Transformation",
         Version = 1
     };
