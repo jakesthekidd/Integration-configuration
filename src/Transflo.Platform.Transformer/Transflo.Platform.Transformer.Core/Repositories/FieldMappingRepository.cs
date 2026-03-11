@@ -7,13 +7,13 @@ namespace Transflo.Platform.Transformer.Core.Repositories;
 public interface IFieldMappingRepository
 {
     Task<FieldMapping?> GetByIdAsync(Guid id);
-    Task<List<FieldMapping>> GetByTemplateIdAsync(Guid templateId);
-    Task<List<FieldMapping>> GetByTemplateIdOrderedAsync(Guid templateId);
+    Task<List<FieldMapping>> GetByTemplateVersionIdAsync(Guid templateVersionId);
+    Task<List<FieldMapping>> GetByTemplateVersionIdOrderedAsync(Guid templateVersionId);
     Task<FieldMapping> CreateAsync(FieldMapping mapping);
     Task<List<FieldMapping>> CreateBulkAsync(List<FieldMapping> mappings);
     Task<FieldMapping> UpdateAsync(FieldMapping mapping);
     Task DeleteAsync(Guid id);
-    Task DeleteByTemplateIdAsync(Guid templateId);
+    Task DeleteByTemplateVersionIdAsync(Guid templateVersionId);
 }
 
 public class FieldMappingRepository : IFieldMappingRepository
@@ -32,17 +32,17 @@ public class FieldMappingRepository : IFieldMappingRepository
         return await _context.FieldMappings.FindAsync(id);
     }
 
-    public async Task<List<FieldMapping>> GetByTemplateIdAsync(Guid templateId)
+    public async Task<List<FieldMapping>> GetByTemplateVersionIdAsync(Guid templateVersionId)
     {
         return await _context.FieldMappings
-            .Where(m => m.TemplateId == templateId)
+            .Where(m => m.TemplateVersionId == templateVersionId)
             .ToListAsync();
     }
 
-    public async Task<List<FieldMapping>> GetByTemplateIdOrderedAsync(Guid templateId)
+    public async Task<List<FieldMapping>> GetByTemplateVersionIdOrderedAsync(Guid templateVersionId)
     {
         return await _context.FieldMappings
-            .Where(m => m.TemplateId == templateId)
+            .Where(m => m.TemplateVersionId == templateVersionId)
             .OrderBy(m => m.ExecutionOrder)
             .ToListAsync();
     }
@@ -97,11 +97,11 @@ public class FieldMappingRepository : IFieldMappingRepository
         }
     }
 
-    public async Task DeleteByTemplateIdAsync(Guid templateId)
+    public async Task DeleteByTemplateVersionIdAsync(Guid templateVersionId)
     {
-        var mappings = await GetByTemplateIdAsync(templateId);
+        var mappings = await GetByTemplateVersionIdAsync(templateVersionId);
         _context.FieldMappings.RemoveRange(mappings);
         await _context.SaveChangesAsync();
-        _logger.LogInformation($"Deleted {mappings.Count} field mappings for template: {templateId}");
+        _logger.LogInformation($"Deleted {mappings.Count} field mappings for template version: {templateVersionId}");
     }
 }

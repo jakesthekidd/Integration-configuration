@@ -209,13 +209,13 @@ public class TemplatesController : ControllerBase
         var createdTemplate = await _repo.CreateAsync(copy);
 
         // Copy all field mappings from the source template
-        var sourceMappings = await mappingRepo.GetByTemplateIdOrderedAsync(templateId);
+        var sourceMappings = await mappingRepo.GetByTemplateVersionIdOrderedAsync(source.Id);
         if (sourceMappings.Count > 0)
         {
             var copiedMappings = sourceMappings.Select(m => new FieldMapping
             {
                 Id = Guid.NewGuid(),
-                TemplateId = createdTemplate.TemplateId,
+                TemplateVersionId = createdTemplate.Id,
                 SourcePath = m.SourcePath,
                 TargetPath = m.TargetPath,
                 TransformationType = m.TransformationType,

@@ -126,7 +126,7 @@ public class TransformationCoordinator : ITransformationCoordinator
             return (null, null, error);
         }
 
-        var efMappings = await _mappingRepository.GetByTemplateIdOrderedAsync(templateId);
+        var efMappings = await _mappingRepository.GetByTemplateVersionIdOrderedAsync(efTemplate.Id);
         if (efMappings.Count == 0)
         {
             var error = new TransformationResult { Success = false };
@@ -157,7 +157,7 @@ public class TransformationCoordinator : ITransformationCoordinator
         new()
         {
             Id = ef.Id,
-            TemplateId = ef.TemplateId,
+            TemplateId = ef.TemplateVersionId,
             SourcePath = ef.SourcePath,
             TargetPath = ef.TargetPath,
             TransformationType = ef.TransformationType,

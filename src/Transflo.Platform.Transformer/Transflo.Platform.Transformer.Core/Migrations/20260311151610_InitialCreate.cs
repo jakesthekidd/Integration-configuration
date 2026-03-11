@@ -238,8 +238,7 @@ namespace Transflo.Platform.Transformer.Core.Migrations
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
-                    template_version_id = table.Column<Guid>(type: "uuid", nullable: true),
-                    template_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    template_version_id = table.Column<Guid>(type: "uuid", nullable: false),
                     source_path = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
                     target_path = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
                     transformation_type = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
@@ -313,8 +312,8 @@ namespace Transflo.Platform.Transformer.Core.Migrations
                 columns: new[] { "id", "connection_config", "created_at", "created_by", "deleted_at", "description", "display_name", "is_active", "metadata", "name", "revision", "sample_json_schema", "updated_at", "updated_by", "version" },
                 values: new object[,]
                 {
-                    { new Guid("00000000-0000-0000-0000-000000000001"), null, new DateTime(2026, 3, 10, 20, 42, 9, 286, DateTimeKind.Utc).AddTicks(1237), "System", null, "TruckMate Transportation Management System", "TruckMate TMS", true, null, "TruckMate", 1, null, new DateTime(2026, 3, 10, 20, 42, 9, 286, DateTimeKind.Utc).AddTicks(1237), null, "1.0" },
-                    { new Guid("00000000-0000-0000-0000-000000000002"), null, new DateTime(2026, 3, 10, 20, 42, 9, 286, DateTimeKind.Utc).AddTicks(1237), "System", null, "McLeod Transportation Management System", "McLeod Software", true, null, "McLeod", 1, null, new DateTime(2026, 3, 10, 20, 42, 9, 286, DateTimeKind.Utc).AddTicks(1237), null, "1.0" }
+                    { new Guid("00000000-0000-0000-0000-000000000001"), null, new DateTime(2026, 3, 11, 15, 16, 10, 223, DateTimeKind.Utc).AddTicks(3190), "System", null, "TruckMate Transportation Management System", "TruckMate TMS", true, null, "TruckMate", 1, null, new DateTime(2026, 3, 11, 15, 16, 10, 223, DateTimeKind.Utc).AddTicks(3190), null, "1.0" },
+                    { new Guid("00000000-0000-0000-0000-000000000002"), null, new DateTime(2026, 3, 11, 15, 16, 10, 223, DateTimeKind.Utc).AddTicks(3190), "System", null, "McLeod Transportation Management System", "McLeod Software", true, null, "McLeod", 1, null, new DateTime(2026, 3, 11, 15, 16, 10, 223, DateTimeKind.Utc).AddTicks(3190), null, "1.0" }
                 });
 
             migrationBuilder.CreateIndex(
@@ -361,19 +360,14 @@ namespace Transflo.Platform.Transformer.Core.Migrations
                 column: "tms_system_id");
 
             migrationBuilder.CreateIndex(
-                name: "IX_field_mappings_template_id",
-                table: "field_mappings",
-                column: "template_id");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_field_mappings_template_id_execution_order",
-                table: "field_mappings",
-                columns: new[] { "template_id", "execution_order" });
-
-            migrationBuilder.CreateIndex(
                 name: "IX_field_mappings_template_version_id",
                 table: "field_mappings",
                 column: "template_version_id");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_field_mappings_template_version_id_execution_order",
+                table: "field_mappings",
+                columns: new[] { "template_version_id", "execution_order" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_lookup_tables_partner_id",

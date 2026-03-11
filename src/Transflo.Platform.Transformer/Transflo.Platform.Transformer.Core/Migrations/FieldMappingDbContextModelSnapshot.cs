@@ -155,11 +155,7 @@ namespace Transflo.Platform.Transformer.Core.Migrations
                         .HasColumnType("character varying(500)")
                         .HasColumnName("target_path");
 
-                    b.Property<Guid>("TemplateId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("template_id");
-
-                    b.Property<Guid?>("TemplateVersionId")
+                    b.Property<Guid>("TemplateVersionId")
                         .HasColumnType("uuid")
                         .HasColumnName("template_version_id");
 
@@ -188,11 +184,9 @@ namespace Transflo.Platform.Transformer.Core.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("TemplateId");
-
                     b.HasIndex("TemplateVersionId");
 
-                    b.HasIndex("TemplateId", "ExecutionOrder");
+                    b.HasIndex("TemplateVersionId", "ExecutionOrder");
 
                     b.ToTable("field_mappings");
                 });
@@ -719,27 +713,27 @@ namespace Transflo.Platform.Transformer.Core.Migrations
                         new
                         {
                             Id = new Guid("00000000-0000-0000-0000-000000000001"),
-                            CreatedAt = new DateTime(2026, 3, 10, 20, 42, 9, 286, DateTimeKind.Utc).AddTicks(1237),
+                            CreatedAt = new DateTime(2026, 3, 11, 15, 16, 10, 223, DateTimeKind.Utc).AddTicks(3190),
                             CreatedBy = "System",
                             Description = "TruckMate Transportation Management System",
                             DisplayName = "TruckMate TMS",
                             IsActive = true,
                             Name = "TruckMate",
                             Revision = 1,
-                            UpdatedAt = new DateTime(2026, 3, 10, 20, 42, 9, 286, DateTimeKind.Utc).AddTicks(1237),
+                            UpdatedAt = new DateTime(2026, 3, 11, 15, 16, 10, 223, DateTimeKind.Utc).AddTicks(3190),
                             Version = "1.0"
                         },
                         new
                         {
                             Id = new Guid("00000000-0000-0000-0000-000000000002"),
-                            CreatedAt = new DateTime(2026, 3, 10, 20, 42, 9, 286, DateTimeKind.Utc).AddTicks(1237),
+                            CreatedAt = new DateTime(2026, 3, 11, 15, 16, 10, 223, DateTimeKind.Utc).AddTicks(3190),
                             CreatedBy = "System",
                             Description = "McLeod Transportation Management System",
                             DisplayName = "McLeod Software",
                             IsActive = true,
                             Name = "McLeod",
                             Revision = 1,
-                            UpdatedAt = new DateTime(2026, 3, 10, 20, 42, 9, 286, DateTimeKind.Utc).AddTicks(1237),
+                            UpdatedAt = new DateTime(2026, 3, 11, 15, 16, 10, 223, DateTimeKind.Utc).AddTicks(3190),
                             Version = "1.0"
                         });
                 });
@@ -812,21 +806,24 @@ namespace Transflo.Platform.Transformer.Core.Migrations
 
             modelBuilder.Entity("Transflo.Platform.Transformer.Core.Models.FieldMapping", b =>
                 {
-                    b.HasOne("Transflo.Platform.Transformer.Core.Models.TemplateVersion", null)
+                    b.HasOne("Transflo.Platform.Transformer.Core.Models.TemplateVersion", "TemplateVersion")
                         .WithMany("FieldMappings")
                         .HasForeignKey("TemplateVersionId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("TemplateVersion");
                 });
 
             modelBuilder.Entity("Transflo.Platform.Transformer.Core.Models.FieldMappingTemplate", b =>
                 {
                     b.HasOne("Transflo.Platform.Transformer.Core.Models.Customer", "Customer")
-                        .WithMany("Templates")
+                        .WithMany("FieldMappingTemplates")
                         .HasForeignKey("CustomerId")
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("Transflo.Platform.Transformer.Core.Models.TmsSystem", "TmsSystem")
-                        .WithMany("Templates")
+                        .WithMany("FieldMappingTemplates")
                         .HasForeignKey("TmsSystemId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -894,7 +891,7 @@ namespace Transflo.Platform.Transformer.Core.Migrations
 
             modelBuilder.Entity("Transflo.Platform.Transformer.Core.Models.Customer", b =>
                 {
-                    b.Navigation("Templates");
+                    b.Navigation("FieldMappingTemplates");
                 });
 
             modelBuilder.Entity("Transflo.Platform.Transformer.Core.Models.Partner", b =>
@@ -916,9 +913,9 @@ namespace Transflo.Platform.Transformer.Core.Migrations
 
             modelBuilder.Entity("Transflo.Platform.Transformer.Core.Models.TmsSystem", b =>
                 {
-                    b.Navigation("LookupTables");
+                    b.Navigation("FieldMappingTemplates");
 
-                    b.Navigation("Templates");
+                    b.Navigation("LookupTables");
                 });
 #pragma warning restore 612, 618
         }

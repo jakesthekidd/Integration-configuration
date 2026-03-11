@@ -115,18 +115,14 @@ public class FieldMappingDbContext : DbContext
         // FieldMapping configuration
         modelBuilder.Entity<FieldMapping>(entity =>
         {
-            entity.HasIndex(e => e.TemplateId);
             entity.HasIndex(e => e.TemplateVersionId);
-            entity.HasIndex(e => new { e.TemplateId, e.ExecutionOrder });
+            entity.HasIndex(e => new { e.TemplateVersionId, e.ExecutionOrder });
 
             // Configure enum to string conversion
             entity.Property(e => e.TransformationType)
                 .HasConversion<string>();
 
-            // Explicitly ignore the Template navigation property
-            entity.Ignore(e => e.Template);
-
-            entity.HasOne<TemplateVersion>()
+            entity.HasOne(e => e.TemplateVersion)
                 .WithMany(v => v.FieldMappings)
                 .HasForeignKey(e => e.TemplateVersionId)
                 .OnDelete(DeleteBehavior.Cascade);

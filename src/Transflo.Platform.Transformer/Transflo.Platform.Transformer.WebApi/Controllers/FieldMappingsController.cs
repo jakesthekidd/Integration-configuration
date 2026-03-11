@@ -23,14 +23,14 @@ public class FieldMappingsController : ControllerBase
     {
         var mappings = !templateId.HasValue
             ? new List<FieldMapping>() // Return empty if no template specified
-            : await _repo.GetByTemplateIdOrderedAsync(templateId.Value);
+            : await _repo.GetByTemplateVersionIdOrderedAsync(templateId.Value);
 
         var response = new FieldMappingListResponse
         {
             Mappings = mappings.Select(m => new FieldMappingResponse
             {
                 Id = m.Id,
-                TemplateId = m.TemplateId,
+                TemplateId = m.TemplateVersionId,
                 SourcePath = m.SourcePath,
                 TargetPath = m.TargetPath,
                 TransformationType = m.TransformationType.ToString(),
@@ -62,7 +62,7 @@ public class FieldMappingsController : ControllerBase
         var response = new FieldMappingResponse
         {
             Id = mapping.Id,
-            TemplateId = mapping.TemplateId,
+            TemplateId = mapping.TemplateVersionId,
             SourcePath = mapping.SourcePath,
             TargetPath = mapping.TargetPath,
             TransformationType = mapping.TransformationType.ToString(),
@@ -84,7 +84,7 @@ public class FieldMappingsController : ControllerBase
     {
         var mapping = new FieldMapping
         {
-            TemplateId = request.TemplateId,
+            TemplateVersionId = request.TemplateVersionId ?? request.TemplateId,
             SourcePath = request.SourcePath,
             TargetPath = request.TargetPath,
             TransformationType = request.TransformationType,
@@ -100,7 +100,7 @@ public class FieldMappingsController : ControllerBase
         var response = new FieldMappingResponse
         {
             Id = created.Id,
-            TemplateId = created.TemplateId,
+            TemplateId = created.TemplateVersionId,
             SourcePath = created.SourcePath,
             TargetPath = created.TargetPath,
             TransformationType = created.TransformationType.ToString(),
@@ -141,7 +141,7 @@ public class FieldMappingsController : ControllerBase
         var response = new FieldMappingResponse
         {
             Id = updated.Id,
-            TemplateId = updated.TemplateId,
+            TemplateId = updated.TemplateVersionId,
             SourcePath = updated.SourcePath,
             TargetPath = updated.TargetPath,
             TransformationType = updated.TransformationType.ToString(),

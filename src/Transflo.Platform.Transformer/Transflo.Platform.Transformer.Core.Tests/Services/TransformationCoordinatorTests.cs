@@ -85,7 +85,7 @@ public class TransformationCoordinatorTests
             .Setup(r => r.GetLatestVersionAsync(templateId))
             .ReturnsAsync(DefaultEfTemplate);
         _mappingRepoMock
-            .Setup(r => r.GetByTemplateIdOrderedAsync(templateId))
+            .Setup(r => r.GetByTemplateVersionIdOrderedAsync(DefaultEfTemplate.Id))
             .ReturnsAsync(new List<FieldMapping>());
 
         var result = await _sut.TransformAsync("{}", templateId);
@@ -208,7 +208,7 @@ public class TransformationCoordinatorTests
             .Setup(r => r.GetLatestVersionAsync(templateId))
             .ReturnsAsync(DefaultEfTemplate);
         _mappingRepoMock
-            .Setup(r => r.GetByTemplateIdOrderedAsync(templateId))
+            .Setup(r => r.GetByTemplateVersionIdOrderedAsync(DefaultEfTemplate.Id))
             .ReturnsAsync(DefaultEfMappings);
     }
 }

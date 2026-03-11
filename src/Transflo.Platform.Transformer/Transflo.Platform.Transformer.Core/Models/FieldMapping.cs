@@ -8,11 +8,8 @@ namespace Transflo.Platform.Transformer.Core.Models;
 public class FieldMapping : BaseEntity
 {
     [Column("template_version_id")]
-    public Guid? TemplateVersionId { get; set; }
-
-    [Column("template_id")]
     [Required]
-    public Guid TemplateId { get; set; } = Guid.Empty;
+    public Guid TemplateVersionId { get; set; }
 
     [Column("source_path")]
     [Required]
@@ -43,7 +40,7 @@ public class FieldMapping : BaseEntity
     [Column("validation_rules", TypeName = "jsonb")]
     public string? ValidationRules { get; set; }
 
-    // Foreign key (Note: using string reference to TemplateId, not int Id)
-    [NotMapped]
-    public virtual FieldMappingTemplate? Template { get; set; }
+    // Navigation properties
+    [ForeignKey(nameof(TemplateVersionId))]
+    public virtual TemplateVersion? TemplateVersion { get; set; }
 }
