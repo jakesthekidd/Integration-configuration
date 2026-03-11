@@ -30,81 +30,84 @@ public class LookupTransformationStrategyTests
     [Fact]
     public async Task ApplyAsync_ReturnsMappedValue_WhenKeyFound()
     {
+        // fm-mcleod-002: status "D" → "Delivered" via lut-mcleod-order-status
         var sourceData = new Dictionary<string, object>();
         var mapping = new FieldMapping
         {
             SourcePath = "status",
-            TargetPath = "statusCode",
-            TransformationConfig = """{"LookupTableId":"00000000-0000-0000-0000-000000000001"}"""
+            TargetPath = "status",
+            TransformationConfig = """{"LookupTableId":"lut-mcleod-order-status"}"""
         };
         _jsonParserMock
             .Setup(p => p.GetValueAtPathAsync(sourceData, "status"))
-            .ReturnsAsync("ACTIVE");
+            .ReturnsAsync("D");
         _lookupProviderMock
-            .Setup(p => p.GetAsync(new Guid("00000000-0000-0000-0000-000000000001")))
+            .Setup(p => p.GetAsync("lut-mcleod-order-status"))
             .ReturnsAsync(new LookupData
             {
-                Mappings = """{"ACTIVE":"A","INACTIVE":"I"}""",
+                Mappings = """{"D":"Delivered","A":"Available","P":"In Progress","C":"Cancelled"}""",
                 IsCaseSensitive = false
             });
 
         var result = await _sut.ApplyAsync(new TransformationContext { SourceData = sourceData, Mapping = mapping });
 
-        Assert.Equal("A", result);
+        Assert.Equal("Delivered", result);
     }
 
     [Fact]
     public async Task ApplyAsync_ReturnsLookupDefault_WhenKeyNotFound()
     {
+        // fm-mcleod-002: unknown status code falls back to lookup default value
         var sourceData = new Dictionary<string, object>();
         var mapping = new FieldMapping
         {
             SourcePath = "status",
-            TargetPath = "statusCode",
-            TransformationConfig = """{"LookupTableId":"00000000-0000-0000-0000-000000000001"}"""
+            TargetPath = "status",
+            TransformationConfig = """{"LookupTableId":"lut-mcleod-order-status"}"""
         };
         _jsonParserMock
             .Setup(p => p.GetValueAtPathAsync(sourceData, "status"))
-            .ReturnsAsync("UNKNOWN");
+            .ReturnsAsync("Z");
         _lookupProviderMock
-            .Setup(p => p.GetAsync(new Guid("00000000-0000-0000-0000-000000000001")))
+            .Setup(p => p.GetAsync("lut-mcleod-order-status"))
             .ReturnsAsync(new LookupData
             {
-                Mappings = """{"ACTIVE":"A"}""",
-                DefaultValue = "X",
+                Mappings = """{"D":"Delivered","A":"Available"}""",
+                DefaultValue = "Unknown",
                 IsCaseSensitive = false
             });
 
         var result = await _sut.ApplyAsync(new TransformationContext { SourceData = sourceData, Mapping = mapping });
 
-        Assert.Equal("X", result);
+        Assert.Equal("Unknown", result);
     }
 
     [Fact]
     public async Task ApplyAsync_ReturnsSourceValue_WhenKeyNotFoundAndNoDefault()
     {
+        // fm-mcleod-002: unknown status code returned as-is when no default is configured
         var sourceData = new Dictionary<string, object>();
         var mapping = new FieldMapping
         {
             SourcePath = "status",
-            TargetPath = "statusCode",
-            TransformationConfig = """{"LookupTableId":"00000000-0000-0000-0000-000000000001"}"""
+            TargetPath = "status",
+            TransformationConfig = """{"LookupTableId":"lut-mcleod-order-status"}"""
         };
         _jsonParserMock
             .Setup(p => p.GetValueAtPathAsync(sourceData, "status"))
-            .ReturnsAsync("UNKNOWN");
+            .ReturnsAsync("Z");
         _lookupProviderMock
-            .Setup(p => p.GetAsync(new Guid("00000000-0000-0000-0000-000000000001")))
+            .Setup(p => p.GetAsync("lut-mcleod-order-status"))
             .ReturnsAsync(new LookupData
             {
-                Mappings = """{"ACTIVE":"A"}""",
+                Mappings = """{"D":"Delivered","A":"Available"}""",
                 DefaultValue = null,
                 IsCaseSensitive = false
             });
 
         var result = await _sut.ApplyAsync(new TransformationContext { SourceData = sourceData, Mapping = mapping });
 
-        Assert.Equal("UNKNOWN", result);
+        Assert.Equal("Z", result);
     }
 
     [Fact]
@@ -114,8 +117,8 @@ public class LookupTransformationStrategyTests
         var mapping = new FieldMapping
         {
             SourcePath = "status",
-            TargetPath = "statusCode",
-            TransformationConfig = """{"LookupTableId":"00000000-0000-0000-0000-000000000001"}"""
+            TargetPath = "status",
+            TransformationConfig = """{"LookupTableId":"lut-mcleod-order-status"}"""
         };
         _jsonParserMock
             .Setup(p => p.GetValueAtPathAsync(sourceData, "status"))
@@ -124,7 +127,7 @@ public class LookupTransformationStrategyTests
         var result = await _sut.ApplyAsync(new TransformationContext { SourceData = sourceData, Mapping = mapping });
 
         Assert.Null(result);
-        _lookupProviderMock.Verify(p => p.GetAsync(It.IsAny<Guid>()), Times.Never);
+        _lookupProviderMock.Verify(p => p.GetAsync(It.IsAny<string>()), Times.Never);
     }
 
     [Fact]
@@ -134,16 +137,16 @@ public class LookupTransformationStrategyTests
         var mapping = new FieldMapping
         {
             SourcePath = "status",
-            TargetPath = "statusCode",
+            TargetPath = "status",
             TransformationConfig = """{"SomeOtherKey":"value"}"""
         };
         _jsonParserMock
             .Setup(p => p.GetValueAtPathAsync(sourceData, "status"))
-            .ReturnsAsync("ACTIVE");
+            .ReturnsAsync("D");
 
         var result = await _sut.ApplyAsync(new TransformationContext { SourceData = sourceData, Mapping = mapping });
 
-        Assert.Equal("ACTIVE", result);
+        Assert.Equal("D", result);
     }
 
     [Fact]
@@ -153,71 +156,73 @@ public class LookupTransformationStrategyTests
         var mapping = new FieldMapping
         {
             SourcePath = "status",
-            TargetPath = "statusCode",
-            TransformationConfig = """{"LookupTableId":"00000000-0000-0000-0000-000000000002"}"""
+            TargetPath = "status",
+            TransformationConfig = """{"LookupTableId":"missing-lut"}"""
         };
         _jsonParserMock
             .Setup(p => p.GetValueAtPathAsync(sourceData, "status"))
-            .ReturnsAsync("ACTIVE");
+            .ReturnsAsync("D");
         _lookupProviderMock
-            .Setup(p => p.GetAsync(new Guid("00000000-0000-0000-0000-000000000002")))
+            .Setup(p => p.GetAsync("missing-lut"))
             .ReturnsAsync((LookupData?)null);
 
         var result = await _sut.ApplyAsync(new TransformationContext { SourceData = sourceData, Mapping = mapping });
 
-        Assert.Equal("ACTIVE", result);
+        Assert.Equal("D", result);
     }
 
     [Fact]
     public async Task ApplyAsync_IsCaseSensitive_WhenConfiguredAsSuch()
     {
+        // fm-mcleod-002: lowercase "d" should NOT match "D" when case-sensitive
         var sourceData = new Dictionary<string, object>();
         var mapping = new FieldMapping
         {
             SourcePath = "status",
-            TargetPath = "statusCode",
-            TransformationConfig = """{"LookupTableId":"00000000-0000-0000-0000-000000000003"}"""
+            TargetPath = "status",
+            TransformationConfig = """{"LookupTableId":"lut-mcleod-order-status"}"""
         };
         _jsonParserMock
             .Setup(p => p.GetValueAtPathAsync(sourceData, "status"))
-            .ReturnsAsync("active");
+            .ReturnsAsync("d");
         _lookupProviderMock
-            .Setup(p => p.GetAsync(new Guid("00000000-0000-0000-0000-000000000003")))
+            .Setup(p => p.GetAsync("lut-mcleod-order-status"))
             .ReturnsAsync(new LookupData
             {
-                Mappings = """{"ACTIVE":"A"}""",
-                DefaultValue = "DEFAULT",
+                Mappings = """{"D":"Delivered","A":"Available"}""",
+                DefaultValue = "Unknown",
                 IsCaseSensitive = true
             });
 
         var result = await _sut.ApplyAsync(new TransformationContext { SourceData = sourceData, Mapping = mapping });
 
-        Assert.Equal("DEFAULT", result);
+        Assert.Equal("Unknown", result);
     }
 
     [Fact]
     public async Task ApplyAsync_IsCaseInsensitive_WhenConfiguredAsSuch()
     {
+        // fm-mcleod-002: lowercase "d" matches "D" when case-insensitive
         var sourceData = new Dictionary<string, object>();
         var mapping = new FieldMapping
         {
             SourcePath = "status",
-            TargetPath = "statusCode",
-            TransformationConfig = """{"LookupTableId":"00000000-0000-0000-0000-000000000004"}"""
+            TargetPath = "status",
+            TransformationConfig = """{"LookupTableId":"lut-mcleod-order-status"}"""
         };
         _jsonParserMock
             .Setup(p => p.GetValueAtPathAsync(sourceData, "status"))
-            .ReturnsAsync("active");
+            .ReturnsAsync("d");
         _lookupProviderMock
-            .Setup(p => p.GetAsync(new Guid("00000000-0000-0000-0000-000000000004")))
+            .Setup(p => p.GetAsync("lut-mcleod-order-status"))
             .ReturnsAsync(new LookupData
             {
-                Mappings = """{"ACTIVE":"A"}""",
+                Mappings = """{"D":"Delivered","A":"Available"}""",
                 IsCaseSensitive = false
             });
 
         var result = await _sut.ApplyAsync(new TransformationContext { SourceData = sourceData, Mapping = mapping });
 
-        Assert.Equal("A", result);
+        Assert.Equal("Delivered", result);
     }
 }
