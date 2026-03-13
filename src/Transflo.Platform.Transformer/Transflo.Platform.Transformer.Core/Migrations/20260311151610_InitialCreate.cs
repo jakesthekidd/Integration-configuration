@@ -214,7 +214,8 @@ namespace Transflo.Platform.Transformer.Core.Migrations
                     created_by = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
                     updated_by = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
                     metadata = table.Column<string>(type: "jsonb", nullable: true),
-                    revision = table.Column<int>(type: "integer", nullable: false)
+                    revision = table.Column<int>(type: "integer", nullable: false),
+                    isDeleted = table.Column<bool>(type: "boolean", nullable: false)
                 },
                 constraints: table =>
                 {

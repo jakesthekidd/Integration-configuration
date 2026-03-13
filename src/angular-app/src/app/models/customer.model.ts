@@ -1,34 +1,36 @@
 export interface Customer {
-  id: string;
-  name: string;
-  code?: string;
-  contactEmail?: string;
-  contactPhone?: string;
-  isActive: boolean;
-  notes?: string;
-  createdAt: Date;
-  updatedAt: Date;
-  createdBy?: string;
+  customerId: string;
+  tmsName: string;
+  lastSyncTime: string;
+  updateOrInsertStatuses?: string | null;
+  updateOnlyStatuses?: string | null;
+  customerName: string;
+  credentials: { [key: string]: string | null };
+  settings?: { [key: string]: string } | null;
+  syncFrequencyMinutes?: number | null;
+  orderRetentionDays?: number | null;
+  enabled: boolean;
+  tonuCode?: string | null;
+  outboundEnabled: boolean;
+  whiteListedOrders?: string | null;
+  syncBatchSize?: number | null;
+  updateOrInsertStatusesList?: string[];
+  updateOnlyStatusesList?: string[];
 }
 
-export interface CreateCustomerRequest {
-  name: string;
-  code?: string;
-  contactEmail?: string;
-  contactPhone?: string;
-  isActive: boolean;
-  notes?: string;
-  createdBy?: string;
+export interface Credential {
+  key: string;
+  value: string;
 }
 
-export interface UpdateCustomerRequest {
-  name?: string;
-  code?: string;
-  contactEmail?: string;
-  contactPhone?: string;
-  isActive?: boolean;
-  notes?: string;
+export interface CustomerRequest {
+  customerName: string;
+  tmsName: string;
+  lastSyncTime: string;
+  enabled: boolean;
+  outboundEnabled: boolean;
 }
+
 
 export interface CustomerListResponse {
   customers: Customer[];

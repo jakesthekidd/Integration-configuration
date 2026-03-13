@@ -25,14 +25,6 @@ public class FieldMappingDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        // Customer configuration
-        modelBuilder.Entity<Customer>(entity =>
-        {
-            entity.HasIndex(e => e.Name);
-            entity.HasIndex(e => e.Code).IsUnique().HasFilter("code IS NOT NULL");
-            entity.HasIndex(e => e.IsActive);
-        });
-
         // TmsSystem configuration
         modelBuilder.Entity<TmsSystem>(entity =>
         {
@@ -56,12 +48,6 @@ public class FieldMappingDbContext : DbContext
                 .WithMany(t => t.FieldMappingTemplates)
                 .HasForeignKey(e => e.TmsSystemId)
                 .OnDelete(DeleteBehavior.Cascade);
-
-            entity.HasOne(e => e.Customer)
-                .WithMany(c => c.FieldMappingTemplates)
-                .HasForeignKey(e => e.CustomerId)
-                .OnDelete(DeleteBehavior.SetNull)
-                .IsRequired(false);
 
             // Explicitly ignore the FieldMappings navigation property
             // (TemplateId is a business key, not the FK to Id primary key)

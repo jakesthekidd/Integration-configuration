@@ -1,36 +1,81 @@
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+using Amazon.DynamoDBv2.DataModel;
+using System.Text.Json.Serialization;
+using Transflo.Platform.Transformer.Core.Models;
 
-namespace Transflo.Platform.Transformer.Core.Models;
-
-[Table("customers")]
-public class Customer : BaseEntity
+[DynamoDBTable("Customers")]
+public class Customer
 {
-    [Column("name")]
-    [Required]
-    [MaxLength(200)]
-    public string Name { get; set; } = string.Empty;
+    [DynamoDBHashKey]
+    public string CustomerId { get; set; }
 
-    [Column("code")]
-    [MaxLength(50)]
-    public string? Code { get; set; }
+    [DynamoDBProperty]
+    public string TmsName { get; set; }
 
-    [Column("contact_email")]
-    [MaxLength(200)]
-    public string? ContactEmail { get; set; }
+    [DynamoDBProperty]
+    public string LastSyncTime { get; set; }
 
-    [Column("contact_phone")]
-    [MaxLength(50)]
-    public string? ContactPhone { get; set; }
+    [DynamoDBIgnore]
+    [JsonIgnore]
+    public string[] UpdateOrInsertStatusesList
+    {
+        get
+        {
+            return string.IsNullOrWhiteSpace(UpdateOrInsertStatuses) ? []
+            : UpdateOrInsertStatuses.Split(",");
+        }
+    }
 
-    [Column("is_active")]
-    public bool IsActive { get; set; } = true;
+    [DynamoDBProperty]
+    public string? UpdateOrInsertStatuses { get; set; }
 
-    [Column("notes")]
-    public string? Notes { get; set; }
+    [DynamoDBIgnore]
+    [JsonIgnore]
+    public string[] UpdateOnlyStatusesList
+    {
+        get
+        {
+            return string.IsNullOrWhiteSpace(UpdateOnlyStatuses) ? []
+            : UpdateOnlyStatuses.Split(",");
+        }
+    }
 
-    // Navigation property – templates that belong to this customer
+    [DynamoDBProperty]
+    public string? UpdateOnlyStatuses { get; set; }
 
-    // Navigation property – templates that belong to this customer
-    public virtual ICollection<FieldMappingTemplate> FieldMappingTemplates { get; set; } = new List<FieldMappingTemplate>();
+    [DynamoDBIgnore]
+    [JsonIgnore]
+    public SecretData SecretData { get; set; }
+
+    [DynamoDBProperty]
+    public string CustomerName { get; set; }
+
+    [DynamoDBIgnore]
+    public Dictionary<string, string> Credentials { get; set; }
+
+    [DynamoDBProperty]
+    public Dictionary<string, string>? Settings { get; set; }
+
+    [DynamoDBProperty]
+    public int? SyncFrequencyMinutes { get; set; }
+
+    [DynamoDBProperty]
+    public int? OrderRetentionDays { get; set; }
+
+    [DynamoDBProperty]
+    public bool Enabled { get; set; }
+
+    [DynamoDBProperty]
+    public bool IsDeleted { get; set; }
+
+    [DynamoDBProperty]
+    public string? TonuCode { get; set; }
+
+    [DynamoDBProperty]
+    public bool OutboundEnabled { get; set; }
+
+    [DynamoDBProperty]
+    public string? WhiteListedOrders { get; set; }
+
+    [DynamoDBProperty]
+    public int? SyncBatchSize { get; set; }
 }

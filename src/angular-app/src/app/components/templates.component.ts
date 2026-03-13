@@ -54,9 +54,9 @@ import { Customer } from '../models/customer.model';
               <label>Customer</label>
               <select [(ngModel)]="newTemplate.customerId" name="customerId">
                 <option value="">— Generic (no customer) —</option>
-                <option *ngFor="let c of customers" [value]="c.id">
+                <!-- <option *ngFor="let c of customers" [value]="c.id">
                   {{ c.name }}{{ c.code ? ' (' + c.code + ')' : '' }}
-                </option>
+                </option> -->
               </select>
               <small>Optionally scope this template to a specific customer.</small>
             </div>
@@ -104,9 +104,9 @@ import { Customer } from '../models/customer.model';
               <label>Customer</label>
               <select [(ngModel)]="editRequest.customerId" name="editCustomerId">
                 <option value="">— Generic (no customer) —</option>
-                <option *ngFor="let c of customers" [value]="c.id">
+                <!-- <option *ngFor="let c of customers" [value]="c.id">
                   {{ c.name }}{{ c.code ? ' (' + c.code + ')' : '' }}
-                </option>
+                </option> -->
               </select>
             </div>
             <div class="form-group">
@@ -158,7 +158,7 @@ import { Customer } from '../models/customer.model';
                 <br /><small class="muted">{{ template.templateId }}</small>
               </td>
               <td>{{ getTmsSystemName(template.tmsSystemId) }}</td>
-              <td>{{ getCustomerName(template.customerId) }}</td>
+              <!-- <td>{{ getCustomerName(template.customerId) }}</td> -->
               <td>
                 <span class="badge badge-version">v{{ template.version }}</span>
               </td>
@@ -719,11 +719,11 @@ export class TemplatesComponent implements OnInit {
     });
   }
 
-  getCustomerName(customerId?: string): string {
-    if (!customerId) return '—';
-    const c = this.customers.find(x => x.id === customerId);
-    return c ? c.name : customerId;
-  }
+  // getCustomerName(customerId?: string): string {
+  //   if (!customerId) return '—';
+  //   // const c = this.customers.find(x => x.id === customerId);
+  //   return c ? c.name : customerId;
+  // }
 
   getTmsSystemName(tmsSystemId: string): string {
     const tms = this.tmsSystems.find(t => t.id === tmsSystemId);

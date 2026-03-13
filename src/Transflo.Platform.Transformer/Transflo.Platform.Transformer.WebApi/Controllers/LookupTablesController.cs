@@ -160,7 +160,11 @@ public class LookupTablesController : ControllerBase
             return NotFound(ApiResponse<object>.ErrorResponse($"Lookup table not found: {id}"));
         }
 
-        await _repo.DeleteAsync(id);
+        existing.IsDeleted = true;
+        existing.DeletedAt = DateTime.UtcNow;
+
+        var updated = await _repo.UpdateAsync(existing);
         return NoContent();
     }
+
 }
