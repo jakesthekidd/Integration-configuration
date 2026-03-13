@@ -46,12 +46,7 @@ namespace Transflo.Platform.Transformer.Core.Migrations
                 nullable: false,
                 defaultValue: "");
 
-            migrationBuilder.AddColumn<bool>(
-                name: "isDeleted",
-                table: "lookup_tables",
-                type: "boolean",
-                nullable: false,
-                defaultValue: false);
+
 
             migrationBuilder.UpdateData(
                 table: "tms_systems",
@@ -102,9 +97,7 @@ namespace Transflo.Platform.Transformer.Core.Migrations
                 name: "status",
                 table: "template_versions");
 
-            migrationBuilder.DropColumn(
-                name: "isDeleted",
-                table: "lookup_tables");
+
 
             migrationBuilder.AddColumn<Guid>(
                 name: "customer_id",
