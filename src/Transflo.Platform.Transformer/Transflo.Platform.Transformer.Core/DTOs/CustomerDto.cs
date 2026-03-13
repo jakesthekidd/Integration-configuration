@@ -1,22 +1,20 @@
 namespace Transflo.Platform.Transformer.Core.DTOs;
 
-public sealed record CustomerResponse
+public sealed record CustomerRequest
 {
-
-    public string CustomerId { get; set; }
-    public string TmsName { get; set; }
-    public string LastSyncTime { get; set; }
+    public string CustomerId { get; set; } = string.Empty;
+    public string CustomerName { get; set; } = string.Empty;
+    public string TmsName { get; set; } = string.Empty;
+    public string LastSyncTime { get; set; } = string.Empty;
     public string? UpdateOrInsertStatuses { get; set; }
     public string? UpdateOnlyStatuses { get; set; }
-    public string CustomerName { get; set; }
-    public Dictionary<string, string> Credentials { get; set; }
+    public Dictionary<string, string> Credentials { get; set; } = new Dictionary<string, string>();
     public Dictionary<string, string>? Settings { get; set; }
     public int? SyncFrequencyMinutes { get; set; }
     public int? OrderRetentionDays { get; set; }
     public bool Enabled { get; set; }
-    public string? TonuCode { get; set; }
     public bool OutboundEnabled { get; set; }
-    public bool IsDeleted { get; set; }
+    public string? TonuCode { get; set; }
     public string? WhiteListedOrders { get; set; }
     public int? SyncBatchSize { get; set; }
 }

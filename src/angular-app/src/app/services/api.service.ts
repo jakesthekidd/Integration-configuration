@@ -5,7 +5,7 @@ import { TmsSystem, CreateTmsSystemRequest, ApiResponse, TmsSystemListResponse }
 import { FieldMappingTemplate, CreateTemplateRequest, UpdateTemplateRequest, TemplateListResponse } from '../models/template.model';
 import { FieldMapping, CreateFieldMappingRequest, UpdateFieldMappingRequest, FieldMappingListResponse } from '../models/field-mapping.model';
 import { LookupTable, CreateLookupTableRequest, UpdateLookupTableRequest, LookupTableListResponse } from '../models/lookup-table.model';
-import { Customer, CreateCustomerRequest, UpdateCustomerRequest, CustomerListResponse } from '../models/customer.model';
+import { Customer, CustomerRequest, CustomerListResponse } from '../models/customer.model';
 import { TransformationLogSummary, TransformationLogDetail, TransformationLogListResponse } from '../models/transformation-log.model';
 
 @Injectable({
@@ -28,18 +28,31 @@ export class ApiService {
     return this.http.get<ApiResponse<Customer>>(`${this.apiUrl}/customers/${id}`);
   }
 
-  createCustomer(request: CreateCustomerRequest): Observable<ApiResponse<Customer>> {
-    return this.http.post<ApiResponse<Customer>>(`${this.apiUrl}/customers`, request);
+  createCustomer(request: CustomerRequest): Observable<ApiResponse<Customer>> {
+    return this.http.post<ApiResponse<Customer>>(
+      `${this.apiUrl}/customers`,
+      request
+    );
   }
 
-  updateCustomer(id: string, request: UpdateCustomerRequest): Observable<ApiResponse<Customer>> {
-    return this.http.put<ApiResponse<Customer>>(`${this.apiUrl}/customers/${id}`, request);
+  updateCustomer(id: string, request: CustomerRequest): Observable<ApiResponse<Customer>> {
+    return this.http.put<ApiResponse<Customer>>(
+      `${this.apiUrl}/customers/${id}`,
+      request
+    );
   }
 
   deleteCustomer(id: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/customers/${id}`);
   }
 
+  setCustomerStatus(id: string, enabled: boolean): Observable<ApiResponse<Customer>> {
+    return this.http.patch<ApiResponse<Customer>>(
+      `${this.apiUrl}/customers/${id}/status?enabled=${enabled}`,
+      {}
+    );
+  }
+  
   // TMS Systems
   getTmsSystems(activeOnly: boolean = false): Observable<ApiResponse<TmsSystemListResponse>> {
     return this.http.get<ApiResponse<TmsSystemListResponse>>(`${this.apiUrl}/tms-systems?activeOnly=${activeOnly}`);

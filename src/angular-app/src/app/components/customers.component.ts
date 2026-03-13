@@ -2,7 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../services/api.service';
-import { Customer, CreateCustomerRequest } from '../models/customer.model';
+import { Customer, CustomerRequest } from '../models/customer.model';
+import { GeneralService } from '../services/general.service';
 
 @Component({
   selector: 'app-customers',
@@ -30,100 +31,166 @@ import { Customer, CreateCustomerRequest } from '../models/customer.model';
 
       <!-- Create / Edit form -->
       <div *ngIf="showCreateForm || editingCustomer" class="form-card">
-        <h3>{{ editingCustomer ? 'Edit Customer' : 'New Customer' }}</h3>
-        <form (ngSubmit)="editingCustomer ? updateCustomer() : createCustomer()" #customerForm="ngForm">
+    <h3>{{ editingCustomer ? 'Edit Customer' : 'New Customer' }}</h3>
 
-          <div class="form-row">
-            <div class="form-group">
-              <label>Name <span class="required">*</span></label>
-              <input type="text" [(ngModel)]="formData.name" name="name" required
-                     placeholder="e.g. Cheema Transport" />
-            </div>
-            <div class="form-group">
-              <label>Code</label>
-              <input type="text" [(ngModel)]="formData.code" name="code"
-                     placeholder="e.g. cheema (unique short ID)" />
-            </div>
-          </div>
+    <form (ngSubmit)="saveCustomer()" #customerForm="ngForm">
 
-          <div class="form-row">
-            <div class="form-group">
-              <label>Contact Email</label>
-              <input type="email" [(ngModel)]="formData.contactEmail" name="contactEmail"
-                     placeholder="contact@company.com" />
-            </div>
-            <div class="form-group">
-              <label>Contact Phone</label>
-              <input type="tel" [(ngModel)]="formData.contactPhone" name="contactPhone"
-                     placeholder="+1 555 000 0000" />
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label>Notes</label>
-            <textarea [(ngModel)]="formData.notes" name="notes" rows="2"
-                      placeholder="Any additional notes about this customer"></textarea>
-          </div>
-
-          <div class="form-group checkbox">
-            <label>
-              <input type="checkbox" [(ngModel)]="formData.isActive" name="isActive" />
-              Active
-            </label>
-          </div>
-
-          <div class="form-actions">
-            <button type="submit" class="btn-primary" [disabled]="!customerForm.form.valid">
-              {{ editingCustomer ? 'Save Changes' : 'Create Customer' }}
-            </button>
-            <button type="button" class="btn-secondary" (click)="cancelEdit()">Cancel</button>
-          </div>
-        </form>
+    <div class="form-row">
+    <div class="form-group">
+        <label>Customer ID <span class="required">*</span></label>
+        <input type="text" [(ngModel)]="formData.customerId" name="customerId" required />
       </div>
+      <div class="form-group">
+        <label>Customer Name <span class="required">*</span></label>
+        <input type="text" [(ngModel)]="formData.customerName" name="customerName" required />
+      </div>
+
+      <div class="form-group">
+      <label>TMS Name <span class="required">*</span></label>
+      <select [(ngModel)]="formData.tmsName" name="tmsName" required class="form-control">
+        <option value="" disabled>Select TMS</option>
+        <option *ngFor="let tms of tmsOptions" [value]="tms">{{ tms }}</option>
+      </select>
+    </div>
+    <div class="form-group">
+  <label>Sync Frequency Minutes <span class="required">*</span></label>
+  <input
+    type="number"
+    [(ngModel)]="formData.syncFrequencyMinutes"
+    name="syncFrequencyMinutes"
+    class="form-control"
+    required
+    min="0"
+    (keypress)="allowOnlyNumbers($event)"
+  />
+</div>
+
+<div class="form-group">
+  <label>Order Retention Days <span class="required">*</span></label>
+  <input
+    type="number"
+    [(ngModel)]="formData.orderRetentionDays"
+    name="orderRetentionDays"
+    class="form-control"
+    required
+    min="0"
+    (keypress)="allowOnlyNumbers($event)"
+  />
+</div>
+    </div>
+    
+    <div class="form-group checkbox">
+      <label>
+        <input type="checkbox" [(ngModel)]="formData.enabled" name="enabled" />
+        Enabled
+      </label>
+    </div>
+
+    <div class="form-group checkbox">
+      <label>
+        <input type="checkbox" [(ngModel)]="formData.outboundEnabled" name="outboundEnabled" />
+        Outbound Enabled
+      </label>
+    </div>
+    <label><b>Credential</b></label><br>
+    <div *ngIf="formData.tmsName && tmsCredentialKeys[formData.tmsName]?.length">
+  <div class="form-row">
+    <div class="col" *ngFor="let key of tmsCredentialKeys[formData.tmsName]; let i = index">
+      <div class="form-group">
+        <label>{{ key }}</label>
+        <input
+          type="text"
+          [(ngModel)]="formData.credentials[key]"
+          [name]="'credentials.' + key"
+          class="form-control"
+        />
+      </div>
+    </div>
+  </div>
+</div>
+
+    <div class="form-actions">
+    <button class="btn-primary" type="submit"
+        [disabled]="!customerForm.form.valid || creating || updating">
+      <span *ngIf="creating || updating" class="spinner"></span>
+      {{ creating ? 'Creating...' : updating ? 'Saving...' : (editingCustomer ? 'Save Changes' : 'Create Customer') }}
+    </button>
+
+      <button type="button" class="btn-secondary" (click)="cancelEdit()">Cancel</button>
+    </div>
+
+    </form>
+</div>
+
 
       <div *ngIf="error" class="alert alert-error">{{ error }}</div>
       <div *ngIf="success" class="alert alert-success">{{ success }}</div>
 
       <!-- Table -->
       <div class="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Code</th>
-              <th>Email</th>
-              <th>Phone</th>
-              <th>Status</th>
-              <th>Notes</th>
-              <th>Created</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let c of customers">
-              <td><strong>{{ c.name }}</strong></td>
-              <td><code *ngIf="c.code">{{ c.code }}</code><span *ngIf="!c.code" class="muted">—</span></td>
-              <td>{{ c.contactEmail || '—' }}</td>
-              <td>{{ c.contactPhone || '—' }}</td>
-              <td>
-                <span class="badge" [class.badge-active]="c.isActive" [class.badge-inactive]="!c.isActive">
-                  {{ c.isActive ? 'Active' : 'Inactive' }}
-                </span>
-              </td>
-              <td class="notes-cell">{{ c.notes || '—' }}</td>
-              <td>{{ c.createdAt | date:'mediumDate' }}</td>
-              <td class="actions">
-                <button class="btn-small btn-info" (click)="startEdit(c)">Edit</button>
-                <button class="btn-small btn-danger" (click)="deleteCustomer(c.id, c.name)">Delete</button>
-              </td>
-            </tr>
-            <tr *ngIf="customers.length === 0">
-              <td colspan="8" class="no-data">No customers found. Add one above.</td>
-            </tr>
-          </tbody>
-        </table>
+      <table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>TMS</th>
+      <th>Status</th>
+      <th>Sync (min)</th>
+      <th>Retention (days)</th>
+      <th>Last Sync</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    <tr *ngFor="let c of customers">
+      <td><strong>{{ c.customerName }}</strong></td>
+      <td>{{ c.tmsName }}</td>
+
+      <td>
+        <span class="badge" 
+              [class.badge-active]="c.enabled" 
+              [class.badge-inactive]="!c.enabled">
+          {{ c.enabled ? 'Active' : 'Inactive' }}
+        </span>
+      </td>
+
+      <td>{{ c.syncFrequencyMinutes || '—' }}</td>
+      <td>{{ c.orderRetentionDays || '—' }}</td>
+
+      <td>{{ c.lastSyncTime | date:'medium' }}</td>
+
+      <td class="actions">
+        <button class="btn-small btn-info" (click)="startEdit(c)">Edit</button>
+
+        <button class="btn-small btn-info" 
+                (click)="toggleStatus(c)" 
+                [disabled]="togglingStatus[c.customerId]">
+          <span *ngIf="togglingStatus[c.customerId]" class="spinner"></span>
+          <span *ngIf="!togglingStatus[c.customerId]">
+            {{ c.enabled ? 'Deactivate' : 'Activate' }}
+          </span>
+        </button>
+
+        <button class="btn-small btn-danger" 
+                (click)="deleteCustomer(c.customerId)" 
+                [disabled]="deleting[c.customerId]">
+          <span *ngIf="deleting[c.customerId]" class="spinner"></span>
+          <span *ngIf="!deleting[c.customerId]">Delete</span>
+        </button>
+      </td>
+    </tr>
+
+       <tr *ngIf="customers.length === 0">
+         <td colspan="7" class="no-data">No customers found.</td>
+       </tr>
+      </tbody>
+    </table>
+    <div *ngIf="isInitialLoading" class="fullscreen-loader">
+  <div class="loader-spinner"></div>
+</div>
       </div>
     </div>
+
   `,
   styles: [`
     .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
@@ -202,7 +269,21 @@ import { Customer, CreateCustomerRequest } from '../models/customer.model';
       border-radius: 4px;
       font-size: 14px;
     }
+    .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255,255,255,0.6);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      vertical-align: middle;
+      margin-right: 5px;
+    }
 
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
     .form-group.checkbox { flex-direction: row; align-items: center; }
     .form-group.checkbox label { display: flex; align-items: center; gap: 8px; font-weight: 400; }
 
@@ -287,35 +368,77 @@ import { Customer, CreateCustomerRequest } from '../models/customer.model';
     .btn-danger:hover { background: #c0392b; }
 
     .actions { display: flex; gap: 6px; }
+
+    /*body spinner */
+.fullscreen-loader {
+  position: fixed;     
+  top: 0;
+  left: 0;
+  width: 100vw;         
+  height: 100vh;       
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(4px);
+
+  z-index: 9999;   
+}
+
+.loader-spinner {
+  width: 70px;
+  height: 70px;
+  border: 7px solid #e0e0e0;
+  border-top: 7px solid #3498db;
+  border-radius: 50%;
+  animation: loaderSpin 0.8s linear infinite;
+}
+
+@keyframes loaderSpin {
+  to { transform: rotate(360deg); }
+}
   `]
 })
 export class CustomersComponent implements OnInit {
   customers: Customer[] = [];
   filterActive: boolean | null = null;
-
   showCreateForm = false;
   editingCustomer: Customer | null = null;
   error = '';
   success = '';
+  creating: boolean = false;
+  updating: boolean = false;
+  isInitialLoading: boolean = true;
+  isLoading: boolean = false;
+  deleting: { [id: string]: boolean } = {};
+  togglingStatus: { [id: string]: boolean } = {};
+  tmsOptions: string[] = ['Legacy McLeod', 'TruckMate', 'BrokerAI'];
 
-  formData: CreateCustomerRequest = this.emptyForm();
+  formData: Customer = this.emptyForm();
 
-  constructor(private apiService: ApiService) {}
+  constructor(private apiService: ApiService, private generalService: GeneralService) { }
 
   ngOnInit() {
     this.loadCustomers();
   }
 
   loadCustomers() {
+    this.isInitialLoading = true;
     this.apiService.getCustomers(this.filterActive ?? undefined).subscribe({
       next: (response) => {
         if (response.success && response.data) {
           this.customers = response.data.customers;
+        } else {
+          this.customers = [];
         }
+        this.isInitialLoading = false;
       },
       error: (err) => {
         this.error = 'Failed to load customers';
         console.error(err);
+        this.isInitialLoading = false;
       }
     });
   }
@@ -329,84 +452,185 @@ export class CustomersComponent implements OnInit {
 
   startEdit(customer: Customer) {
     this.editingCustomer = customer;
-    this.showCreateForm = false;
+    this.showCreateForm = true;
     this.clearMessages();
+
     this.formData = {
-      name: customer.name,
-      code: customer.code ?? '',
-      contactEmail: customer.contactEmail ?? '',
-      contactPhone: customer.contactPhone ?? '',
-      isActive: customer.isActive,
-      notes: customer.notes ?? ''
+      ...this.emptyForm(),
+      ...customer,
+      lastSyncTime: customer.lastSyncTime ?? new Date().toISOString(),
     };
+
     setTimeout(() => {
       document.querySelector('.form-card')?.scrollIntoView({ behavior: 'smooth' });
     }, 50);
   }
-
-  createCustomer() {
+  saveCustomer() {
     this.clearMessages();
-    this.apiService.createCustomer(this.formData).subscribe({
-      next: (response) => {
-        if (response.success) {
-          this.success = `Customer "${response.data?.name}" created successfully.`;
-          this.showCreateForm = false;
-          this.formData = this.emptyForm();
-          this.loadCustomers();
-        }
-      },
-      error: (err) => {
-        this.error = err.error?.message || 'Failed to create customer';
-        console.error(err);
-      }
-    });
+    const payload = this.CustomerPayload();
+    const isUpdate = !!this.editingCustomer;
+  
+    if (isUpdate) {
+      this.updating = true;
+  
+      this.apiService.updateCustomer(this.editingCustomer!.customerId, payload)
+        .subscribe({
+          next: async (response) => {
+            if (response.success) {
+              // Wait until the success Swal is closed
+              await this.generalService.success("Customer updated successfully");
+              this.cancelEditAndReload();
+            } else {
+              const msg = response.errors?.join(', ') || response.message || 'Failed to update customer';
+              this.generalService.error(msg);
+            }
+          },
+          error: (err) => {
+            const msg = err.error?.message || err.message || 'Network error while updating customer';
+            this.generalService.error(msg);
+            this.updating = false;
+          },
+          complete: () => { this.updating = false; }
+        });
+  
+    } else {
+      this.creating = true;
+  
+      this.apiService.createCustomer(payload)
+        .subscribe({
+          next: async (response) => {
+            if (response.success) {
+              await this.generalService.success("Customer created successfully");
+              this.cancelEditAndReload();
+            } else {
+              const msg = response.errors?.join(', ') || response.message || 'Failed to create customer';
+              this.generalService.error(msg);
+            }
+          },
+          error: (err) => {
+            const msg = err.error?.message || err.message || 'Network error while creating customer';
+            this.generalService.error(msg);
+            this.creating = false;
+          },
+          complete: () => { this.creating = false; }
+        });
+    }
   }
 
-  updateCustomer() {
-    if (!this.editingCustomer) return;
-    this.clearMessages();
 
-    const request = {
-      name: this.formData.name,
-      code: this.formData.code,
-      contactEmail: this.formData.contactEmail,
-      contactPhone: this.formData.contactPhone,
-      isActive: this.formData.isActive,
-      notes: this.formData.notes
+  private cancelEditAndReload() {
+    this.cancelEdit();
+    this.loadCustomers();
+  }
+
+  private getFormattedTime(date?: string): string {
+    const d = date ? new Date(date) : new Date();
+    const pad = (n: number) => n.toString().padStart(2, '0');
+
+    return (
+      d.getFullYear().toString() +
+      pad(d.getMonth() + 1) +
+      pad(d.getDate()) +
+      pad(d.getHours()) +
+      pad(d.getMinutes()) +
+      pad(d.getSeconds()) +
+      '-0000'
+    );
+  }
+  private CustomerPayload(): Customer {
+
+    const credentials = { ...this.formData.credentials };
+
+    const tmsName = this.tmsOptions.includes(this.formData.tmsName)
+      ? this.formData.tmsName
+      : '';
+
+    return {
+      customerId: (this.formData.customerId || '').substring(0, 50),
+      customerName: this.formData.customerName || '',
+      tmsName: tmsName,
+      lastSyncTime: this.formData.lastSyncTime || this.getFormattedTime(),
+      updateOrInsertStatuses: this.formData.updateOrInsertStatuses || '',
+      updateOnlyStatuses: this.formData.updateOnlyStatuses || null,
+      credentials: credentials,
+      settings: this.formData.settings || null,
+      syncFrequencyMinutes: this.formData.syncFrequencyMinutes,
+      orderRetentionDays: this.formData.orderRetentionDays,
+      enabled: this.formData.enabled ?? true,
+      outboundEnabled: this.formData.outboundEnabled ?? true,
+      tonuCode: this.formData.tonuCode || null,
+      whiteListedOrders: this.formData.whiteListedOrders || null,
+      syncBatchSize: this.formData.syncBatchSize ?? null
     };
-
-    this.apiService.updateCustomer(this.editingCustomer.id, request).subscribe({
-      next: (response) => {
-        if (response.success) {
-          this.success = `Customer "${response.data?.name}" updated successfully.`;
-          this.cancelEdit();
-          this.loadCustomers();
-        }
-      },
-      error: (err) => {
-        this.error = err.error?.message || 'Failed to update customer';
-        console.error(err);
-      }
-    });
   }
 
-  deleteCustomer(id: string, name: string) {
-    if (!confirm(`Delete customer "${name}"? Templates linked to this customer will be unlinked.`)) return;
-    this.clearMessages();
+  toggleStatus(customer: Customer) {
+    const newStatus = !customer.enabled;
+    const actionText = newStatus ? 'activate' : 'deactivate';
 
-    this.apiService.deleteCustomer(id).subscribe({
-      next: () => {
-        this.success = `Customer "${name}" deleted.`;
-        this.loadCustomers();
-      },
-      error: (err) => {
-        this.error = err.error?.message || 'Failed to delete customer';
-        console.error(err);
-      }
+    this.generalService.confirm({
+      title: `${newStatus ? 'Activate' : 'Deactivate'} Customer`,
+      text: `Are you sure you want to ${actionText} this customer?`,
+      confirmText: newStatus ? 'Yes, Activate' : 'Yes, Deactivate',
+      confirmColor: newStatus ? '#28a745' : '#28a745',
+      icon: 'question'
+    })
+      .then(result => {
+        if (!result.isConfirmed) return;
+
+        this.togglingStatus[customer.customerId] = true;
+        console.log("customer.customerId", customer.customerId);
+
+        this.apiService.setCustomerStatus(customer.customerId, newStatus).subscribe({
+          next: (response) => {
+            if (response.success) {
+              customer.enabled = newStatus;
+              this.generalService.success(`Customer ${actionText}d successfully`);
+            } else {
+              const msg = response.errors?.join(', ') || `Failed to ${actionText} customer`;
+              this.generalService.error(msg);
+            }
+          },
+          error: (err) => {
+            this.generalService.error(`Failed to ${actionText} customer: ${err.message || err}`);
+            this.togglingStatus[customer.customerId] = false;
+          },
+          complete: () => { this.togglingStatus[customer.customerId] = false; }
+        });
+      });
+  }
+
+  deleteCustomer(customerId: string) {
+    this.generalService.confirm({
+      title: 'Delete Customer',
+      text: 'Are you sure you want to delete this customer?',
+      confirmText: 'Yes, Delete',
+      confirmColor: '#e74c3c',
+      icon: 'warning'
+    })
+    .then(result => {
+      if (!result.isConfirmed) return;
+  
+      this.deleting[customerId] = true;
+  
+      this.apiService.deleteCustomer(customerId).subscribe({
+        next: () => {
+          this.generalService.success('Customer has been deleted.').then(() => {
+            this.loadCustomers(); 
+          });
+        },
+        error: (err) => {
+          this.generalService.error('Failed to delete customer: ' + (err.message || err));
+          this.deleting[customerId] = false;
+        },
+        complete: () => { this.deleting[customerId] = false; }
+      });
     });
   }
 
   cancelEdit() {
+    this.creating = false;
+    this.updating = false;
     this.editingCustomer = null;
     this.showCreateForm = false;
     this.formData = this.emptyForm();
@@ -418,7 +642,57 @@ export class CustomersComponent implements OnInit {
     this.success = '';
   }
 
-  private emptyForm(): CreateCustomerRequest {
-    return { name: '', code: '', contactEmail: '', contactPhone: '', isActive: true, notes: '' };
+  private emptyForm(): Customer {
+    return {
+      customerId: '',
+      customerName: '',
+      tmsName: '',
+      lastSyncTime: new Date().toISOString(),
+      enabled: true,
+      outboundEnabled: false,
+      credentials: {},
+    };
   }
+
+  getCurrentTmsKeys(): string[] {
+    return this.formData.tmsName ? this.tmsCredentialKeys[this.formData.tmsName] || [] : [];
+  }
+
+  tmsCredentialKeys: { [tms: string]: string[] } = {
+    'Legacy McLeod': [
+      'mcleod-url',
+      'mcleod-auth-header',
+      'company-id-header',
+      'x1-url',
+      'x1-auth-header',
+      'wfai-url',
+      'wfai-integration-base-url',
+      'wfai-portal-customer-id',
+      'tonuCode'
+    ],
+    'TruckMate': [
+      'truckmate-url',
+      'truckmate-auth-token',
+      'wfai-url',
+      'wfai-integration-base-url',
+      'wfai-portal-customer-id'
+    ],
+    'BrokerAI': [
+      'brokerai-url',
+      'brokerai-username',
+      'brokerai-password',
+      'brokerai-divisionid',
+      'wfai-url',
+      'wfai-integration-base-url',
+      'wfai-portal-customer-id'
+    ]
+  };
+
+  allowOnlyNumbers(event: KeyboardEvent) {
+    const charCode = event.which ? event.which : event.keyCode;
+    if (charCode < 48 || charCode > 57) {
+      event.preventDefault();
+    }
+  }
+
 }

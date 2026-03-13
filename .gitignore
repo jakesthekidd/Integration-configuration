@@ -260,3 +260,6 @@ AkavacheSqliteLinkerOverride.cs
 NuGetBuild
 WiX.Toolset.DummyFile.txt
 GitHubVS.sln.DotSettings
+
+# Ignore Angular cache
+.angular/cache/

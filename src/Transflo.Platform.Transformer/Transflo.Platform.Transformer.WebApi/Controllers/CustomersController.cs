@@ -1,154 +1,71 @@
 using Microsoft.AspNetCore.Mvc;
 using Transflo.Platform.Transformer.Core.DTOs;
-using Transflo.Platform.Transformer.Core.Models;
-using Transflo.Platform.Transformer.Core.Repositories;
-
-namespace Transflo.Platform.Transformer.WebApi.Controllers;
+using Transflo.Platform.Transformer.Core.Services.Interfaces;
 
 [ApiController]
 [Route("api/v1/customers")]
 [Tags("Customers")]
 public class CustomersController : ControllerBase
 {
-    private readonly ICustomerRepository _repo;
+    private readonly ICustomerService _customerService;
 
-    public CustomersController(ICustomerRepository repo)
+    public CustomersController(ICustomerService customerService)
     {
-        _repo = repo;
+        _customerService = customerService;
     }
 
     [HttpGet]
     [ProducesResponseType(typeof(ApiResponse<CustomerListResponse>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetAll([FromQuery] bool? activeOnly = null)
+    public async Task<ActionResult<ApiResponse<CustomerListResponse>>> GetCustomers([FromQuery] bool? activeOnly = null)
     {
-        var customers = await _repo.GetAllAsync(activeOnly);
-
-        var response = new CustomerListResponse
-        {
-            Customers = customers.Select(c => new CustomerResponse
-            {
-                Id = c.Id,
-                Name = c.Name,
-                Code = c.Code,
-                ContactEmail = c.ContactEmail,
-                ContactPhone = c.ContactPhone,
-                IsActive = c.IsActive,
-                Notes = c.Notes,
-                CreatedAt = c.CreatedAt,
-                UpdatedAt = c.UpdatedAt,
-                CreatedBy = c.CreatedBy
-            }).ToList(),
-            TotalCount = customers.Count
-        };
-
-        return Ok(ApiResponse<CustomerListResponse>.SuccessResponse(response));
+        var result = await _customerService.GetCustomersAsync(activeOnly);
+        return Ok(result);
     }
 
     [HttpGet("{id}")]
-    [ProducesResponseType(typeof(ApiResponse<CustomerResponse>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ApiResponse<CustomerResponse>), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetById(Guid id)
+    [ProducesResponseType(typeof(ApiResponse<Customer>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<Customer>), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ApiResponse<Customer>>> GetCustomerById(string id)
     {
-        var customer = await _repo.GetByIdAsync(id);
-        if (customer == null)
-            return NotFound(ApiResponse<CustomerResponse>.ErrorResponse($"Customer not found: {id}"));
-
-        var response = new CustomerResponse
-        {
-            Id = customer.Id,
-            Name = customer.Name,
-            Code = customer.Code,
-            ContactEmail = customer.ContactEmail,
-            ContactPhone = customer.ContactPhone,
-            IsActive = customer.IsActive,
-            Notes = customer.Notes,
-            CreatedAt = customer.CreatedAt,
-            UpdatedAt = customer.UpdatedAt,
-            CreatedBy = customer.CreatedBy
-        };
-
-        return Ok(ApiResponse<CustomerResponse>.SuccessResponse(response));
+        var result = await _customerService.GetCustomerByIdAsync(id);
+        return result.Success ? Ok(result) : NotFound(result);
     }
 
     [HttpPost]
-    [ProducesResponseType(typeof(ApiResponse<CustomerResponse>), StatusCodes.Status201Created)]
-    public async Task<IActionResult> Create([FromBody] CreateCustomerRequest request)
+    [ProducesResponseType(typeof(ApiResponse<Customer>), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ApiResponse<Customer>), StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<ApiResponse<Customer>>> CreateCustomer([FromBody] CustomerRequest request)
     {
-        var customer = new Customer
-        {
-            Name = request.Name,
-            Code = request.Code,
-            ContactEmail = request.ContactEmail,
-            ContactPhone = request.ContactPhone,
-            IsActive = request.IsActive,
-            Notes = request.Notes,
-            CreatedBy = request.CreatedBy
-        };
-
-        var created = await _repo.CreateAsync(customer);
-
-        var response = new CustomerResponse
-        {
-            Id = created.Id,
-            Name = created.Name,
-            Code = created.Code,
-            ContactEmail = created.ContactEmail,
-            ContactPhone = created.ContactPhone,
-            IsActive = created.IsActive,
-            Notes = created.Notes,
-            CreatedAt = created.CreatedAt,
-            UpdatedAt = created.UpdatedAt,
-            CreatedBy = created.CreatedBy
-        };
-
-        return Created($"/api/v1/customers/{created.Id}", ApiResponse<CustomerResponse>.SuccessResponse(response));
+        var result = await _customerService.CreateCustomerAsync(request);
+        return result.Success
+            ? CreatedAtAction(nameof(GetCustomerById), new { id = result.Data?.CustomerId }, result)
+            : BadRequest(result);
     }
 
     [HttpPut("{id}")]
-    [ProducesResponseType(typeof(ApiResponse<CustomerResponse>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ApiResponse<CustomerResponse>), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateCustomerRequest request)
+    [ProducesResponseType(typeof(ApiResponse<Customer>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<Customer>), StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<ApiResponse<Customer>>> UpdateCustomer(string id, [FromBody] CustomerRequest request)
     {
-        var existing = await _repo.GetByIdAsync(id);
-        if (existing == null)
-            return NotFound(ApiResponse<CustomerResponse>.ErrorResponse($"Customer not found: {id}"));
-
-        if (request.Name != null) existing.Name = request.Name;
-        if (request.Code != null) existing.Code = request.Code;
-        if (request.ContactEmail != null) existing.ContactEmail = request.ContactEmail;
-        if (request.ContactPhone != null) existing.ContactPhone = request.ContactPhone;
-        if (request.IsActive.HasValue) existing.IsActive = request.IsActive.Value;
-        if (request.Notes != null) existing.Notes = request.Notes;
-
-        var updated = await _repo.UpdateAsync(existing);
-
-        var response = new CustomerResponse
-        {
-            Id = updated.Id,
-            Name = updated.Name,
-            Code = updated.Code,
-            ContactEmail = updated.ContactEmail,
-            ContactPhone = updated.ContactPhone,
-            IsActive = updated.IsActive,
-            Notes = updated.Notes,
-            CreatedAt = updated.CreatedAt,
-            UpdatedAt = updated.UpdatedAt,
-            CreatedBy = updated.CreatedBy
-        };
-
-        return Ok(ApiResponse<CustomerResponse>.SuccessResponse(response));
+        var result = await _customerService.UpdateCustomerAsync(id, request);
+        return result.Success ? Ok(result) : BadRequest(result);
     }
 
     [HttpDelete("{id}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Delete(Guid id)
+    [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ApiResponse<bool>>> SoftDeleteCustomer(string id)
     {
-        var existing = await _repo.GetByIdAsync(id);
-        if (existing == null)
-            return NotFound(ApiResponse<object>.ErrorResponse($"Customer not found: {id}"));
+        var result = await _customerService.SoftDeleteCustomerAsync(id);
+        return result.Success ? NoContent() : NotFound(result);
+    }
 
-        await _repo.DeleteAsync(id);
-        return NoContent();
+    [HttpPatch("{id}/status")]
+    [ProducesResponseType(typeof(ApiResponse<Customer>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<Customer>), StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<ApiResponse<Customer>>> SetCustomerStatus(string id, [FromQuery] bool enabled)
+    {
+        var result = await _customerService.SetCustomerStatusAsync(id, enabled);
+        return result.Success ? Ok(result) : BadRequest(result);
     }
 }
