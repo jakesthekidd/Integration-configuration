@@ -10,13 +10,11 @@ public class FieldMappingDbContext : DbContext
     {
     }
 
-    public DbSet<Customer> Customers { get; set; } = null!;
     public DbSet<TmsSystem> TmsSystems { get; set; } = null!;
     public DbSet<Partner> Partners { get; set; } = null!;
     public DbSet<Template> Templates { get; set; } = null!;
     public DbSet<TemplateVersion> TemplateVersions { get; set; } = null!;
     public DbSet<TemplateAssignment> TemplateAssignments { get; set; } = null!;
-    public DbSet<FieldMappingTemplate> FieldMappingTemplates { get; set; } = null!;
     public DbSet<FieldMapping> FieldMappings { get; set; } = null!;
     public DbSet<LookupTable> LookupTables { get; set; } = null!;
     public DbSet<TransformationLog> TransformationLogs { get; set; } = null!;
@@ -30,28 +28,6 @@ public class FieldMappingDbContext : DbContext
         {
             entity.HasIndex(e => e.Name).IsUnique();
             entity.HasIndex(e => e.IsActive);
-        });
-
-        // FieldMappingTemplate configuration
-        modelBuilder.Entity<FieldMappingTemplate>(entity =>
-        {
-            entity.HasIndex(e => e.TemplateId);
-            entity.HasIndex(e => new { e.TemplateId, e.Version }).IsUnique();
-            entity.HasIndex(e => e.TmsSystemId);
-            entity.HasIndex(e => e.Status);
-
-            // Configure enum to string conversion
-            entity.Property(e => e.Status)
-                .HasConversion<string>();
-
-            entity.HasOne(e => e.TmsSystem)
-                .WithMany(t => t.FieldMappingTemplates)
-                .HasForeignKey(e => e.TmsSystemId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            // Explicitly ignore the FieldMappings navigation property
-            // (TemplateId is a business key, not the FK to Id primary key)
-            entity.Ignore(e => e.FieldMappings);
         });
 
         // Partner configuration
