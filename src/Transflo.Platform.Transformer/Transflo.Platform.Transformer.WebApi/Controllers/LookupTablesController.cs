@@ -164,7 +164,6 @@ public class LookupTablesController : ControllerBase
         existing.DeletedAt = DateTime.UtcNow;
 
         var updated = await _repo.UpdateAsync(existing);
-        //await _repo.DeleteAsync(id);
         return NoContent();
     }
 
