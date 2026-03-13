@@ -517,9 +517,28 @@ export class LookupTablesComponent implements OnInit {
     this.loadLookupTables();
   }
 
+    isValidJSON(str: string): boolean {
+        if (typeof str !== "string") return false; // Must be a string
+
+        try {
+            const parsed = JSON.parse(str);
+
+            // Ensure the parsed result is an object, array, or primitive allowed in JSON
+            return typeof parsed === "object" || typeof parsed === "number" ||
+                typeof parsed === "boolean" || parsed === null || typeof parsed === "string";
+        } catch (e) {
+            return false; // Parsing failed
+        }
+    }
+
   createLookupTable() {
     this.error = '';
-    this.success = '';
+      this.success = '';
+      var mappingStr = "" + this.newLookup.mappings?.toString();
+      if (!this.isValidJSON(mappingStr)) {
+          this.error = 'Wrong mapping JSON Entries, Failed to create lookup table';
+          return;
+      }
 
     this.apiService.createLookupTable(this.newLookup).subscribe({
       next: (response) => {
@@ -536,6 +555,7 @@ export class LookupTablesComponent implements OnInit {
       }
     });
   }
+
 
   deleteLookupTable(id: string) {
     if (!confirm('Are you sure you want to delete this lookup table?')) {

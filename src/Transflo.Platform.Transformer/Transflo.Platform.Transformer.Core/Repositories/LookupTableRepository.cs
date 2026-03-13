@@ -34,7 +34,7 @@ public class LookupTableRepository : ILookupTableRepository
     public async Task<List<LookupTable>> GetByTmsSystemIdAsync(Guid tmsSystemId)
     {
         return await _context.LookupTables
-            .Where(l => l.TmsSystemId == tmsSystemId)
+            .Where(l => l.TmsSystemId == tmsSystemId && !l.IsDeleted)
             .OrderBy(l => l.Name)
             .ToListAsync();
     }
@@ -48,15 +48,16 @@ public class LookupTableRepository : ILookupTableRepository
     public async Task<List<LookupTable>> GetAllAsync()
     {
         return await _context.LookupTables
+            .Where(l => !l.IsDeleted)
             .OrderBy(l => l.TmsSystemId)
             .ThenBy(l => l.Name)
             .ToListAsync();
     }
-
     public async Task<LookupTable> CreateAsync(LookupTable lookupTable)
     {
         lookupTable.CreatedAt = DateTime.UtcNow;
         lookupTable.UpdatedAt = DateTime.UtcNow;
+        lookupTable.IsDeleted = false;
 
         _context.LookupTables.Add(lookupTable);
         await _context.SaveChangesAsync();
