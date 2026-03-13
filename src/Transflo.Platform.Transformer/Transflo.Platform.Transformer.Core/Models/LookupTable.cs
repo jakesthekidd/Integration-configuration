@@ -43,4 +43,7 @@ public class LookupTable : BaseEntity
     // Foreign key
     [ForeignKey(nameof(TmsSystemId))]
     public virtual TmsSystem? TmsSystem { get; set; }
+
+    [Column("isDeleted")]
+    public bool IsDeleted { get; set; }
 }
