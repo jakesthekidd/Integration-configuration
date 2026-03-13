@@ -39,6 +39,7 @@ builder.Services.AddDbContext<FieldMappingDbContext>(options =>
 builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
 builder.Services.AddScoped<ITmsSystemRepository, TmsSystemRepository>();
 builder.Services.AddScoped<ITemplateRepository, TemplateRepository>();
+builder.Services.AddScoped<ITemplateVersionRepository, TemplateVersionRepository>();
 builder.Services.AddScoped<IFieldMappingRepository, FieldMappingRepository>();
 builder.Services.AddScoped<ILookupTableRepository, LookupTableRepository>();
 builder.Services.AddScoped<ITransformationLogRepository, TransformationLogRepository>();

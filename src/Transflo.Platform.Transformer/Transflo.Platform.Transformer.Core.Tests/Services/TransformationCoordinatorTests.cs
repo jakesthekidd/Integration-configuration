@@ -16,22 +16,27 @@ public class TransformationCoordinatorTests
     private readonly Mock<IFieldMappingRepository> _mappingRepoMock = new();
     private readonly Mock<ITransformationLogRepository> _logRepoMock = new();
     private readonly Mock<ITransformationService> _serviceMock = new();
+    private readonly Mock<ITemplateVersionRepository> _versionRepoMock = new();
     private readonly Mock<ILogger<TransformationCoordinator>> _loggerMock = new();
     private readonly TransformationCoordinator _sut;
 
-    // Core EF entities used by repository mocks – mirror the McLeod seed template
-    private static readonly FieldMappingTemplate DefaultEfTemplate = new()
+    private static readonly Template DefaultEfTemplate = new()
     {
-        TemplateId = new Guid("00000000-0000-0000-0000-000000000001"),
-        TmsSystemId = new Guid("00000000-0000-0000-0000-000000000002"),
-        Name = "McLeod to WFAI Transformation",
-        Version = 1
+        Id = new Guid("00000000-0000-0000-0000-000000000001"),
+        Name = "McLeod to WFAI Transformation"
+    };
+
+    private static readonly TemplateVersion DefaultEfVersion = new()
+    {
+        Id = new Guid("00000000-0000-0000-0000-00000000000A"),
+        TemplateId = DefaultEfTemplate.Id,
+        Version = 1,
+        Status = TemplateVersionStatus.Published
     };
 
     private static readonly List<FieldMapping> DefaultEfMappings =
     [
-        // fm-mcleod-001: Direct copy of order ID
-        new() { SourcePath = "id", TargetPath = "externalId" }
+        new() { SourcePath = "id", TargetPath = "externalId", TemplateVersionId = DefaultEfVersion.Id }
     ];
 
     public TransformationCoordinatorTests()
@@ -41,6 +46,7 @@ public class TransformationCoordinatorTests
             _mappingRepoMock.Object,
             _logRepoMock.Object,
             _serviceMock.Object,
+            _versionRepoMock.Object,
             _loggerMock.Object);
 
         _logRepoMock
@@ -53,8 +59,8 @@ public class TransformationCoordinatorTests
     {
         var templateId = new Guid("00000000-0000-0000-0000-000000000003");
         _templateRepoMock
-            .Setup(r => r.GetLatestVersionAsync(templateId))
-            .ReturnsAsync((FieldMappingTemplate?)null);
+            .Setup(r => r.GetByIdAsync(templateId))
+            .ReturnsAsync((Template?)null);
 
         var result = await _sut.TransformAsync("{}", templateId);
 
@@ -66,10 +72,13 @@ public class TransformationCoordinatorTests
     [Fact]
     public async Task TransformAsync_ReturnsError_WhenSpecificVersionNotFound()
     {
-        var templateId = new Guid("00000000-0000-0000-0000-000000000001");
+        var templateId = DefaultEfTemplate.Id;
         _templateRepoMock
-            .Setup(r => r.GetByIdAsync(templateId, 99))
-            .ReturnsAsync((FieldMappingTemplate?)null);
+            .Setup(r => r.GetByIdAsync(templateId))
+            .ReturnsAsync(DefaultEfTemplate);
+        _versionRepoMock
+            .Setup(r => r.GetByVersionAsync(templateId, 99))
+            .ReturnsAsync((TemplateVersion?)null);
 
         var result = await _sut.TransformAsync("{}", templateId, version: 99);
 
@@ -80,12 +89,10 @@ public class TransformationCoordinatorTests
     [Fact]
     public async Task TransformAsync_ReturnsError_WhenNoMappingsFound()
     {
-        var templateId = new Guid("00000000-0000-0000-0000-000000000001");
-        _templateRepoMock
-            .Setup(r => r.GetLatestVersionAsync(templateId))
-            .ReturnsAsync(DefaultEfTemplate);
+        var templateId = DefaultEfTemplate.Id;
+        SetupResolve(templateId);
         _mappingRepoMock
-            .Setup(r => r.GetByTemplateVersionIdOrderedAsync(DefaultEfTemplate.Id))
+            .Setup(r => r.GetByTemplateVersionIdOrderedAsync(DefaultEfVersion.Id))
             .ReturnsAsync(new List<FieldMapping>());
 
         var result = await _sut.TransformAsync("{}", templateId);
@@ -97,7 +104,7 @@ public class TransformationCoordinatorTests
     [Fact]
     public async Task TransformAsync_DelegatesTo_TransformationService()
     {
-        var templateId = new Guid("00000000-0000-0000-0000-000000000001");
+        var templateId = DefaultEfTemplate.Id;
         SetupResolve(templateId);
         var serviceResult = new TransformationResult { Success = true, FieldsMapped = 1 };
         _serviceMock
@@ -116,7 +123,7 @@ public class TransformationCoordinatorTests
     [Fact]
     public async Task TransformAsync_PersistsLog()
     {
-        var templateId = new Guid("00000000-0000-0000-0000-000000000001");
+        var templateId = DefaultEfTemplate.Id;
         SetupResolve(templateId);
         _serviceMock
             .Setup(s => s.TransformAsync(
@@ -133,7 +140,7 @@ public class TransformationCoordinatorTests
     [Fact]
     public async Task PreviewTransformationAsync_DoesNotPersistLog()
     {
-        var templateId = new Guid("00000000-0000-0000-0000-000000000001");
+        var templateId = DefaultEfTemplate.Id;
         SetupResolve(templateId);
         _serviceMock
             .Setup(s => s.TransformAsync(
@@ -152,8 +159,8 @@ public class TransformationCoordinatorTests
     {
         var templateId = new Guid("00000000-0000-0000-0000-000000000003");
         _templateRepoMock
-            .Setup(r => r.GetLatestVersionAsync(templateId))
-            .ReturnsAsync((FieldMappingTemplate?)null);
+            .Setup(r => r.GetByIdAsync(templateId))
+            .ReturnsAsync((Template?)null);
 
         var records = new List<JsonElement>
         {
@@ -171,7 +178,7 @@ public class TransformationCoordinatorTests
     [Fact]
     public async Task TransformBatchAsync_PersistsSingleSummaryLog()
     {
-        var templateId = new Guid("00000000-0000-0000-0000-000000000001");
+        var templateId = DefaultEfTemplate.Id;
         SetupResolve(templateId);
         var batchResult = new BatchTransformResult
         {
@@ -197,7 +204,7 @@ public class TransformationCoordinatorTests
             JsonDocument.Parse("""{"id":"3089051"}""").RootElement
         };
 
-        await _sut.TransformBatchAsync(new Guid("00000000-0000-0000-0000-000000000001"), records);
+        await _sut.TransformBatchAsync(templateId, records);
 
         _logRepoMock.Verify(r => r.CreateAsync(It.IsAny<TransformationLog>()), Times.Once);
     }
@@ -205,10 +212,13 @@ public class TransformationCoordinatorTests
     private void SetupResolve(Guid templateId)
     {
         _templateRepoMock
-            .Setup(r => r.GetLatestVersionAsync(templateId))
+            .Setup(r => r.GetByIdAsync(templateId))
             .ReturnsAsync(DefaultEfTemplate);
+        _versionRepoMock
+            .Setup(r => r.GetPublishedVersionAsync(templateId))
+            .ReturnsAsync(DefaultEfVersion);
         _mappingRepoMock
-            .Setup(r => r.GetByTemplateVersionIdOrderedAsync(DefaultEfTemplate.Id))
+            .Setup(r => r.GetByTemplateVersionIdOrderedAsync(DefaultEfVersion.Id))
             .ReturnsAsync(DefaultEfMappings);
     }
 }

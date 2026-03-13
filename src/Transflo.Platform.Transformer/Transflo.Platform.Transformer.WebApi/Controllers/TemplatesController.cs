@@ -18,9 +18,9 @@ public class TemplatesController : ControllerBase
 
     [HttpGet]
     [ProducesResponseType(typeof(ApiResponse<TemplateListResponse>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetAll([FromQuery] Guid? tmsSystemId = null)
+    public async Task<IActionResult> GetAll()
     {
-        var templates = await _service.GetAllAsync(tmsSystemId);
+        var templates = await _service.GetAllAsync();
         var response = new TemplateListResponse
         {
             Templates = templates.ToList(),
@@ -32,9 +32,9 @@ public class TemplatesController : ControllerBase
     [HttpGet("{templateId}")]
     [ProducesResponseType(typeof(ApiResponse<TemplateResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<TemplateResponse>), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetById(Guid templateId, [FromQuery] int? version = null)
+    public async Task<IActionResult> GetById(Guid templateId)
     {
-        var response = await _service.GetByIdAsync(templateId, version);
+        var response = await _service.GetByIdAsync(templateId);
         if (response is null)
             return NotFound(ApiResponse<TemplateResponse>.ErrorResponse($"Template not found: {templateId}"));
 
@@ -46,7 +46,7 @@ public class TemplatesController : ControllerBase
     public async Task<IActionResult> Create([FromBody] CreateTemplateRequest request)
     {
         var response = await _service.CreateAsync(request);
-        return Created($"/api/v1/templates/{response.TemplateId}",
+        return Created($"/api/v1/templates/{response.Id}",
             ApiResponse<TemplateResponse>.SuccessResponse(response));
     }
 
@@ -65,9 +65,9 @@ public class TemplatesController : ControllerBase
     [HttpDelete("{templateId}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Delete(Guid templateId, [FromQuery] int? version = null)
+    public async Task<IActionResult> Delete(Guid templateId)
     {
-        var found = await _service.DeleteAsync(templateId, version);
+        var found = await _service.DeleteAsync(templateId);
         if (!found)
             return NotFound(ApiResponse<object>.ErrorResponse($"Template not found: {templateId}"));
 
@@ -83,7 +83,7 @@ public class TemplatesController : ControllerBase
         if (response is null)
             return NotFound(ApiResponse<TemplateResponse>.ErrorResponse($"Template not found: {templateId}"));
 
-        return Created($"/api/v1/templates/{response.TemplateId}",
+        return Created($"/api/v1/templates/{response.Id}",
             ApiResponse<TemplateResponse>.SuccessResponse(response));
     }
 }

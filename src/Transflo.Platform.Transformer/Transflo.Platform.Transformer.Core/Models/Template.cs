@@ -3,7 +3,6 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Transflo.Platform.Transformer.Core.Models;
 
-
 [Table("templates")]
 public class Template : BaseEntity
 {

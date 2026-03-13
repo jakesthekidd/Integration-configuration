@@ -85,6 +85,12 @@ public class FieldMappingDbContext : DbContext
         modelBuilder.Entity<TemplateVersion>(entity =>
         {
             entity.HasIndex(e => e.TemplateId);
+            entity.HasIndex(e => e.Status);
+            entity.HasIndex(e => new { e.TemplateId, e.Version }).IsUnique();
+
+            // Store enum as string
+            entity.Property(e => e.Status).HasConversion<string>();
+
             entity.HasOne(e => e.Template)
                 .WithMany(t => t.TemplateVersions)
                 .HasForeignKey(e => e.TemplateId)

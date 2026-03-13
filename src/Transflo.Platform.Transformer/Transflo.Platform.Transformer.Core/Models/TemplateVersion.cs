@@ -13,6 +13,16 @@ public class TemplateVersion : BaseEntity
     [Column("version")]
     public int Version { get; set; } = 1;
 
+    [Column("status")]
+    public TemplateVersionStatus Status { get; set; } = TemplateVersionStatus.Draft;
+
+    [Column("published_at")]
+    public DateTime? PublishedAt { get; set; }
+
+    [Column("published_by")]
+    [MaxLength(100)]
+    public string? PublishedBy { get; set; }
+
     [Column("validation_rules", TypeName = "jsonb")]
     public string? ValidationRules { get; set; }
 

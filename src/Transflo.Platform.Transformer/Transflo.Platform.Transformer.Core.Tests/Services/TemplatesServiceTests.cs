@@ -10,48 +10,44 @@ public class TemplatesServiceTests
 {
     private readonly Mock<ITemplateRepository> _templateRepoMock = new();
     private readonly Mock<IFieldMappingRepository> _mappingRepoMock = new();
+    private readonly Mock<ITemplateVersionRepository> _versionRepoMock = new();
     private readonly TemplatesService _sut;
 
-    private static readonly FieldMappingTemplate SampleTemplate = new()
+    private static readonly Template SampleTemplate = new()
     {
-        Id = Guid.Parse("aaaaaaaa-0000-0000-0000-000000000001"),
-        TemplateId = Guid.Parse("bbbbbbbb-0000-0000-0000-000000000001"),
+        Id = Guid.Parse("bbbbbbbb-0000-0000-0000-000000000001"),
         Name = "Test Template",
         Description = "Desc",
-        TmsSystemId = Guid.Parse("cccccccc-0000-0000-0000-000000000001"),
+        Status = TemplateStatus.Draft,
+        SourceSchema = "Source",
+        TargetSchema = "Target"
+    };
+
+    private static readonly TemplateVersion SampleVersion = new()
+    {
+        Id = Guid.NewGuid(),
+        TemplateId = SampleTemplate.Id,
         Version = 1,
-        Status = TemplateStatus.Draft
+        Status = TemplateVersionStatus.Published
     };
 
     public TemplatesServiceTests()
     {
-        _sut = new TemplatesService(_templateRepoMock.Object, _mappingRepoMock.Object);
+        _sut = new TemplatesService(_templateRepoMock.Object, _mappingRepoMock.Object, _versionRepoMock.Object);
     }
 
     // ── GetAllAsync ──────────────────────────────────────────────────────────
 
     [Fact]
-    public async Task GetAllAsync_NoFilter_CallsGetAllAsync()
+    public async Task GetAllAsync_CallsGetAllAsync()
     {
-        _templateRepoMock.Setup(r => r.GetAllAsync()).ReturnsAsync([SampleTemplate]);
+        _templateRepoMock.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<Template> { SampleTemplate });
 
         var result = await _sut.GetAllAsync();
 
         _templateRepoMock.Verify(r => r.GetAllAsync(), Times.Once);
         Assert.Single(result);
-        Assert.Equal(SampleTemplate.TemplateId, result[0].TemplateId);
-    }
-
-    [Fact]
-    public async Task GetAllAsync_WithTmsSystemId_CallsGetByTmsSystemIdAsync()
-    {
-        var tmsId = SampleTemplate.TmsSystemId;
-        _templateRepoMock.Setup(r => r.GetByTmsSystemIdAsync(tmsId)).ReturnsAsync([SampleTemplate]);
-
-        var result = await _sut.GetAllAsync(tmsId);
-
-        _templateRepoMock.Verify(r => r.GetByTmsSystemIdAsync(tmsId), Times.Once);
-        Assert.Single(result);
+        Assert.Equal(SampleTemplate.Id, result[0].Id);
     }
 
     // ── GetByIdAsync ─────────────────────────────────────────────────────────
@@ -60,8 +56,8 @@ public class TemplatesServiceTests
     public async Task GetByIdAsync_ReturnsNull_WhenNotFound()
     {
         _templateRepoMock
-            .Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), null))
-            .ReturnsAsync((FieldMappingTemplate?)null);
+            .Setup(r => r.GetByIdAsync(It.IsAny<Guid>()))
+            .ReturnsAsync((Template?)null);
 
         var result = await _sut.GetByIdAsync(Guid.NewGuid());
 
@@ -72,10 +68,10 @@ public class TemplatesServiceTests
     public async Task GetByIdAsync_ReturnsResponse_WhenFound()
     {
         _templateRepoMock
-            .Setup(r => r.GetByIdAsync(SampleTemplate.TemplateId, null))
+            .Setup(r => r.GetByIdAsync(SampleTemplate.Id))
             .ReturnsAsync(SampleTemplate);
 
-        var result = await _sut.GetByIdAsync(SampleTemplate.TemplateId);
+        var result = await _sut.GetByIdAsync(SampleTemplate.Id);
 
         Assert.NotNull(result);
         Assert.Equal(SampleTemplate.Name, result.Name);
@@ -85,23 +81,28 @@ public class TemplatesServiceTests
     // ── CreateAsync ──────────────────────────────────────────────────────────
 
     [Fact]
-    public async Task CreateAsync_SetsVersion1AndStatusDraft()
+    public async Task CreateAsync_SetsStatusDraftAndCreatesVersion1()
     {
         _templateRepoMock
-            .Setup(r => r.CreateAsync(It.IsAny<FieldMappingTemplate>()))
-            .ReturnsAsync((FieldMappingTemplate t) => t);
+            .Setup(r => r.CreateAsync(It.IsAny<Template>()))
+            .ReturnsAsync((Template t) => t);
+            
+        _versionRepoMock
+            .Setup(r => r.CreateAsync(It.IsAny<TemplateVersion>()))
+            .ReturnsAsync((TemplateVersion v) => v);
 
         var request = new CreateTemplateRequest
         {
-            Name = "New Template",
-            TmsSystemId = SampleTemplate.TmsSystemId
+            Name = "New Template"
         };
 
         var result = await _sut.CreateAsync(request);
 
-        Assert.Equal(1, result.Version);
+        _versionRepoMock.Verify(r => r.CreateAsync(It.Is<TemplateVersion>(v => v.Version == 1 && v.Status == TemplateVersionStatus.Draft)), Times.Once);
+        
         Assert.Equal("Draft", result.Status);
         Assert.Equal("New Template", result.Name);
+        Assert.NotEqual(Guid.Empty, result.Id);
     }
 
     // ── UpdateAsync ──────────────────────────────────────────────────────────
@@ -110,8 +111,8 @@ public class TemplatesServiceTests
     public async Task UpdateAsync_ReturnsNull_WhenTemplateNotFound()
     {
         _templateRepoMock
-            .Setup(r => r.GetLatestVersionAsync(It.IsAny<Guid>()))
-            .ReturnsAsync((FieldMappingTemplate?)null);
+            .Setup(r => r.GetByIdAsync(It.IsAny<Guid>()))
+            .ReturnsAsync((Template?)null);
 
         var result = await _sut.UpdateAsync(Guid.NewGuid(), new UpdateTemplateRequest());
 
@@ -119,22 +120,21 @@ public class TemplatesServiceTests
     }
 
     [Fact]
-    public async Task UpdateAsync_IncrementsVersion()
+    public async Task UpdateAsync_UpdatesTemplate()
     {
         _templateRepoMock
-            .Setup(r => r.GetLatestVersionAsync(SampleTemplate.TemplateId))
+            .Setup(r => r.GetByIdAsync(SampleTemplate.Id))
             .ReturnsAsync(SampleTemplate);
         _templateRepoMock
-            .Setup(r => r.CreateAsync(It.IsAny<FieldMappingTemplate>()))
-            .ReturnsAsync((FieldMappingTemplate t) => t);
+            .Setup(r => r.UpdateAsync(It.IsAny<Template>()))
+            .ReturnsAsync((Template t) => t);
 
-        var result = await _sut.UpdateAsync(SampleTemplate.TemplateId, new UpdateTemplateRequest
+        var result = await _sut.UpdateAsync(SampleTemplate.Id, new UpdateTemplateRequest
         {
             Name = "Updated Name"
         });
 
         Assert.NotNull(result);
-        Assert.Equal(2, result.Version);
         Assert.Equal("Updated Name", result.Name);
     }
 
@@ -144,26 +144,26 @@ public class TemplatesServiceTests
     public async Task DeleteAsync_ReturnsFalse_WhenNotFound()
     {
         _templateRepoMock
-            .Setup(r => r.GetLatestVersionAsync(It.IsAny<Guid>()))
-            .ReturnsAsync((FieldMappingTemplate?)null);
+            .Setup(r => r.GetByIdAsync(It.IsAny<Guid>()))
+            .ReturnsAsync((Template?)null);
 
         var result = await _sut.DeleteAsync(Guid.NewGuid());
 
         Assert.False(result);
-        _templateRepoMock.Verify(r => r.DeleteAsync(It.IsAny<Guid>(), It.IsAny<int?>()), Times.Never);
+        _templateRepoMock.Verify(r => r.DeleteAsync(It.IsAny<Guid>()), Times.Never);
     }
 
     [Fact]
     public async Task DeleteAsync_CallsRepo_AndReturnsTrue_WhenFound()
     {
         _templateRepoMock
-            .Setup(r => r.GetLatestVersionAsync(SampleTemplate.TemplateId))
+            .Setup(r => r.GetByIdAsync(SampleTemplate.Id))
             .ReturnsAsync(SampleTemplate);
 
-        var result = await _sut.DeleteAsync(SampleTemplate.TemplateId);
+        var result = await _sut.DeleteAsync(SampleTemplate.Id);
 
         Assert.True(result);
-        _templateRepoMock.Verify(r => r.DeleteAsync(SampleTemplate.TemplateId, null), Times.Once);
+        _templateRepoMock.Verify(r => r.DeleteAsync(SampleTemplate.Id), Times.Once);
     }
 
     // ── DuplicateAsync ───────────────────────────────────────────────────────
@@ -172,8 +172,8 @@ public class TemplatesServiceTests
     public async Task DuplicateAsync_ReturnsNull_WhenSourceNotFound()
     {
         _templateRepoMock
-            .Setup(r => r.GetLatestVersionAsync(It.IsAny<Guid>()))
-            .ReturnsAsync((FieldMappingTemplate?)null);
+            .Setup(r => r.GetByIdAsync(It.IsAny<Guid>()))
+            .ReturnsAsync((Template?)null);
 
         var result = await _sut.DuplicateAsync(Guid.NewGuid());
 
@@ -184,31 +184,40 @@ public class TemplatesServiceTests
     public async Task DuplicateAsync_CreatesNewTemplateWithCopySuffix_AndCopiesMappings()
     {
         _templateRepoMock
-            .Setup(r => r.GetLatestVersionAsync(SampleTemplate.TemplateId))
+            .Setup(r => r.GetByIdAsync(SampleTemplate.Id))
             .ReturnsAsync(SampleTemplate);
+            
+        _versionRepoMock
+            .Setup(r => r.GetPublishedVersionAsync(SampleTemplate.Id))
+            .ReturnsAsync(SampleVersion);
 
-        FieldMappingTemplate? savedTemplate = null;
+        Template? savedTemplate = null;
         _templateRepoMock
-            .Setup(r => r.CreateAsync(It.IsAny<FieldMappingTemplate>()))
-            .Callback<FieldMappingTemplate>(t => savedTemplate = t)
-            .ReturnsAsync((FieldMappingTemplate t) => t);
+            .Setup(r => r.CreateAsync(It.IsAny<Template>()))
+            .Callback<Template>(t => savedTemplate = t)
+            .ReturnsAsync((Template t) => t);
+            
+        TemplateVersion? savedVersion = null;
+        _versionRepoMock
+            .Setup(r => r.CreateAsync(It.IsAny<TemplateVersion>()))
+            .Callback<TemplateVersion>(v => savedVersion = v)
+            .ReturnsAsync((TemplateVersion v) => v);
 
         var sourceMappings = new List<FieldMapping>
         {
-            new() { Id = Guid.NewGuid(), SourcePath = "a", TargetPath = "b", TemplateVersionId = SampleTemplate.Id }
+            new() { Id = Guid.NewGuid(), SourcePath = "a", TargetPath = "b", TemplateVersionId = SampleVersion.Id }
         };
         _mappingRepoMock
-            .Setup(r => r.GetByTemplateVersionIdOrderedAsync(SampleTemplate.Id))
+            .Setup(r => r.GetByTemplateVersionIdOrderedAsync(SampleVersion.Id))
             .ReturnsAsync(sourceMappings);
         _mappingRepoMock
             .Setup(r => r.CreateBulkAsync(It.IsAny<List<FieldMapping>>()))
-            .Returns(Task.CompletedTask);
+            .ReturnsAsync(sourceMappings);
 
-        var result = await _sut.DuplicateAsync(SampleTemplate.TemplateId);
+        var result = await _sut.DuplicateAsync(SampleTemplate.Id);
 
         Assert.NotNull(result);
         Assert.Contains("Copy", result.Name);
-        Assert.Equal(1, result.Version);
         _mappingRepoMock.Verify(r => r.CreateBulkAsync(It.Is<List<FieldMapping>>(
             list => list.Count == 1 && list[0].SourcePath == "a")), Times.Once);
     }
