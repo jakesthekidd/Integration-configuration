@@ -30,6 +30,7 @@ interface TransformResult {
   warnings?: Array<{ code: string; sourcePath?: string; targetPath?: string; message: string }>;
   executionTimeMs?: number;
 }
+import { environment } from '../../environments/environment';
 
 @Component({
   selector: 'app-transformation-test',
@@ -679,13 +680,13 @@ export class TransformationTestComponent implements OnInit {
   showAnnotatedView = false;
   annotatedSourceHtml: SafeHtml = '';
 
-  private apiUrl = 'http://localhost:63590/api/v1';
+  private apiUrl = environment.apiUrl;
 
   constructor(
     private apiService: ApiService,
     private http: HttpClient,
     private sanitizer: DomSanitizer
-  ) {}
+  ) { }
 
   get errorCount(): number {
     return this.mappingIssues.filter(i => i.type === 'error').length;

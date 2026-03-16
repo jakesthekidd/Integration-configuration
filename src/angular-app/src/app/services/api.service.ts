@@ -7,12 +7,13 @@ import { FieldMapping, CreateFieldMappingRequest, UpdateFieldMappingRequest, Fie
 import { LookupTable, CreateLookupTableRequest, UpdateLookupTableRequest, LookupTableListResponse } from '../models/lookup-table.model';
 import { Customer, CustomerRequest, CustomerListResponse } from '../models/customer.model';
 import { TransformationLogSummary, TransformationLogDetail, TransformationLogListResponse } from '../models/transformation-log.model';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ApiService {
-  private apiUrl = 'http://localhost:63590/api/v1';
+  private apiUrl = environment.apiUrl;
 
   constructor(private http: HttpClient) { }
 
@@ -52,7 +53,7 @@ export class ApiService {
       {}
     );
   }
-  
+
   // TMS Systems
   getTmsSystems(activeOnly: boolean = false): Observable<ApiResponse<TmsSystemListResponse>> {
     return this.http.get<ApiResponse<TmsSystemListResponse>>(`${this.apiUrl}/tms-systems?activeOnly=${activeOnly}`);
