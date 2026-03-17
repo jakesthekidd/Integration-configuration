@@ -64,6 +64,7 @@ builder.Services.AddSingleton<IDynamoDBContext, DynamoDBContext>();
 // Repositories
 builder.Services.AddScoped<ITmsSystemRepository, TmsSystemRepository>();
 builder.Services.AddScoped<ITemplateRepository, TemplateRepository>();
+builder.Services.AddScoped<ITemplateVersionRepository, TemplateVersionRepository>();
 builder.Services.AddScoped<IFieldMappingRepository, FieldMappingRepository>();
 builder.Services.AddScoped<ILookupTableRepository, LookupTableRepository>();
 builder.Services.AddScoped<ITransformationLogRepository, TransformationLogRepository>();
@@ -84,6 +85,7 @@ builder.Services.AddScoped<ITransformationStrategyFactory, TransformationStrateg
 
 builder.Services.AddScoped<ITransformationService, TransformationService>();
 builder.Services.AddScoped<ITransformationCoordinator, TransformationCoordinator>();
+builder.Services.AddScoped<ITemplatesService, TemplatesService>();
 
 var app = builder.Build();
 

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Transflo.Platform.Transformer.Core.Data;
@@ -11,9 +12,11 @@ using Transflo.Platform.Transformer.Core.Data;
 namespace Transflo.Platform.Transformer.Core.Migrations
 {
     [DbContext(typeof(FieldMappingDbContext))]
-    partial class FieldMappingDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260313205813_UpdateTemplateVersionModel")]
+    partial class UpdateTemplateVersionModel
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -109,6 +112,106 @@ namespace Transflo.Platform.Transformer.Core.Migrations
                     b.HasIndex("TemplateVersionId", "ExecutionOrder");
 
                     b.ToTable("field_mappings");
+                });
+
+            modelBuilder.Entity("Transflo.Platform.Transformer.Core.Models.FieldMappingTemplate", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text")
+                        .HasColumnName("description");
+
+                    b.Property<string>("Metadata")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("metadata");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("name");
+
+                    b.Property<DateTime?>("PublishedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("published_at");
+
+                    b.Property<string>("PublishedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("published_by");
+
+                    b.Property<int>("Revision")
+                        .IsConcurrencyToken()
+                        .HasColumnType("integer")
+                        .HasColumnName("revision");
+
+                    b.Property<string>("SampleInputJson")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("sample_input_json");
+
+                    b.Property<string>("SourceSchema")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("source_schema");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("status");
+
+                    b.Property<string>("TargetSchema")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("target_schema");
+
+                    b.Property<Guid>("TemplateId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("template_id");
+
+                    b.Property<Guid>("TmsSystemId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tms_system_id");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("updated_by");
+
+                    b.Property<int>("Version")
+                        .HasColumnType("integer")
+                        .HasColumnName("version");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("TemplateId");
+
+                    b.HasIndex("TmsSystemId");
+
+                    b.HasIndex("TemplateId", "Version")
+                        .IsUnique();
+
+                    b.ToTable("field_mapping_templates");
                 });
 
             modelBuilder.Entity("Transflo.Platform.Transformer.Core.Models.LookupTable", b =>
@@ -550,27 +653,27 @@ namespace Transflo.Platform.Transformer.Core.Migrations
                         new
                         {
                             Id = new Guid("00000000-0000-0000-0000-000000000001"),
-                            CreatedAt = new DateTime(2026, 3, 13, 21, 6, 53, 498, DateTimeKind.Utc).AddTicks(69),
+                            CreatedAt = new DateTime(2026, 3, 13, 20, 58, 13, 548, DateTimeKind.Utc).AddTicks(8588),
                             CreatedBy = "System",
                             Description = "TruckMate Transportation Management System",
                             DisplayName = "TruckMate TMS",
                             IsActive = true,
                             Name = "TruckMate",
                             Revision = 1,
-                            UpdatedAt = new DateTime(2026, 3, 13, 21, 6, 53, 498, DateTimeKind.Utc).AddTicks(69),
+                            UpdatedAt = new DateTime(2026, 3, 13, 20, 58, 13, 548, DateTimeKind.Utc).AddTicks(8588),
                             Version = "1.0"
                         },
                         new
                         {
                             Id = new Guid("00000000-0000-0000-0000-000000000002"),
-                            CreatedAt = new DateTime(2026, 3, 13, 21, 6, 53, 498, DateTimeKind.Utc).AddTicks(69),
+                            CreatedAt = new DateTime(2026, 3, 13, 20, 58, 13, 548, DateTimeKind.Utc).AddTicks(8588),
                             CreatedBy = "System",
                             Description = "McLeod Transportation Management System",
                             DisplayName = "McLeod Software",
                             IsActive = true,
                             Name = "McLeod",
                             Revision = 1,
-                            UpdatedAt = new DateTime(2026, 3, 13, 21, 6, 53, 498, DateTimeKind.Utc).AddTicks(69),
+                            UpdatedAt = new DateTime(2026, 3, 13, 20, 58, 13, 548, DateTimeKind.Utc).AddTicks(8588),
                             Version = "1.0"
                         });
                 });
@@ -652,6 +755,17 @@ namespace Transflo.Platform.Transformer.Core.Migrations
                     b.Navigation("TemplateVersion");
                 });
 
+            modelBuilder.Entity("Transflo.Platform.Transformer.Core.Models.FieldMappingTemplate", b =>
+                {
+                    b.HasOne("Transflo.Platform.Transformer.Core.Models.TmsSystem", "TmsSystem")
+                        .WithMany("FieldMappingTemplates")
+                        .HasForeignKey("TmsSystemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("TmsSystem");
+                });
+
             modelBuilder.Entity("Transflo.Platform.Transformer.Core.Models.LookupTable", b =>
                 {
                     b.HasOne("Transflo.Platform.Transformer.Core.Models.Partner", "Partner")
@@ -727,6 +841,8 @@ namespace Transflo.Platform.Transformer.Core.Migrations
 
             modelBuilder.Entity("Transflo.Platform.Transformer.Core.Models.TmsSystem", b =>
                 {
+                    b.Navigation("FieldMappingTemplates");
+
                     b.Navigation("LookupTables");
                 });
 #pragma warning restore 612, 618

@@ -15,6 +15,7 @@ public class TransformationCoordinator : ITransformationCoordinator
     private readonly IFieldMappingRepository _mappingRepository;
     private readonly ITransformationLogRepository _logRepository;
     private readonly ITransformationService _transformationService;
+    private readonly ITemplateVersionRepository _templateVersionRepository;
     private readonly ILogger<TransformationCoordinator> _logger;
 
     public TransformationCoordinator(
@@ -22,12 +23,14 @@ public class TransformationCoordinator : ITransformationCoordinator
         IFieldMappingRepository mappingRepository,
         ITransformationLogRepository logRepository,
         ITransformationService transformationService,
+        ITemplateVersionRepository templateVersionRepository,
         ILogger<TransformationCoordinator> logger)
     {
         _templateRepository = templateRepository;
         _mappingRepository = mappingRepository;
         _logRepository = logRepository;
         _transformationService = transformationService;
+        _templateVersionRepository = templateVersionRepository;
         _logger = logger;
     }
 
@@ -111,22 +114,30 @@ public class TransformationCoordinator : ITransformationCoordinator
         Guid templateId,
         int? version)
     {
-        var efTemplate = version.HasValue
-            ? await _templateRepository.GetByIdAsync(templateId, version.Value)
-            : await _templateRepository.GetLatestVersionAsync(templateId);
+        var efTemplate = await _templateRepository.GetByIdAsync(templateId);
+        TemplateVersion? efVersion = null;
 
-        if (efTemplate == null)
+        if (version.HasValue)
+        {
+            efVersion = await _templateVersionRepository.GetByVersionAsync(templateId, version.Value);
+        }
+        else
+        {
+            efVersion = await _templateVersionRepository.GetPublishedVersionAsync(templateId);
+        }
+
+        if (efTemplate == null || efVersion == null)
         {
             var error = new TransformationResult { Success = false };
             error.Errors.Add(new TransformationError
             {
                 ErrorCode = "TEMPLATE_NOT_FOUND",
-                Message = $"Template not found: {templateId}" + (version.HasValue ? $" v{version.Value}" : "")
+                Message = $"Template version not found: {templateId}" + (version.HasValue ? $" v{version.Value}" : "")
             });
             return (null, null, error);
         }
 
-        var efMappings = await _mappingRepository.GetByTemplateVersionIdOrderedAsync(efTemplate.Id);
+        var efMappings = await _mappingRepository.GetByTemplateVersionIdOrderedAsync(efVersion.Id);
         if (efMappings.Count == 0)
         {
             var error = new TransformationResult { Success = false };
@@ -138,20 +149,17 @@ public class TransformationCoordinator : ITransformationCoordinator
             return (null, null, error);
         }
 
-        return (ToServiceTemplate(efTemplate), efMappings.Select(ToServiceMapping).ToList(), null);
-    }
-
-    private static ServiceModels.FieldMappingTemplate ToServiceTemplate(FieldMappingTemplate ef) =>
-        new()
+        // Map EF entity to service model
+        var serviceTemplate = new ServiceModels.FieldMappingTemplate
         {
-            TemplateId = ef.TemplateId,
-            TmsSystemId = ef.TmsSystemId,
-            Name = ef.Name,
-            Version = ef.Version,
-            Description = ef.Description,
-            SampleInputJson = ef.SampleInputJson,
-            Metadata = ef.Metadata
+            TemplateId = efTemplate.Id,
+            Name = efTemplate.Name,
+            Description = efTemplate.Description,
+            Version = efVersion.Version
         };
+
+        return (serviceTemplate, efMappings.Select(ToServiceMapping).ToList(), null);
+    }
 
     private static ServiceModels.FieldMapping ToServiceMapping(FieldMapping ef) =>
         new()
