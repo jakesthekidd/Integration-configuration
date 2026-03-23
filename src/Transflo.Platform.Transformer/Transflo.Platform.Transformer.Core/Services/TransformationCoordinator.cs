@@ -40,13 +40,13 @@ public class TransformationCoordinator : ITransformationCoordinator
         int? version = null,
         TransformOptions? options = null)
     {
-        var (template, mappings, earlyResult) = await ResolveAsync(templateId, version);
-        if (earlyResult != null)
+        var resolution = await ResolveAsync(templateId, version);
+        if (resolution.HasError)
         {
-            return earlyResult;
+            return resolution.EarlyResult!;
         }
 
-        var result = await _transformationService.TransformAsync(sourceJson, template!, mappings!);
+        var result = await _transformationService.TransformAsync(sourceJson, resolution.Template!, resolution.Mappings!);
         await PersistLogAsync(sourceJson, templateId, result, options);
         return result;
     }
@@ -58,13 +58,13 @@ public class TransformationCoordinator : ITransformationCoordinator
     {
         _logger.LogInformation("Previewing transformation with template: {TemplateId}", templateId);
 
-        var (template, mappings, earlyResult) = await ResolveAsync(templateId, version);
-        if (earlyResult != null)
+        var resolution = await ResolveAsync(templateId, version);
+        if (resolution.HasError)
         {
-            return earlyResult;
+            return resolution.EarlyResult!;
         }
 
-        return await _transformationService.TransformAsync(sourceJson, template!, mappings!);
+        return await _transformationService.TransformAsync(sourceJson, resolution.Template!, resolution.Mappings!);
     }
 
     public async Task<BatchTransformResult> TransformBatchAsync(
@@ -73,8 +73,8 @@ public class TransformationCoordinator : ITransformationCoordinator
         int? version = null,
         TransformOptions? options = null)
     {
-        var (template, mappings, earlyResult) = await ResolveAsync(templateId, version);
-        if (earlyResult != null)
+        var resolution = await ResolveAsync(templateId, version);
+        if (resolution.HasError)
         {
             return new BatchTransformResult
             {
@@ -85,12 +85,12 @@ public class TransformationCoordinator : ITransformationCoordinator
                 {
                     Index = i,
                     Success = false,
-                    Errors = earlyResult.Errors
+                    Errors = resolution.EarlyResult!.Errors
                 }).ToList()
             };
         }
 
-        var batchResult = await _transformationService.TransformBatchAsync(template!, mappings!, records);
+        var batchResult = await _transformationService.TransformBatchAsync(resolution.Template!, resolution.Mappings!, records);
 
         var summaryResult = new TransformationResult
         {
@@ -110,9 +110,7 @@ public class TransformationCoordinator : ITransformationCoordinator
         return batchResult;
     }
 
-    private async Task<(ServiceModels.FieldMappingTemplate? template, List<ServiceModels.FieldMapping>? mappings, TransformationResult? earlyResult)> ResolveAsync(
-        Guid templateId,
-        int? version)
+    private async Task<TemplateResolutionResult> ResolveAsync(Guid templateId, int? version)
     {
         var efTemplate = await _templateRepository.GetByIdAsync(templateId);
         TemplateVersion? efVersion = null;
@@ -134,7 +132,7 @@ public class TransformationCoordinator : ITransformationCoordinator
                 ErrorCode = "TEMPLATE_NOT_FOUND",
                 Message = $"Template version not found: {templateId}" + (version.HasValue ? $" v{version.Value}" : "")
             });
-            return (null, null, error);
+            return TemplateResolutionResult.Error(error);
         }
 
         var efMappings = await _mappingRepository.GetByTemplateVersionIdOrderedAsync(efVersion.Id);
@@ -146,20 +144,21 @@ public class TransformationCoordinator : ITransformationCoordinator
                 ErrorCode = "NO_MAPPINGS",
                 Message = $"No mappings found for template: {templateId}"
             });
-            return (null, null, error);
+            return TemplateResolutionResult.Error(error);
         }
 
-        // Map EF entity to service model
-        var serviceTemplate = new ServiceModels.FieldMappingTemplate
-        {
-            TemplateId = efTemplate.Id,
-            Name = efTemplate.Name,
-            Description = efTemplate.Description,
-            Version = efVersion.Version
-        };
-
-        return (serviceTemplate, efMappings.Select(ToServiceMapping).ToList(), null);
+        return TemplateResolutionResult.Success(
+            ToServiceTemplate(efTemplate),
+            efMappings.Select(ToServiceMapping).ToList());
     }
+
+    private static ServiceModels.FieldMappingTemplate ToServiceTemplate(Template ef) =>
+        new()
+        {
+            TemplateId = ef.Id,
+            Name = ef.Name,
+            Description = ef.Description,
+        };
 
     private static ServiceModels.FieldMapping ToServiceMapping(FieldMapping ef) =>
         new()
