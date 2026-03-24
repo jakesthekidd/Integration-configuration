@@ -15,15 +15,6 @@ import { Customer } from '../models/customer.model';
       <h2>Template Management</h2>
 
       <div class="filters">
-        <label>
-          Filter by TMS System:
-          <select [(ngModel)]="selectedTmsSystemId" (change)="onTmsFilterChange()">
-            <option value="">All Systems</option>
-            <option *ngFor="let tms of tmsSystems" [value]="tms.id">
-              {{ tms.displayName }}
-            </option>
-          </select>
-        </label>
         <button class="btn-primary" (click)="toggleCreateForm()">
           {{ showCreateForm ? 'Cancel' : 'New Template' }}
         </button>
@@ -40,38 +31,33 @@ import { Customer } from '../models/customer.model';
                      placeholder="e.g., McLeod to WFAI Transformation" />
             </div>
             <div class="form-group">
-              <label>TMS System <span class="required">*</span></label>
-              <select [(ngModel)]="newTemplate.tmsSystemId" name="tmsSystemId" required>
-                <option value="">Select TMS System</option>
-                <option *ngFor="let tms of tmsSystems" [value]="tms.id">
-                  {{ tms.displayName }}
-                </option>
-              </select>
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>Customer</label>
-              <select [(ngModel)]="newTemplate.customerId" name="customerId">
-                <option value="">— Generic (no customer) —</option>
-                <!-- <option *ngFor="let c of customers" [value]="c.id">
-                  {{ c.name }}{{ c.code ? ' (' + c.code + ')' : '' }}
-                </option> -->
-              </select>
-              <small>Optionally scope this template to a specific customer.</small>
-            </div>
-            <div class="form-group">
               <label>Description</label>
               <textarea [(ngModel)]="newTemplate.description" name="description" rows="2"
                         placeholder="Describe what this template transforms and how"></textarea>
             </div>
           </div>
-          <div class="form-group">
-            <label>Sample Input JSON</label>
-            <textarea [(ngModel)]="newTemplate.sampleInputJson" name="sampleInputJson" rows="5"
-                      class="json-textarea"
-                      placeholder='{ "field": "value", ... }'></textarea>
-            <small>Paste a representative source JSON payload. Used to auto-suggest source field paths in the Field Mappings screen and to pre-populate the Test Transformation screen.</small>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Source Schema (JSON)</label>
+              <textarea [(ngModel)]="newTemplate.sourceSchema" name="sourceSchema" rows="5"
+                        class="json-textarea"
+                        placeholder='{ "field": "value", ... }'></textarea>
+              <div class="drop-zone" (click)="fileInputCreateSource.click()" (dragover)="$event.preventDefault()" (drop)="onFileDropSourceSchema($event, false)">
+                <p>Drag & Drop JSON file here or <strong>Click to Upload</strong></p>
+                <input type="file" #fileInputCreateSource (change)="handleFileUploadSourceSchema($event, false)" accept=".json" style="display:none">
+              </div>
+              <small>Used to auto-suggest source field paths in the Field Mappings screen.</small>
+            </div>
+            <div class="form-group">
+              <label>Target Schema (JSON)</label>
+              <textarea [(ngModel)]="newTemplate.targetSchema" name="targetSchema" rows="5"
+                        class="json-textarea"
+                        placeholder='{ "field": "value", ... }'></textarea>
+              <div class="drop-zone" (click)="fileInputCreateTarget.click()" (dragover)="$event.preventDefault()" (drop)="onFileDropTargetSchema($event, false)">
+                <p>Drag & Drop JSON file here or <strong>Click to Upload</strong></p>
+                <input type="file" #fileInputCreateTarget (change)="handleFileUploadTargetSchema($event, false)" accept=".json" style="display:none">
+              </div>
+            </div>
           </div>
           <div class="form-actions">
             <button type="submit" class="btn-primary" [disabled]="!createForm.form.valid">
@@ -95,32 +81,44 @@ import { Customer } from '../models/customer.model';
                      placeholder="Template name" />
             </div>
             <div class="form-group">
-              <label>TMS System</label>
-              <input type="text" [value]="getTmsSystemName(editingTemplate.tmsSystemId)" readonly />
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>Customer</label>
-              <select [(ngModel)]="editRequest.customerId" name="editCustomerId">
-                <option value="">— Generic (no customer) —</option>
-                <!-- <option *ngFor="let c of customers" [value]="c.id">
-                  {{ c.name }}{{ c.code ? ' (' + c.code + ')' : '' }}
-                </option> -->
-              </select>
-            </div>
-            <div class="form-group">
               <label>Description</label>
               <textarea [(ngModel)]="editRequest.description" name="editDescription" rows="2"
                         placeholder="Template description"></textarea>
             </div>
           </div>
-          <div class="form-group">
-            <label>Sample Input JSON</label>
-            <textarea [(ngModel)]="editRequest.sampleInputJson" name="editSampleInputJson" rows="5"
-                      class="json-textarea"
-                      placeholder='{ "field": "value", ... }'></textarea>
-            <small>Paste a representative source JSON payload. Used to auto-suggest source field paths in the Field Mappings screen and to pre-populate the Test Transformation screen.</small>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Edit Version</label>
+              <select [(ngModel)]="selectedVersion" name="editVersion" (change)="onVersionSelect()">
+                <option *ngFor="let v of templateVersions" [value]="v.version">
+                  Version {{ v.version }} ({{ v.status }})
+                </option>
+              </select>
+            </div>
+            <div class="form-group"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Source Schema (JSON)</label>
+              <textarea [(ngModel)]="editRequest.sourceSchema" name="editSourceSchema" rows="5"
+                        class="json-textarea"
+                       placeholder='{ "field": "value", ... }'></textarea>
+              <div class="drop-zone" (click)="fileInputEditSource.click()" (dragover)="$event.preventDefault()" (drop)="onFileDropSourceSchema($event, true)">
+                <p>Drag & Drop JSON file here or <strong>Click to Upload</strong></p>
+                <input type="file" #fileInputEditSource (change)="handleFileUploadSourceSchema($event, true)" accept=".json" style="display:none">
+              </div>
+              <small>Used to auto-suggest source field paths.</small>
+            </div>
+            <div class="form-group">
+              <label>Target Schema (JSON)</label>
+              <textarea [(ngModel)]="editRequest.targetSchema" name="editTargetSchema" rows="5"
+                        class="json-textarea"
+                       placeholder='{ "field": "value", ... }'></textarea>
+              <div class="drop-zone" (click)="fileInputEditTarget.click()" (dragover)="$event.preventDefault()" (drop)="onFileDropTargetSchema($event, true)">
+                <p>Drag & Drop JSON file here or <strong>Click to Upload</strong></p>
+                <input type="file" #fileInputEditTarget (change)="handleFileUploadTargetSchema($event, true)" accept=".json" style="display:none">
+              </div>
+            </div>
           </div>
           <div class="form-actions">
             <button type="submit" class="btn-primary" [disabled]="!editForm.form.valid">
@@ -142,8 +140,6 @@ import { Customer } from '../models/customer.model';
           <thead>
             <tr>
               <th>Name</th>
-              <th>TMS System</th>
-              <th>Customer</th>
               <th>Version</th>
               <th>Status</th>
               <th>Description</th>
@@ -155,10 +151,8 @@ import { Customer } from '../models/customer.model';
             <tr *ngFor="let template of templates">
               <td>
                 <strong>{{ template.name }}</strong>
-                <br /><small class="muted">{{ template.templateId }}</small>
+                <br /><small class="muted">{{ template.id }}</small>
               </td>
-              <td>{{ getTmsSystemName(template.tmsSystemId) }}</td>
-              <!-- <td>{{ getCustomerName(template.customerId) }}</td> -->
               <td>
                 <span class="badge badge-version">v{{ template.version }}</span>
               </td>
@@ -190,18 +184,22 @@ import { Customer } from '../models/customer.model';
                         title="Archive this template">
                   Archive
                 </button>
+                <button class="btn-small btn-reactivate"
+                        *ngIf="template.status === 'Archived'"
+                        (click)="reactivateTemplate(template)"
+                        title="Reactivate this archived template">
+                  Reactivate
+                </button>
                 <button class="btn-small btn-danger"
                         (click)="deleteTemplate(template)"
-                        title="Delete this template version">
+                        title="Delete this template">
                   Delete
                 </button>
               </td>
             </tr>
             <tr *ngIf="templates.length === 0">
-              <td colspan="8" class="no-data">
-                No templates found.
-                <span *ngIf="selectedTmsSystemId">Try clearing the TMS filter.</span>
-                <span *ngIf="!selectedTmsSystemId">Click "New Template" to create one.</span>
+              <td colspan="6" class="no-data">
+                No templates found. Click "New Template" to create one.
               </td>
             </tr>
           </tbody>
@@ -485,6 +483,30 @@ import { Customer } from '../models/customer.model';
       background: #95a5a6;
       color: white;
     }
+    
+    .btn-reactivate {
+      background: #34495e;
+      color: white;
+    }
+    
+    .btn-reactivate:hover {
+      background: #2c3e50;
+    }
+
+    .drop-zone {
+      border: 2px dashed #3498db;
+      border-radius: 4px;
+      padding: 15px;
+      text-align: center;
+      background: #fff;
+      cursor: pointer;
+      transition: background 0.2s;
+      margin-top: 5px;
+    }
+
+    .drop-zone:hover, .drop-zone.dragover {
+      background: #ebf5fb;
+    }
 
     .no-data {
       text-align: center;
@@ -503,51 +525,24 @@ import { Customer } from '../models/customer.model';
 })
 export class TemplatesComponent implements OnInit {
   templates: FieldMappingTemplate[] = [];
-  tmsSystems: TmsSystem[] = [];
-  customers: Customer[] = [];
-  selectedTmsSystemId: string = '';
+  templateVersions: any[] = []; // Placeholder for versions list
+  selectedVersion: number | null = null;
   showCreateForm: boolean = false;
   editingTemplate: FieldMappingTemplate | null = null;
   error: string = '';
   success: string = '';
 
   newTemplate: CreateTemplateRequest = this.getEmptyCreateRequest();
-  editRequest: UpdateTemplateRequest = { name: '', description: '', customerId: '' };
+  editRequest: UpdateTemplateRequest = { name: '', description: '', sourceSchema: '', targetSchema: '' };
 
-  constructor(private apiService: ApiService) {}
+  constructor(private apiService: ApiService) { }
 
   ngOnInit() {
-    this.loadTmsSystems();
-    this.loadCustomers();
     this.loadTemplates();
   }
 
-  loadCustomers() {
-    this.apiService.getCustomers(true).subscribe({
-      next: (response) => {
-        if (response.success && response.data) {
-          this.customers = response.data.customers;
-        }
-      },
-      error: (err) => console.error('Failed to load customers', err)
-    });
-  }
-
-  loadTmsSystems() {
-    this.apiService.getTmsSystems(true).subscribe({
-      next: (response) => {
-        if (response.success && response.data) {
-          this.tmsSystems = response.data.systems;
-        }
-      },
-      error: (err) => {
-        console.error('Failed to load TMS systems', err);
-      }
-    });
-  }
-
   loadTemplates() {
-    this.apiService.getTemplates(this.selectedTmsSystemId || undefined).subscribe({
+    this.apiService.getTemplates().subscribe({
       next: (response) => {
         if (response.success && response.data) {
           this.templates = response.data.templates;
@@ -558,10 +553,6 @@ export class TemplatesComponent implements OnInit {
         console.error(err);
       }
     });
-  }
-
-  onTmsFilterChange() {
-    this.loadTemplates();
   }
 
   toggleCreateForm() {
@@ -595,24 +586,115 @@ export class TemplatesComponent implements OnInit {
   startEdit(template: FieldMappingTemplate) {
     this.editingTemplate = template;
     this.showCreateForm = false;
+    this.selectedVersion = template.version;
     this.editRequest = {
       name: template.name,
       description: template.description,
-      customerId: template.customerId ?? '',
-      sampleInputJson: template.sampleInputJson ?? ''
+      sourceSchema: template.sourceSchema ?? '',
+      targetSchema: template.targetSchema ?? ''
     };
     this.clearMessages();
+
+    // Load available versions
+    this.loadTemplateVersions(template.id);
 
     setTimeout(() => {
       document.querySelector('.form-container')?.scrollIntoView({ behavior: 'smooth' });
     }, 100);
   }
 
+  loadTemplateVersions(templateId: string) {
+    this.apiService.getTemplateVersions(templateId).subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.templateVersions = response.data;
+        }
+      }
+    });
+  }
+
+  onVersionSelect() {
+    if (!this.editingTemplate || !this.selectedVersion) return;
+    this.apiService.getTemplateById(this.editingTemplate.id, this.selectedVersion).subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.editRequest.sourceSchema = response.data.sourceSchema ?? '';
+          this.editRequest.targetSchema = response.data.targetSchema ?? '';
+          // Optionally update other fields if they vary by version
+        }
+      }
+    });
+  }
+
+  reactivateTemplate(template: FieldMappingTemplate) {
+    if (!confirm(`Reactivate template "${template.name}"?`)) return;
+    this.clearMessages();
+    this.apiService.reactivateTemplate(template.id).subscribe({
+      next: () => {
+        this.success = `Template "${template.name}" reactivated.`;
+        this.loadTemplates();
+      },
+      error: (err) => this.error = err.error?.message || 'Failed to reactivate'
+    });
+  }
+
+  handleFileUploadSourceSchema(event: any, isEdit: boolean = false) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    this.readSchemaFile(file, isEdit, 'source');
+  }
+
+  onFileDropSourceSchema(event: DragEvent, isEdit: boolean = false) {
+    event.preventDefault();
+    const file = event.dataTransfer?.files?.[0];
+    if (!file) return;
+    this.readSchemaFile(file, isEdit, 'source');
+  }
+
+  handleFileUploadTargetSchema(event: any, isEdit: boolean = false) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    this.readSchemaFile(file, isEdit, 'target');
+  }
+
+  onFileDropTargetSchema(event: DragEvent, isEdit: boolean = false) {
+    event.preventDefault();
+    const file = event.dataTransfer?.files?.[0];
+    if (!file) return;
+    this.readSchemaFile(file, isEdit, 'target');
+  }
+
+  private readSchemaFile(file: File, isEdit: boolean, type: 'source' | 'target') {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const content = e.target?.result as string;
+        JSON.parse(content); // Validate JSON
+        if (isEdit) {
+          if (type === 'source') {
+            this.editRequest.sourceSchema = content;
+          } else {
+            this.editRequest.targetSchema = content;
+          }
+        } else {
+          if (type === 'source') {
+            this.newTemplate.sourceSchema = content;
+          } else {
+            this.newTemplate.targetSchema = content;
+          }
+        }
+      } catch (err) {
+        this.error = `Invalid JSON file for ${type} schema`;
+      }
+    };
+    reader.readAsText(file);
+  }
+
   updateTemplate() {
     if (!this.editingTemplate) return;
     this.clearMessages();
 
-    this.apiService.updateTemplate(this.editingTemplate.templateId, this.editRequest).subscribe({
+    this.apiService.updateTemplate(this.editingTemplate.id, this.editRequest).subscribe({
       next: (response) => {
         if (response.success) {
           this.success = `Template updated to version ${response.data?.version}.`;
@@ -629,13 +711,13 @@ export class TemplatesComponent implements OnInit {
 
   cancelEdit() {
     this.editingTemplate = null;
-    this.editRequest = { name: '', description: '', customerId: '', sampleInputJson: '' };
+    this.editRequest = { name: '', description: '', sourceSchema: '', targetSchema: '' };
   }
 
   duplicateTemplate(template: FieldMappingTemplate) {
     this.clearMessages();
 
-    this.apiService.duplicateTemplate(template.templateId).subscribe({
+    this.apiService.duplicateTemplate(template.id).subscribe({
       next: (response) => {
         if (response.success) {
           this.success = `Template "${response.data?.name}" created as a copy of "${template.name}".`;
@@ -661,7 +743,7 @@ export class TemplatesComponent implements OnInit {
       status: 'Published'
     };
 
-    this.apiService.updateTemplate(template.templateId, publishRequest).subscribe({
+    this.apiService.updateTemplate(template.id, publishRequest).subscribe({
       next: (response) => {
         if (response.success) {
           this.success = `Template "${template.name}" published successfully.`;
@@ -687,7 +769,7 @@ export class TemplatesComponent implements OnInit {
       status: 'Archived'
     };
 
-    this.apiService.updateTemplate(template.templateId, archiveRequest).subscribe({
+    this.apiService.updateTemplate(template.id, archiveRequest).subscribe({
       next: (response) => {
         if (response.success) {
           this.success = `Template "${template.name}" archived.`;
@@ -707,7 +789,7 @@ export class TemplatesComponent implements OnInit {
     }
     this.clearMessages();
 
-    this.apiService.deleteTemplate(template.templateId, template.version).subscribe({
+    this.apiService.deleteTemplate(template.id, template.version).subscribe({
       next: () => {
         this.success = `Template "${template.name}" (v${template.version}) deleted.`;
         this.loadTemplates();
@@ -719,22 +801,13 @@ export class TemplatesComponent implements OnInit {
     });
   }
 
-  // getCustomerName(customerId?: string): string {
-  //   if (!customerId) return '—';
-  //   // const c = this.customers.find(x => x.id === customerId);
-  //   return c ? c.name : customerId;
-  // }
-
-  getTmsSystemName(tmsSystemId: string): string {
-    const tms = this.tmsSystems.find(t => t.id === tmsSystemId);
-    return tms ? tms.displayName : tmsSystemId;
-  }
+  // getTmsSystemName removed
 
   getStatusClass(status: string): string {
     switch (status?.toLowerCase()) {
       case 'published': return 'badge-published';
-      case 'archived':  return 'badge-archived';
-      default:          return 'badge-draft';
+      case 'archived': return 'badge-archived';
+      default: return 'badge-draft';
     }
   }
 
@@ -750,6 +823,6 @@ export class TemplatesComponent implements OnInit {
   }
 
   private getEmptyCreateRequest(): CreateTemplateRequest {
-    return { name: '', description: '', tmsSystemId: '', customerId: '', sampleInputJson: '' };
+    return { name: '', description: '', sourceSchema: '', targetSchema: '' };
   }
 }

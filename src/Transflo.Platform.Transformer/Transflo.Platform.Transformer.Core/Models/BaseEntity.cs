@@ -18,6 +18,9 @@ public abstract class BaseEntity
     [Column("deleted_at")]
     public DateTime? DeletedAt { get; set; }
 
+    [Column("is_deleted")]
+    public bool IsDeleted { get; set; } = false;
+
     [Column("created_by")]
     [MaxLength(100)]
     public string? CreatedBy { get; set; }

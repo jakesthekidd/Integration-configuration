@@ -86,9 +86,13 @@ export class ApiService {
 
   getTemplateById(templateId: string, version?: number): Observable<ApiResponse<FieldMappingTemplate>> {
     const url = version
-      ? `${this.apiUrl}/templates/${templateId}?version=${version}`
+      ? `${this.apiUrl}/templates/${templateId}/versions/${version}`
       : `${this.apiUrl}/templates/${templateId}`;
     return this.http.get<ApiResponse<FieldMappingTemplate>>(url);
+  }
+
+  getTemplateVersions(templateId: string): Observable<ApiResponse<any[]>> {
+    return this.http.get<ApiResponse<any[]>>(`${this.apiUrl}/templates/${templateId}/versions`);
   }
 
   createTemplate(request: CreateTemplateRequest): Observable<ApiResponse<FieldMappingTemplate>> {
@@ -109,6 +113,12 @@ export class ApiService {
   duplicateTemplate(templateId: string): Observable<ApiResponse<FieldMappingTemplate>> {
     return this.http.post<ApiResponse<FieldMappingTemplate>>(
       `${this.apiUrl}/templates/${templateId}/duplicate`, {}
+    );
+  }
+
+  reactivateTemplate(templateId: string): Observable<void> {
+    return this.http.post<void>(
+      `${this.apiUrl}/templates/${templateId}/reactivate`, {}
     );
   }
 
@@ -182,7 +192,7 @@ export class ApiService {
   getTransformationLogById(id: string): Observable<ApiResponse<TransformationLogDetail>> {
     return this.http.get<ApiResponse<TransformationLogDetail>>(`${this.apiUrl}/transform-logs/${id}`);
   }
-  
+
   transformJsonWithTemplate(request: TransformRequest): Observable<any> {
     return this.http.post<any>(`${this.apiUrl}/transform`, request);
   }

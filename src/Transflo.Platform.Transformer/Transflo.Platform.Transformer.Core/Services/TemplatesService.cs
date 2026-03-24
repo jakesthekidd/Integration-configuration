@@ -85,6 +85,22 @@ public class TemplatesService : ITemplatesService
         return true;
     }
 
+    public async Task<bool> ReactivateAsync(Guid templateId)
+    {
+        var existing = await _templateRepo.GetByIdAsync(templateId);
+        if (existing is null || existing.IsDeleted) // Specifically don't reactivate soft-deleted
+            return false;
+
+        if (existing.Status != TemplateStatus.Archived)
+            return false;
+
+        existing.Status = TemplateStatus.Draft;
+        existing.UpdatedAt = DateTime.UtcNow;
+
+        await _templateRepo.UpdateAsync(existing);
+        return true;
+    }
+
     public async Task<TemplateResponse?> DuplicateAsync(Guid templateId)
     {
         var source = await _templateRepo.GetByIdAsync(templateId);
@@ -218,6 +234,7 @@ public class TemplatesService : ITemplatesService
         Status = t.Status.ToString(),
         SourceSchema = t.SourceSchema,
         TargetSchema = t.TargetSchema,
+        Version = t.TemplateVersions?.OrderByDescending(v => v.Version).FirstOrDefault()?.Version ?? 1,
         CreatedAt = t.CreatedAt,
         UpdatedAt = t.UpdatedAt,
         CreatedBy = "system" // Or mapped if available

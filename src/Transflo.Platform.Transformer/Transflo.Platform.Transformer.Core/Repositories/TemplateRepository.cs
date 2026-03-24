@@ -33,6 +33,8 @@ public class TemplateRepository : ITemplateRepository
     public async Task<List<Template>> GetAllAsync()
     {
         return await _context.Templates
+            .Include(t => t.TemplateVersions)
+            .Where(t => !t.IsDeleted)
             .OrderByDescending(t => t.CreatedAt)
             .ToListAsync();
     }
@@ -41,6 +43,7 @@ public class TemplateRepository : ITemplateRepository
     {
         template.CreatedAt = DateTime.UtcNow;
         template.UpdatedAt = DateTime.UtcNow;
+        template.IsDeleted = false;
 
         _context.Templates.Add(template);
         await _context.SaveChangesAsync();
@@ -65,9 +68,13 @@ public class TemplateRepository : ITemplateRepository
         var template = await _context.Templates.FindAsync(id);
         if (template is not null)
         {
-            _context.Templates.Remove(template);
+            template.IsDeleted = true;
+            template.DeletedAt = DateTime.UtcNow;
+            template.Status = TemplateStatus.Deleted;
+            template.UpdatedAt = DateTime.UtcNow;
+
             await _context.SaveChangesAsync();
-            _logger.LogInformation($"Deleted template: {id}");
+            _logger.LogInformation($"Soft-deleted template: {id}");
         }
     }
 }

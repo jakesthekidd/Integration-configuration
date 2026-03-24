@@ -18,7 +18,7 @@ import { FieldMappingTemplate } from '../models/template.model';
           Filter by Template:
           <select [(ngModel)]="selectedTemplateId" (change)="onTemplateChange()">
             <option value="">All Templates</option>
-            <option *ngFor="let template of templates" [value]="template.templateId">
+            <option *ngFor="let template of templates" [value]="template.id">
               {{template.name}} (v{{template.version}})
             </option>
           </select>
@@ -36,7 +36,7 @@ import { FieldMappingTemplate } from '../models/template.model';
             <select [(ngModel)]="newMapping.templateId" name="templateId" required
                     (change)="onNewMappingTemplateChange()">
               <option value="">Select Template</option>
-              <option *ngFor="let template of templates" [value]="template.templateId">
+              <option *ngFor="let template of templates" [value]="template.id">
                 {{template.name}} (v{{template.version}})
               </option>
             </select>
@@ -397,7 +397,7 @@ export class FieldMappingsComponent implements OnInit {
 
   newMapping: CreateFieldMappingRequest = this.getEmptyMapping();
 
-  constructor(private apiService: ApiService) {}
+  constructor(private apiService: ApiService) { }
 
   ngOnInit() {
     this.loadTemplates();
@@ -452,7 +452,7 @@ export class FieldMappingsComponent implements OnInit {
 
   private loadSourcePathsFromSampleJson(templateId: string): void {
     if (!templateId) return;
-    const template = this.templates.find(t => t.templateId === templateId);
+    const template = this.templates.find(t => t.id === templateId);
     if (!template?.sampleInputJson) return;
 
     this.apiService.parseJson(template.sampleInputJson).subscribe({
@@ -507,7 +507,7 @@ export class FieldMappingsComponent implements OnInit {
   }
 
   getTemplateName(templateId: string): string {
-    const template = this.templates.find(t => t.templateId === templateId);
+    const template = this.templates.find(t => t.id === templateId);
     return template ? `${template.name} (v${template.version})` : templateId;
   }
 

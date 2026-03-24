@@ -24,7 +24,7 @@ import { MappingIssue, TransformRequest, TransformResult } from '../models/trans
             Select Template:
             <select [(ngModel)]="selectedTemplateId" (change)="onTemplateChange()">
               <option value="">Choose a template...</option>
-              <option *ngFor="let template of templates" [value]="template.templateId">
+              <option *ngFor="let template of templates" [value]="template.id">
                 {{template.name}} (v{{template.version}})
               </option>
             </select>
@@ -768,7 +768,7 @@ export class TransformationTestComponent implements OnInit {
     this.success = '';
 
     if (this.selectedTemplateId && !this.sourceJson) {
-      const template = this.templates.find(t => t.templateId === this.selectedTemplateId);
+      const template = this.templates.find(t => t.id === this.selectedTemplateId);
       if (template?.sampleInputJson) {
         try {
           const parsed = JSON.parse(template.sampleInputJson);
@@ -800,7 +800,7 @@ export class TransformationTestComponent implements OnInit {
           } finally {
             this.isParsing = false;
           }
-        }, 0); 
+        }, 0);
       };
       reader.readAsText(file);
     }
@@ -881,18 +881,18 @@ export class TransformationTestComponent implements OnInit {
     this.apiService.transformJsonWithTemplate(request).subscribe({
       next: (response) => {
         const data: TransformResult = response?.data ?? {};
-    
+
         if (data.outputJson) {
           this.transformedJson = data.outputJson;
         } else if (data.transformedData) {
           this.transformedJson = JSON.stringify(data.transformedData, null, 2);
         }
-    
+
         this.transformResult = data;
-    
+
         // Normalise errors and warnings into a unified MappingIssue list
         const issues: MappingIssue[] = [];
-    
+
         for (const err of data.errors ?? []) {
           issues.push({
             type: 'error',
@@ -902,7 +902,7 @@ export class TransformationTestComponent implements OnInit {
             message: err.message
           });
         }
-    
+
         for (const warn of data.warnings ?? []) {
           issues.push({
             type: 'warning',
@@ -912,9 +912,9 @@ export class TransformationTestComponent implements OnInit {
             message: warn.message
           });
         }
-    
+
         this.mappingIssues = issues;
-    
+
         if (data.success) {
           this.success = issues.length > 0
             ? `Transformation completed with ${this.warningCount} warning(s).`
@@ -923,7 +923,7 @@ export class TransformationTestComponent implements OnInit {
           const partialNote = this.transformedJson ? ' Partial output is shown below.' : '';
           this.success = `Partial transformation: ${this.errorCount} required field(s) could not be mapped.${partialNote}`;
         }
-    
+
         if (this.annotatedIssueCount > 0) {
           this.buildAnnotatedJson();
         }
@@ -1016,7 +1016,7 @@ export class TransformationTestComponent implements OnInit {
         this.transformedJson = formatted;
       }
 
-      this.error = ''; 
+      this.error = '';
       this.annotatedSourceHtml = '';
     } catch (e: any) {
 
@@ -1039,27 +1039,27 @@ export class TransformationTestComponent implements OnInit {
 
   annotateJsonError(json: string, errorDetails: { line: number; column: number }): string {
     if (!json || !errorDetails) return json;
-  
+
     const { line, column } = errorDetails;
     const lines = json.split('\n');
-  
+
     if (line < 1 || line > lines.length) return json;
-  
+
     const errorLine = lines[line - 1];
-  
+
     if (!errorLine || column < 1 || column > errorLine.length) {
       return json;
     }
-  
+
     const highlightedChar = errorLine[column - 1] || '';
-  
+
     const highlighted =
       errorLine.substring(0, column - 1) +
       `<span class="json-error-marker">${this.escapeHtml(highlightedChar)}</span>` +
       errorLine.substring(column);
-  
+
     lines[line - 1] = highlighted;
-  
+
     return lines.join('\n');
   }
 
@@ -1157,7 +1157,7 @@ export class TransformationTestComponent implements OnInit {
         const reader = new FileReader();
         reader.onload = (e: any) => {
           this.isParsing = true;
-        
+
           setTimeout(() => {
             try {
               const json = JSON.parse(e.target.result);
@@ -1170,7 +1170,7 @@ export class TransformationTestComponent implements OnInit {
             } finally {
               this.isParsing = false;
             }
-          }, 0); 
+          }, 0);
         };
         reader.readAsText(file);
         this.fileName = file.name;
