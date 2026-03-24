@@ -1,36 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ApiService } from '../services/api.service';
 import { FieldMappingTemplate } from '../models/template.model';
-
-interface TransformRequest {
-  sourceJson: string;
-  templateId: string;
-  version?: number;
-}
-
-interface MappingIssue {
-  type: 'error' | 'warning';
-  code: string;
-  sourcePath?: string;
-  targetPath?: string;
-  message: string;
-}
-
-interface TransformResult {
-  success: boolean;
-  outputJson?: string;
-  transformedData?: any;
-  fieldsMapped?: number;
-  fieldsSkipped?: number;
-  errors?: Array<{ errorCode: string; fieldPath?: string; sourcePath?: string; message: string }>;
-  warnings?: Array<{ code: string; sourcePath?: string; targetPath?: string; message: string }>;
-  executionTimeMs?: number;
-}
-import { environment } from '../../environments/environment';
+import { parseTree, printParseErrorCode, ParseError } from 'jsonc-parser';
+import { MappingIssue, TransformRequest, TransformResult } from '../models/transformation-test.Model';
 
 @Component({
   selector: 'app-transformation-test',
@@ -65,8 +40,8 @@ import { environment } from '../../environments/environment';
         </div>
 
         <div class="sample-buttons">
-          <button class="btn-secondary" (click)="loadSampleInput()">Load Sample Input</button>
-          <button class="btn-secondary" (click)="clearAll()">Clear All</button>
+          <button class="btn-secondary file-label" (click)="loadSampleInput()">Load Sample Input</button>
+          <button class="btn-secondary file-label" (click)="clearAll()">Clear All</button>
         </div>
       </div>
 
@@ -87,20 +62,29 @@ import { environment } from '../../environments/environment';
               </button>
             </div>
           </div>
-          <div class="source-body">
-            <textarea
-              *ngIf="!showAnnotatedView"
-              [(ngModel)]="sourceJson"
-              class="json-editor"
-              placeholder="Paste your source JSON here or upload a file..."
-              spellcheck="false"
-            ></textarea>
-            <div
-              *ngIf="showAnnotatedView"
-              class="json-annotated-container"
-              [innerHTML]="annotatedSourceHtml"
-            ></div>
+          <div
+          class="source-body source-dropzone"
+          [class.drag-over]="isDragOver"
+          (dragover)="onDragOver($event)"
+          (dragleave)="onDragLeave($event)"
+          (drop)="onFileDrop($event)"
+          >
+          <div *ngIf="isParsing" class="spinner-overlay">
+            <div class="spinner"></div>
+            <div class="spinner-text">Parsing JSON...</div>
           </div>
+          <textarea
+            *ngIf="!showAnnotatedView"
+            [(ngModel)]="sourceJson"
+            class="json-editor"
+            placeholder="Paste JSON or drag & drop a JSON file here..."
+            spellcheck="false"
+          ></textarea>
+
+          <div *ngIf="isDragOver" class="drop-overlay">
+            Drop JSON file here
+          </div>
+        </div>
           <div class="panel-footer">
             <span *ngIf="sourceJson">{{ getJsonSize(sourceJson) }}</span>
           </div>
@@ -239,12 +223,11 @@ import { environment } from '../../environments/environment';
 
     .controls {
       display: flex;
+      align-items: center;
       gap: 20px;
       margin-bottom: 20px;
-      flex-wrap: wrap;
-      align-items: center;
+      flex-wrap: nowrap;
     }
-
     .template-selector {
       flex: 1;
       min-width: 250px;
@@ -280,6 +263,7 @@ import { environment } from '../../environments/environment';
       cursor: pointer;
       font-size: 14px;
       font-weight: 500;
+      margin-top: 24px;;
     }
 
     .file-label:hover {
@@ -664,6 +648,63 @@ import { environment } from '../../environments/environment';
       color: #666;
       margin-bottom: 0;
     }
+
+    .source-dropzone {
+      position: relative;
+      flex: 1;
+      min-height: 400px;
+      border: 2px dashed #ccc;
+      border-radius: 4px;
+      transition: border-color 0.2s, background-color 0.2s;
+    }
+
+    .source-dropzone.drag-over {
+      border-color: #3498db;
+      background-color: #f0f8ff;
+    }
+    .drop-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(52, 152, 219, 0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      color: #3498db;
+      font-size: 18px;
+      pointer-events: none;
+    }
+    .spinner-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(255, 255, 255, 0.7);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid #ddd;
+      border-top: 4px solid #3498db;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    .spinner-text {
+      margin-top: 10px;
+      font-size: 14px;
+      color: #555;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
   `]
 })
 export class TransformationTestComponent implements OnInit {
@@ -679,12 +720,11 @@ export class TransformationTestComponent implements OnInit {
   mappingIssues: MappingIssue[] = [];
   showAnnotatedView = false;
   annotatedSourceHtml: SafeHtml = '';
-
-  private apiUrl = environment.apiUrl;
+  isDragOver = false;
+  isParsing = false;
 
   constructor(
     private apiService: ApiService,
-    private http: HttpClient,
     private sanitizer: DomSanitizer
   ) { }
 
@@ -746,15 +786,21 @@ export class TransformationTestComponent implements OnInit {
       this.fileName = file.name;
       const reader = new FileReader();
       reader.onload = (e: any) => {
-        try {
-          const json = JSON.parse(e.target.result);
-          this.sourceJson = JSON.stringify(json, null, 2);
-          this.error = '';
-          this.showAnnotatedView = false;
-        } catch (err) {
-          this.error = 'Invalid JSON file';
-          this.sourceJson = '';
-        }
+        this.isParsing = true;
+
+        setTimeout(() => {
+          try {
+            const json = JSON.parse(e.target.result);
+            this.sourceJson = JSON.stringify(json, null, 2);
+            this.error = '';
+            this.showAnnotatedView = false;
+          } catch {
+            this.error = 'Invalid JSON file';
+            this.sourceJson = '';
+          } finally {
+            this.isParsing = false;
+          }
+        }, 0); 
       };
       reader.readAsText(file);
     }
@@ -832,22 +878,21 @@ export class TransformationTestComponent implements OnInit {
     };
 
     // Server always returns HTTP 200 — read everything from the next callback
-    this.http.post<any>(`${this.apiUrl}/transform`, request).subscribe({
+    this.apiService.transformJsonWithTemplate(request).subscribe({
       next: (response) => {
         const data: TransformResult = response?.data ?? {};
-
-        // Build output JSON string from whichever field is available
+    
         if (data.outputJson) {
           this.transformedJson = data.outputJson;
         } else if (data.transformedData) {
           this.transformedJson = JSON.stringify(data.transformedData, null, 2);
         }
-
+    
         this.transformResult = data;
-
+    
         // Normalise errors and warnings into a unified MappingIssue list
         const issues: MappingIssue[] = [];
-
+    
         for (const err of data.errors ?? []) {
           issues.push({
             type: 'error',
@@ -857,7 +902,7 @@ export class TransformationTestComponent implements OnInit {
             message: err.message
           });
         }
-
+    
         for (const warn of data.warnings ?? []) {
           issues.push({
             type: 'warning',
@@ -867,9 +912,9 @@ export class TransformationTestComponent implements OnInit {
             message: warn.message
           });
         }
-
+    
         this.mappingIssues = issues;
-
+    
         if (data.success) {
           this.success = issues.length > 0
             ? `Transformation completed with ${this.warningCount} warning(s).`
@@ -878,8 +923,7 @@ export class TransformationTestComponent implements OnInit {
           const partialNote = this.transformedJson ? ' Partial output is shown below.' : '';
           this.success = `Partial transformation: ${this.errorCount} required field(s) could not be mapped.${partialNote}`;
         }
-
-        // Pre-build annotated view so "Highlight Issues" button is immediately usable
+    
         if (this.annotatedIssueCount > 0) {
           this.buildAnnotatedJson();
         }
@@ -959,18 +1003,115 @@ export class TransformationTestComponent implements OnInit {
   }
 
   formatJson(target: 'source' | 'target') {
+    let json = target === 'source' ? this.sourceJson : this.transformedJson;
+
     try {
-      const json = target === 'source' ? this.sourceJson : this.transformedJson;
       const parsed = JSON.parse(json);
       const formatted = JSON.stringify(parsed, null, 2);
+
       if (target === 'source') {
         this.sourceJson = formatted;
       } else {
+
         this.transformedJson = formatted;
       }
-    } catch (e) {
-      this.error = 'Invalid JSON format';
+
+      this.error = ''; 
+      this.annotatedSourceHtml = '';
+    } catch (e: any) {
+
+      const errors = this.validateJsonAllErrors(json);
+
+      if (errors.length > 0) {
+
+        this.error = `Invalid JSON (${errors.length} errors found)`;
+
+        this.errorDetails = errors.join('\n');
+
+      } else {
+
+        this.error = 'Invalid JSON format';
+
+      }
+
     }
+  }
+
+  annotateJsonError(json: string, errorDetails: { line: number; column: number }): string {
+    if (!json || !errorDetails) return json;
+  
+    const { line, column } = errorDetails;
+    const lines = json.split('\n');
+  
+    if (line < 1 || line > lines.length) return json;
+  
+    const errorLine = lines[line - 1];
+  
+    if (!errorLine || column < 1 || column > errorLine.length) {
+      return json;
+    }
+  
+    const highlightedChar = errorLine[column - 1] || '';
+  
+    const highlighted =
+      errorLine.substring(0, column - 1) +
+      `<span class="json-error-marker">${this.escapeHtml(highlightedChar)}</span>` +
+      errorLine.substring(column);
+  
+    lines[line - 1] = highlighted;
+  
+    return lines.join('\n');
+  }
+
+  validateJsonAllErrors(json: string): string[] {
+
+    const errors: ParseError[] = [];
+
+    parseTree(json, errors);
+
+    const lines = json.split('\n');
+
+    return errors.map((e, index) => {
+
+      const beforeError = json.substring(0, e.offset);
+      const line = beforeError.split('\n').length;
+      const column = beforeError.split('\n').pop()?.length || 0;
+
+      const lineText = lines[line - 1] || '';
+
+      const fieldName = this.getFieldNameFromLine(lineText);
+
+      const baseMessage =
+        `${index + 1}: ${printParseErrorCode(e.error)} at line ${line}, column ${column}`;
+
+      return fieldName
+        ? `${baseMessage} (near field: ${fieldName})`
+        : baseMessage;
+
+    });
+  }
+
+  private getFieldNameFromLine(lineText: string): string | null {
+
+    const match = lineText.match(/"([^"]+)"\s*:/);
+
+    return match ? match[1] : null;
+
+  }
+
+  getJsonErrorDetails(json: string, error: Error) {
+    const match = /position (\d+)/.exec(error.message);
+    if (!match) return null;
+
+    const pos = Number(match[1]);
+    const lines = json.substring(0, pos).split('\n');
+
+    return {
+      line: lines.length,
+      column: lines[lines.length - 1].length + 1,
+      position: pos,
+      message: error.message
+    };
   }
 
   copyToClipboard() {
@@ -994,5 +1135,48 @@ export class TransformationTestComponent implements OnInit {
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#039;');
+  }
+
+  onDragOver(event: DragEvent) {
+    event.preventDefault();
+    this.isDragOver = true;
+  }
+
+  onDragLeave(event: DragEvent) {
+    event.preventDefault();
+    this.isDragOver = false;
+  }
+
+  onFileDrop(event: DragEvent) {
+    event.preventDefault();
+    this.isDragOver = false;
+
+    if (event.dataTransfer?.files.length) {
+      const file = event.dataTransfer.files[0];
+      if (file.type === 'application/json' || file.name.endsWith('.json')) {
+        const reader = new FileReader();
+        reader.onload = (e: any) => {
+          this.isParsing = true;
+        
+          setTimeout(() => {
+            try {
+              const json = JSON.parse(e.target.result);
+              this.sourceJson = JSON.stringify(json, null, 2);
+              this.error = '';
+              this.showAnnotatedView = false;
+            } catch {
+              this.error = 'Invalid JSON file';
+              this.sourceJson = '';
+            } finally {
+              this.isParsing = false;
+            }
+          }, 0); 
+        };
+        reader.readAsText(file);
+        this.fileName = file.name;
+      } else {
+        this.error = 'Only JSON files are supported';
+      }
+    }
   }
 }

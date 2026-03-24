@@ -8,6 +8,7 @@ import { LookupTable, CreateLookupTableRequest, UpdateLookupTableRequest, Lookup
 import { Customer, CustomerRequest, CustomerListResponse } from '../models/customer.model';
 import { TransformationLogSummary, TransformationLogDetail, TransformationLogListResponse } from '../models/transformation-log.model';
 import { environment } from '../../environments/environment';
+import { TransformRequest } from '../models/transformation-test.Model';
 
 @Injectable({
   providedIn: 'root'
@@ -180,5 +181,9 @@ export class ApiService {
 
   getTransformationLogById(id: string): Observable<ApiResponse<TransformationLogDetail>> {
     return this.http.get<ApiResponse<TransformationLogDetail>>(`${this.apiUrl}/transform-logs/${id}`);
+  }
+  
+  transformJsonWithTemplate(request: TransformRequest): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/transform`, request);
   }
 }
