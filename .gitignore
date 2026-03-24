@@ -263,3 +263,44 @@ GitHubVS.sln.DotSettings
 
 # Ignore Angular cache
 .angular/cache/
+
+# Angular
+# https://github.com/github/gitignore/blob/main/community/JavaScript/Angular.gitignore
+
+# compiled output
+dist/
+tmp/
+out-tsc/
+bazel-out/
+
+# node_modules
+node_modules/
+
+# IDEs and editors
+.idea/
+.project
+.classpath
+.cproject
+.settings/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+.nb-gradle/
+
+# Tooling
+.angular/
+.webpack/
+.sourcemaps/
+.sass-cache/
+connect.lock
+coverage/
+libpeerconnection.log
+npm-debug.log
+testem.log
+typings/
+
+# System files
+.DS_Store
+Thumbs.db
