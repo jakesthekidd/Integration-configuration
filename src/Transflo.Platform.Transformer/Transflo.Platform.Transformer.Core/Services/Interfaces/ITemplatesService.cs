@@ -10,6 +10,7 @@ public interface ITemplatesService
     Task<TemplateResponse?> UpdateAsync(Guid templateId, UpdateTemplateRequest request);
     /// <summary>Returns false when the template does not exist.</summary>
     Task<bool> DeleteAsync(Guid templateId);
+    Task<bool> ReactivateAsync(Guid templateId);
     Task<TemplateResponse?> DuplicateAsync(Guid templateId);
 
     // ── Version lifecycle ────────────────────────────────────────────────────
@@ -31,4 +32,5 @@ public interface ITemplatesService
     /// or is not in Draft status.
     /// </summary>
     Task<TemplateVersionResponse?> PublishVersionAsync(Guid templateId, int version, string? publishedBy = null);
+    Task<bool> DeleteVersionAsync(Guid templateId, int version);
 }

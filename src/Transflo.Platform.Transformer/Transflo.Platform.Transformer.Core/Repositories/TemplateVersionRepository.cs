@@ -92,4 +92,20 @@ public class TemplateVersionRepository : ITemplateVersionRepository
 
         return target;
     }
+
+    public async Task<bool> DeleteAsync(Guid templateId, int version)
+    {
+        var target = await GetByVersionAsync(templateId, version);
+        if (target is null)
+            return false;
+
+        _context.TemplateVersions.Remove(target);
+        await _context.SaveChangesAsync();
+
+        _logger.LogInformation(
+            "Deleted template version {Version} for template {TemplateId}",
+            version, templateId);
+
+        return true;
+    }
 }

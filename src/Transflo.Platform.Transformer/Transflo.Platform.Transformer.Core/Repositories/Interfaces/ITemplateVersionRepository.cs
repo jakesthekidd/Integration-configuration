@@ -17,4 +17,5 @@ public interface ITemplateVersionRepository
     /// <c>SaveChangesAsync</c> call.
     /// </summary>
     Task<TemplateVersion> PublishVersionAsync(Guid templateId, int version, string? publishedBy = null);
+    Task<bool> DeleteAsync(Guid templateId, int version);
 }

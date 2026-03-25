@@ -15,6 +15,7 @@ export interface FieldMapping {
 
 export interface CreateFieldMappingRequest {
   templateId: string;
+  templateVersionId?: string;
   sourcePath: string;
   targetPath: string;
   transformationType: string;

@@ -74,6 +74,18 @@ public class TemplatesController : ControllerBase
         return NoContent();
     }
 
+    [HttpPost("{templateId}/reactivate")]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Reactivate(Guid templateId)
+    {
+        var found = await _service.ReactivateAsync(templateId);
+        if (!found)
+            return NotFound(ApiResponse<object>.ErrorResponse($"Template not found or not deleted: {templateId}"));
+
+        return NoContent();
+    }
+
     [HttpPost("{templateId}/duplicate")]
     [ProducesResponseType(typeof(ApiResponse<TemplateResponse>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ApiResponse<TemplateResponse>), StatusCodes.Status404NotFound)]
