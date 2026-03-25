@@ -4,6 +4,7 @@ export interface FieldMappingTemplate {
   description?: string;
   version: number;
   status: string;
+  latestVersionStatus?: string;
   createdAt: Date;
   updatedAt: Date;
   createdBy?: string;

@@ -15,7 +15,7 @@ public class Template : BaseEntity
     public string? Description { get; set; }
 
     [Column("status")]
-    public TemplateStatus Status { get; set; } = TemplateStatus.Draft;
+    public TemplateStatus Status { get; set; } = TemplateStatus.Active;
 
     [Column("source_schema", TypeName = "jsonb")]
     public string? SourceSchema { get; set; }

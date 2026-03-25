@@ -8,7 +8,7 @@ import { LookupTable, CreateLookupTableRequest, UpdateLookupTableRequest, Lookup
 import { Customer, CustomerRequest, CustomerListResponse } from '../models/customer.model';
 import { TransformationLogSummary, TransformationLogDetail, TransformationLogListResponse } from '../models/transformation-log.model';
 import { environment } from '../../environments/environment';
-import { TransformRequest } from '../models/transformation-test.Model';
+import { TransformRequest } from '../models/transformation-test.model';
 
 @Injectable({
   providedIn: 'root'
@@ -108,6 +108,14 @@ export class ApiService {
       ? `${this.apiUrl}/templates/${templateId}?version=${version}`
       : `${this.apiUrl}/templates/${templateId}`;
     return this.http.delete<void>(url);
+  }
+
+  createTemplateVersion(templateId: string): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(`${this.apiUrl}/templates/${templateId}/versions`, {});
+  }
+
+  publishTemplateVersion(templateId: string, version: number): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(`${this.apiUrl}/templates/${templateId}/versions/${version}/publish`, {});
   }
 
   duplicateTemplate(templateId: string): Observable<ApiResponse<FieldMappingTemplate>> {

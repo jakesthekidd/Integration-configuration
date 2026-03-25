@@ -5,7 +5,7 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ApiService } from '../services/api.service';
 import { FieldMappingTemplate } from '../models/template.model';
 import { parseTree, printParseErrorCode, ParseError } from 'jsonc-parser';
-import { MappingIssue, TransformRequest, TransformResult } from '../models/transformation-test.Model';
+import { MappingIssue, TransformRequest, TransformResult } from '../models/transformation-test.model';
 
 @Component({
   selector: 'app-transformation-test',

@@ -142,6 +142,7 @@ import { Customer } from '../models/customer.model';
               <th>Name</th>
               <th>Version</th>
               <th>Status</th>
+              <th>Current Version Status</th>
               <th>Description</th>
               <th>Created</th>
               <th>Actions</th>
@@ -161,6 +162,11 @@ import { Customer } from '../models/customer.model';
                   {{ template.status }}
                 </span>
               </td>
+              <td>
+                <span class="badge" [ngClass]="getVersionStatusClass(template.latestVersionStatus)">
+                  {{ template.latestVersionStatus || 'Draft' }}
+                </span>
+              </td>
               <td class="description-cell">{{ template.description || '—' }}</td>
               <td>{{ formatDate(template.createdAt) }}</td>
               <td class="actions-cell">
@@ -172,14 +178,20 @@ import { Customer } from '../models/customer.model';
                         title="Create a copy of this template with all its field mappings">
                   Duplicate
                 </button>
+                <button class="btn-small btn-duplicate"
+                        *ngIf="template.latestVersionStatus === 'Published' && template.status !== 'Archived'"
+                        (click)="createNewVersion(template)"
+                        title="Create a new draft version forked from this published template">
+                  New Version
+                </button>
                 <button class="btn-small btn-publish"
-                        *ngIf="template.status === 'Draft'"
+                        *ngIf="template.latestVersionStatus === 'Draft' && template.status !== 'Archived'"
                         (click)="publishTemplate(template)"
                         title="Publish this template to make it available for transformations">
                   Publish
                 </button>
                 <button class="btn-small btn-archive"
-                        *ngIf="template.status === 'Published'"
+                        *ngIf="template.status !== 'Archived'"
                         (click)="archiveTemplate(template)"
                         title="Archive this template">
                   Archive
@@ -731,19 +743,33 @@ export class TemplatesComponent implements OnInit {
     });
   }
 
+  createNewVersion(template: FieldMappingTemplate) {
+    if (!confirm(`Create a new draft version for template "${template.name}"?`)) {
+      return;
+    }
+    this.clearMessages();
+
+    this.apiService.createTemplateVersion(template.id).subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.success = `New draft version created for template "${template.name}".`;
+          this.loadTemplates();
+        }
+      },
+      error: (err) => {
+        this.error = err.error?.message || 'Failed to create new version';
+        console.error(err);
+      }
+    });
+  }
+
   publishTemplate(template: FieldMappingTemplate) {
     if (!confirm(`Publish template "${template.name}"? It will become available for transformations.`)) {
       return;
     }
     this.clearMessages();
 
-    const publishRequest: UpdateTemplateRequest = {
-      name: template.name,
-      description: template.description,
-      status: 'Published'
-    };
-
-    this.apiService.updateTemplate(template.id, publishRequest).subscribe({
+    this.apiService.publishTemplateVersion(template.id, template.version).subscribe({
       next: (response) => {
         if (response.success) {
           this.success = `Template "${template.name}" published successfully.`;
@@ -805,8 +831,15 @@ export class TemplatesComponent implements OnInit {
 
   getStatusClass(status: string): string {
     switch (status?.toLowerCase()) {
-      case 'published': return 'badge-published';
+      case 'active': return 'badge-published'; // Resuse green for active
       case 'archived': return 'badge-archived';
+      default: return 'badge-draft';
+    }
+  }
+
+  getVersionStatusClass(status?: string): string {
+    switch (status?.toLowerCase()) {
+      case 'published': return 'badge-published';
       default: return 'badge-draft';
     }
   }

@@ -40,7 +40,7 @@ public class TemplatesService : ITemplatesService
             Id = Guid.NewGuid(),
             Name = request.Name,
             Description = request.Description,
-            Status = TemplateStatus.Draft,
+            Status = TemplateStatus.Active,
             SourceSchema = NullIfEmpty(request.SourceSchema),
             TargetSchema = NullIfEmpty(request.TargetSchema)
         };
@@ -94,7 +94,7 @@ public class TemplatesService : ITemplatesService
         if (existing.Status != TemplateStatus.Archived)
             return false;
 
-        existing.Status = TemplateStatus.Draft;
+        existing.Status = TemplateStatus.Active;
         existing.UpdatedAt = DateTime.UtcNow;
 
         await _templateRepo.UpdateAsync(existing);
@@ -114,7 +114,7 @@ public class TemplatesService : ITemplatesService
             Id = Guid.NewGuid(),
             Name = $"{source.Name} - Copy",
             Description = source.Description,
-            Status = TemplateStatus.Draft,
+            Status = TemplateStatus.Active,
             SourceSchema = source.SourceSchema,
             TargetSchema = source.TargetSchema
         };
@@ -232,6 +232,7 @@ public class TemplatesService : ITemplatesService
         Name = t.Name,
         Description = t.Description,
         Status = t.Status.ToString(),
+        LatestVersionStatus = t.TemplateVersions?.OrderByDescending(v => v.Version).FirstOrDefault()?.Status.ToString() ?? "Draft",
         SourceSchema = t.SourceSchema,
         TargetSchema = t.TargetSchema,
         Version = t.TemplateVersions?.OrderByDescending(v => v.Version).FirstOrDefault()?.Version ?? 1,

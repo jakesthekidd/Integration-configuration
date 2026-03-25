@@ -11,19 +11,31 @@ namespace Transflo.Platform.Transformer.WebApi.Controllers;
 public class FieldMappingsController : ControllerBase
 {
     private readonly IFieldMappingRepository _repo;
+    private readonly ITemplateVersionRepository _versionRepo;
 
-    public FieldMappingsController(IFieldMappingRepository repo)
+    public FieldMappingsController(IFieldMappingRepository repo, ITemplateVersionRepository versionRepo)
     {
         _repo = repo;
+        _versionRepo = versionRepo;
     }
 
     [HttpGet]
     [ProducesResponseType(typeof(ApiResponse<FieldMappingListResponse>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetAll([FromQuery] Guid? templateId = null)
+    public async Task<IActionResult> GetAll([FromQuery] Guid? templateId = null, [FromQuery] Guid? templateVersionId = null)
     {
-        var mappings = !templateId.HasValue
-            ? new List<FieldMapping>() // Return empty if no template specified
-            : await _repo.GetByTemplateVersionIdOrderedAsync(templateId.Value);
+        Guid? targetVersionId = templateVersionId;
+        
+        if (!targetVersionId.HasValue && templateId.HasValue)
+        {
+            var versions = await _versionRepo.GetAllVersionsAsync(templateId.Value);
+            var draft = versions.FirstOrDefault(v => v.Status == TemplateVersionStatus.Draft);
+            var published = versions.FirstOrDefault(v => v.Status == TemplateVersionStatus.Published);
+            targetVersionId = draft?.Id ?? published?.Id;
+        }
+
+        var mappings = !targetVersionId.HasValue
+            ? new List<FieldMapping>() // Return empty if no valid version found
+            : await _repo.GetByTemplateVersionIdOrderedAsync(targetVersionId.Value);
 
         var response = new FieldMappingListResponse
         {
@@ -82,17 +94,31 @@ public class FieldMappingsController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<FieldMappingResponse>), StatusCodes.Status201Created)]
     public async Task<IActionResult> Create([FromBody] CreateFieldMappingRequest request)
     {
+        var targetVersionId = request.TemplateVersionId;
+        if (!targetVersionId.HasValue)
+        {
+            var versions = await _versionRepo.GetAllVersionsAsync(request.TemplateId);
+            var draft = versions.FirstOrDefault(v => v.Status == TemplateVersionStatus.Draft);
+            
+            if (draft == null)
+            {
+                return BadRequest(ApiResponse<FieldMappingResponse>.ErrorResponse(
+                    $"No Draft version found for Template {request.TemplateId}. You must create a new version before adding mappings."));
+            }
+            targetVersionId = draft.Id;
+        }
+
         var mapping = new FieldMapping
         {
-            TemplateVersionId = request.TemplateVersionId ?? request.TemplateId,
+            TemplateVersionId = targetVersionId.Value,
             SourcePath = request.SourcePath,
             TargetPath = request.TargetPath,
             TransformationType = request.TransformationType,
-            TransformationConfig = request.TransformationConfig,
+            TransformationConfig = NullIfEmpty(request.TransformationConfig),
             ExecutionOrder = request.ExecutionOrder,
             IsRequired = request.IsRequired,
             DefaultValue = request.DefaultValue,
-            ValidationRules = request.ValidationRules
+            ValidationRules = NullIfEmpty(request.ValidationRules)
         };
 
         var created = await _repo.CreateAsync(mapping);
@@ -130,11 +156,11 @@ public class FieldMappingsController : ControllerBase
         existing.SourcePath = request.SourcePath;
         existing.TargetPath = request.TargetPath;
         existing.TransformationType = request.TransformationType;
-        existing.TransformationConfig = request.TransformationConfig;
+        existing.TransformationConfig = NullIfEmpty(request.TransformationConfig);
         existing.ExecutionOrder = request.ExecutionOrder;
         existing.IsRequired = request.IsRequired;
         existing.DefaultValue = request.DefaultValue;
-        existing.ValidationRules = request.ValidationRules;
+        existing.ValidationRules = NullIfEmpty(request.ValidationRules);
 
         var updated = await _repo.UpdateAsync(existing);
 
@@ -171,4 +197,9 @@ public class FieldMappingsController : ControllerBase
         await _repo.DeleteAsync(id);
         return NoContent();
     }
+
+    /// <summary>Converts an empty or whitespace-only string to null so that jsonb columns
+    /// in PostgreSQL are never sent an empty string (which causes error 22P02).</summary>
+    private static string? NullIfEmpty(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? null : value;
 }
