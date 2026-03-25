@@ -135,10 +135,14 @@ export class ApiService {
   }
 
   // Field Mappings
-  getFieldMappings(templateId?: string): Observable<ApiResponse<FieldMappingListResponse>> {
-    const url = templateId
+  getFieldMappings(templateId?: string, templateVersionId?: string): Observable<ApiResponse<FieldMappingListResponse>> {
+    let url = templateId
       ? `${this.apiUrl}/field-mappings?templateId=${templateId}`
       : `${this.apiUrl}/field-mappings`;
+
+    if (templateVersionId) {
+      url += (url.includes('?') ? '&' : '?') + `templateVersionId=${templateVersionId}`;
+    }
     return this.http.get<ApiResponse<FieldMappingListResponse>>(url);
   }
 

@@ -1,29 +1,18 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../services/api.service';
 import { FieldMapping, CreateFieldMappingRequest, TransformationTypes } from '../models/field-mapping.model';
-import { FieldMappingTemplate } from '../models/template.model';
 
 @Component({
   selector: 'app-field-mappings',
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="container">
-      <h2>Field Mappings Management</h2>
-
-      <div class="filters">
-        <label>
-          Filter by Template:
-          <select [(ngModel)]="selectedTemplateId" (change)="onTemplateChange()">
-            <option value="">All Templates</option>
-            <option *ngFor="let template of templates" [value]="template.id">
-              {{template.name}} (v{{template.version}})
-            </option>
-          </select>
-        </label>
-        <button class="btn-primary" (click)="showCreateForm = !showCreateForm">
+    <div class="container mappings-subcontainer">
+      <div class="filters" style="justify-content: space-between;">
+        <h3>Field Mappings for {{ templateName }}</h3>
+        <button class="btn-primary" *ngIf="!isReadonly" (click)="showCreateForm = !showCreateForm">
           {{ showCreateForm ? 'Cancel' : 'Add New Mapping' }}
         </button>
       </div>
@@ -31,19 +20,9 @@ import { FieldMappingTemplate } from '../models/template.model';
       <div *ngIf="showCreateForm || editingMapping" class="form-container">
         <h3>{{ editingMapping ? 'Edit Field Mapping' : 'Create Field Mapping' }}</h3>
         <form (ngSubmit)="editingMapping ? updateMapping() : createMapping()" #mappingForm="ngForm">
-          <div class="form-group" *ngIf="!editingMapping">
-            <label>Template: <span class="required">*</span></label>
-            <select [(ngModel)]="newMapping.templateId" name="templateId" required
-                    (change)="onNewMappingTemplateChange()">
-              <option value="">Select Template</option>
-              <option *ngFor="let template of templates" [value]="template.id">
-                {{template.name}} (v{{template.version}})
-              </option>
-            </select>
-          </div>
-          <div class="form-group" *ngIf="editingMapping">
+          <div class="form-group">
             <label>Template:</label>
-            <input type="text" [value]="getTemplateName(editingMapping.templateId)" readonly />
+            <input type="text" [value]="templateName" readonly class="readonly-input" />
           </div>
 
           <div class="form-group">
@@ -123,26 +102,24 @@ import { FieldMappingTemplate } from '../models/template.model';
         <table>
           <thead>
             <tr>
-              <th>Template</th>
               <th>Source Path</th>
               <th>Target Path</th>
               <th>Type</th>
               <th>Order</th>
               <th>Required</th>
               <th>Default</th>
-              <th>Actions</th>
+              <th *ngIf="!isReadonly">Actions</th>
             </tr>
           </thead>
           <tbody>
             <tr *ngFor="let mapping of mappings">
-              <td>{{ getTemplateName(mapping.templateId) }}</td>
               <td><code>{{ mapping.sourcePath }}</code></td>
               <td><code>{{ mapping.targetPath }}</code></td>
               <td><span class="badge">{{ mapping.transformationType }}</span></td>
               <td>{{ mapping.executionOrder }}</td>
               <td>{{ mapping.isRequired ? 'Yes' : 'No' }}</td>
               <td>{{ mapping.defaultValue || '-' }}</td>
-              <td>
+              <td *ngIf="!isReadonly">
                 <button class="btn-small btn-info" (click)="startEdit(mapping)">Edit</button>
                 <button class="btn-small btn-danger" (click)="deleteMapping(mapping.id)">Delete</button>
               </td>
@@ -156,14 +133,15 @@ import { FieldMappingTemplate } from '../models/template.model';
     </div>
   `,
   styles: [`
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
+    .container.mappings-subcontainer {
+      max-width: 100%;
+      padding: 0;
+      margin: 0;
     }
-
-    h2 {
-      color: #2c3e50;
-      margin-bottom: 20px;
+    
+    .readonly-input {
+      background-color: #e9ecef !important;
+      cursor: not-allowed;
     }
 
     .filters {
@@ -383,11 +361,15 @@ import { FieldMappingTemplate } from '../models/template.model';
     }
   `]
 })
-export class FieldMappingsComponent implements OnInit {
+export class FieldMappingsComponent implements OnInit, OnChanges {
+  @Input() templateId!: string;
+  @Input() templateVersionId!: string;
+  @Input() templateName: string = '';
+  @Input() sampleInputJson?: string;
+  @Input() isReadonly: boolean = false;
+
   mappings: FieldMapping[] = [];
-  templates: FieldMappingTemplate[] = [];
   transformationTypes = TransformationTypes;
-  selectedTemplateId: string = '';
   showCreateForm: boolean = false;
   editingMapping: FieldMapping | null = null;
   error: string = '';
@@ -400,26 +382,25 @@ export class FieldMappingsComponent implements OnInit {
   constructor(private apiService: ApiService) { }
 
   ngOnInit() {
-    this.loadTemplates();
-    this.loadMappings();
+    this.refreshMappingData();
   }
 
-  loadTemplates() {
-    this.apiService.getTemplates().subscribe({
-      next: (response) => {
-        if (response.success && response.data) {
-          this.templates = response.data.templates;
-        }
-      },
-      error: (err) => {
-        this.error = 'Failed to load templates';
-        console.error(err);
-      }
-    });
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes['templateVersionId'] && !changes['templateVersionId'].firstChange) {
+      this.refreshMappingData();
+      this.cancelEdit();
+    }
+  }
+
+  refreshMappingData() {
+    if (this.templateId && this.templateVersionId) {
+      this.loadMappings();
+      this.loadSourcePathsFromSampleJson();
+    }
   }
 
   loadMappings() {
-    this.apiService.getFieldMappings(this.selectedTemplateId || undefined).subscribe({
+    this.apiService.getFieldMappings(this.templateId, this.templateVersionId).subscribe({
       next: (response) => {
         if (response.success && response.data) {
           this.mappings = response.data.mappings;
@@ -433,29 +414,15 @@ export class FieldMappingsComponent implements OnInit {
     });
   }
 
-  private refreshPathSuggestions(templateId?: string): void {
-    const scope = templateId
-      ? this.mappings.filter(m => m.templateId === templateId)
-      : this.mappings;
-    this.sourcePaths = [...new Set(scope.map(m => m.sourcePath).filter(Boolean))].sort();
-    this.targetPaths = [...new Set(scope.map(m => m.targetPath).filter(Boolean))].sort();
+  private refreshPathSuggestions(): void {
+    this.sourcePaths = [...new Set(this.mappings.map(m => m.sourcePath).filter(Boolean))].sort();
+    this.targetPaths = [...new Set(this.mappings.map(m => m.targetPath).filter(Boolean))].sort();
   }
 
-  onTemplateChange() {
-    this.loadMappings();
-    this.loadSourcePathsFromSampleJson(this.selectedTemplateId);
-  }
+  private loadSourcePathsFromSampleJson(): void {
+    if (!this.sampleInputJson) return;
 
-  onNewMappingTemplateChange() {
-    this.loadSourcePathsFromSampleJson(this.newMapping.templateId);
-  }
-
-  private loadSourcePathsFromSampleJson(templateId: string): void {
-    if (!templateId) return;
-    const template = this.templates.find(t => t.id === templateId);
-    if (!template?.sampleInputJson) return;
-
-    this.apiService.parseJson(template.sampleInputJson).subscribe({
+    this.apiService.parseJson(this.sampleInputJson).subscribe({
       next: (response) => {
         if (response.success && response.data?.fields) {
           const parsedPaths: string[] = Object.keys(response.data.fields);
@@ -469,6 +436,10 @@ export class FieldMappingsComponent implements OnInit {
   createMapping() {
     this.error = '';
     this.success = '';
+
+    // Always stamp the current Input values in case newMapping was initialized before inputs were set
+    this.newMapping.templateId = this.templateId;
+    this.newMapping.templateVersionId = this.templateVersionId;
 
     this.apiService.createFieldMapping(this.newMapping).subscribe({
       next: (response) => {
@@ -506,21 +477,17 @@ export class FieldMappingsComponent implements OnInit {
     });
   }
 
-  getTemplateName(templateId: string): string {
-    const template = this.templates.find(t => t.id === templateId);
-    return template ? `${template.name} (v${template.version})` : templateId;
-  }
-
   startEdit(mapping: FieldMapping) {
     this.editingMapping = mapping;
     this.showCreateForm = false;
     this.error = '';
     this.success = '';
-    this.refreshPathSuggestions(mapping.templateId);
+    this.refreshPathSuggestions();
 
     // Populate form with mapping data
     this.newMapping = {
-      templateId: mapping.templateId,
+      templateId: this.templateId,
+      templateVersionId: this.templateVersionId,
       sourcePath: mapping.sourcePath,
       targetPath: mapping.targetPath,
       transformationType: mapping.transformationType,
@@ -581,7 +548,8 @@ export class FieldMappingsComponent implements OnInit {
 
   private getEmptyMapping(): CreateFieldMappingRequest {
     return {
-      templateId: '',
+      templateId: this.templateId || '',
+      templateVersionId: this.templateVersionId || '',
       sourcePath: '',
       targetPath: '',
       transformationType: 'Direct',
