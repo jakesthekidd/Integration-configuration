@@ -7,4 +7,9 @@ public enum TemplateStatus
     Published = 2, // Obsolete - use version status instead
     Archived = 3,
     Deleted = 4
+    Draft,
+    Published,
+    Archived,
+    Deleted,
+    Active
 }

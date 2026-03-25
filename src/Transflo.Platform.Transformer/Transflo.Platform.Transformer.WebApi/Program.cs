@@ -5,6 +5,7 @@ using Microsoft.Extensions.Options;
 using Transflo.Platform.Transformer.Core.Configurations;
 using Transflo.Platform.Transformer.Core.Data;
 using Transflo.Platform.Transformer.Core.Repositories;
+using Transflo.Platform.Transformer.Core.Repositories.Interfaces;
 using Transflo.Platform.Transformer.Core.Services;
 using Transflo.Platform.Transformer.Core.Services.Interfaces;
 using Transflo.Platform.Transformer.TransformationService.Services;

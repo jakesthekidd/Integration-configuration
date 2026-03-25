@@ -4,16 +4,9 @@ using System.Text.Json;
 using Transflo.Platform.Transformer.Core.Data;
 using Transflo.Platform.Transformer.Core.Models;
 using Transflo.Platform.Transformer.Core.DTOs;
+using Transflo.Platform.Transformer.Core.Repositories.Interfaces;
 
 namespace Transflo.Platform.Transformer.Core.Repositories;
-
-public interface ITransformationLogRepository
-{
-    Task<TransformationLog> CreateAsync(TransformationLog log);
-    Task<TransformationLog?> GetByIdAsync(Guid id);
-    Task<List<TransformationLog>> GetByTemplateIdAsync(Guid templateId, int limit = 50);
-    Task<List<TransformationLog>> GetAllAsync(int limit = 100);
-}
 
 public class TransformationLogRepository : ITransformationLogRepository
 {
