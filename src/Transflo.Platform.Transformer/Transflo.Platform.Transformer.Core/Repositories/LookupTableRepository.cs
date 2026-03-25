@@ -1,19 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Transflo.Platform.Transformer.Core.Data;
 using Transflo.Platform.Transformer.Core.Models;
+using Transflo.Platform.Transformer.Core.Repositories.Interfaces;
 
 namespace Transflo.Platform.Transformer.Core.Repositories;
-
-public interface ILookupTableRepository
-{
-    Task<LookupTable?> GetByIdAsync(Guid id);
-    Task<List<LookupTable>> GetByTmsSystemIdAsync(Guid tmsSystemId);
-    Task<LookupTable?> GetByTmsAndFieldAsync(Guid tmsSystemId, string fieldName);
-    Task<List<LookupTable>> GetAllAsync();
-    Task<LookupTable> CreateAsync(LookupTable lookupTable);
-    Task<LookupTable> UpdateAsync(LookupTable lookupTable);
-    Task DeleteAsync(Guid id);
-}
 
 public class LookupTableRepository : ILookupTableRepository
 {
