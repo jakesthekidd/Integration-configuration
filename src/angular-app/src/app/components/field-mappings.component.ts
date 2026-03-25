@@ -366,6 +366,7 @@ export class FieldMappingsComponent implements OnInit, OnChanges {
   @Input() templateVersionId!: string;
   @Input() templateName: string = '';
   @Input() sampleInputJson?: string;
+  @Input() sourceSchema?: string;
   @Input() isReadonly: boolean = false;
 
   mappings: FieldMapping[] = [];
@@ -395,7 +396,8 @@ export class FieldMappingsComponent implements OnInit, OnChanges {
   refreshMappingData() {
     if (this.templateId && this.templateVersionId) {
       this.loadMappings();
-      this.loadSourcePathsFromSampleJson();
+      //this.loadSourcePathsFromSampleJson();
+      this.loadSourcePathsFromSourceSchema();
     }
   }
 
@@ -426,12 +428,27 @@ export class FieldMappingsComponent implements OnInit, OnChanges {
       next: (response) => {
         if (response.success && response.data?.fields) {
           const parsedPaths: string[] = Object.keys(response.data.fields);
-          this.sourcePaths = [...new Set([...this.sourcePaths, ...parsedPaths])].sort();
+            this.sourcePaths = [...new Set([...this.sourcePaths, ...parsedPaths])].sort();
         }
       },
       error: (err) => console.warn('Could not parse sample JSON for path suggestions', err)
     });
-  }
+    }
+
+    private loadSourcePathsFromSourceSchema(): void {
+        if (!this.sourceSchema) return;
+
+        this.apiService.parseJson(this.sourceSchema).subscribe({
+            next: (response) => {
+                if (response.success && response.data?.fields) {
+                    const parsedPaths: string[] = Object.keys(response.data.fields);
+                    this.sourcePaths = [...new Set([...this.sourcePaths, ...parsedPaths])].sort();
+                    console.log(this.sourcePaths); alert(this.sourcePaths);
+                }
+            },
+            error: (err) => console.warn('Could not parse sample JSON for path suggestions', err)
+        });
+    }
 
   createMapping() {
     this.error = '';
