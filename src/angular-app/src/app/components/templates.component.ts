@@ -202,12 +202,6 @@ type Screen = 'list' | 'detail' | 'version';
         <!-- Versions Section -->
         <div class="section-header">
           <h3>Versions</h3>
-          <button class="btn-primary"
-                  *ngIf="canCreateNewVersion()"
-                  (click)="createNewVersion(selectedTemplate)"
-                  title="Create a new draft version">
-            ＋ New Version
-          </button>
         </div>
 
         <div class="table-container">
@@ -228,11 +222,22 @@ type Screen = 'list' | 'detail' | 'version';
                 </td>
                 <td>{{ formatDate(v.createdAt) }}</td>
                 <td class="actions-cell" (click)="$event.stopPropagation()">
-                  <button class="btn-small btn-publish"
-                          *ngIf="v.status === 'Draft' && selectedTemplate?.status !== 'Archived'"
-                          (click)="publishVersion(v)">
-                    Publish
+                  <!-- Draft Actions -->
+                  <ng-container *ngIf="v.status === 'Draft' && selectedTemplate?.status !== 'Archived'">
+                    <button class="btn-small btn-danger" 
+                            *ngIf="templateVersions.length > 1"
+                            (click)="deleteVersion(v)" 
+                            title="Delete this draft">Delete</button>
+                  </ng-container>
+
+                  <!-- Other Actions -->
+                  <button class="btn-small btn-secondary"
+                          *ngIf="v.status !== 'Draft' && !hasAnyDraft() && selectedTemplate?.status !== 'Archived'"
+                          (click)="createNewVersion(selectedTemplate!, v.version)"
+                          title="Create a new draft based on this version">
+                    Fork
                   </button>
+                  
                   <button class="btn-small btn-info" (click)="openVersion(v)">View Mappings</button>
                 </td>
               </tr>
@@ -853,16 +858,19 @@ export class TemplatesComponent implements OnInit {
     });
   }
 
-  canCreateNewVersion(): boolean {
-    if (!this.selectedTemplate || this.selectedTemplate.status === 'Archived') return false;
-    return this.templateVersions.some(v => v.status === 'Published') &&
-      !this.templateVersions.some(v => v.status === 'Draft');
+  hasAnyDraft(): boolean {
+    return this.templateVersions.some(v => v.status === 'Draft');
   }
 
-  createNewVersion(template: FieldMappingTemplate) {
-    if (!confirm(`Create a new draft version for "${template.name}"?`)) return;
+  createNewVersion(template: FieldMappingTemplate, baseVersion?: number) {
+    const msg = baseVersion
+      ? `Create a new draft version for "${template.name}" based on v${baseVersion}?`
+      : `Create a new draft version for "${template.name}" based on the latest published version?`;
+
+    if (!confirm(msg)) return;
+
     this.clearMessages();
-    this.apiService.createTemplateVersion(template.id).subscribe({
+    this.apiService.createTemplateVersion(template.id, baseVersion).subscribe({
       next: (response) => {
         if (response.success) {
           this.success = `New draft version created.`;
@@ -898,6 +906,22 @@ export class TemplatesComponent implements OnInit {
         }
       },
       error: (err) => this.error = err.error?.message || 'Failed to publish version'
+    });
+  }
+
+  deleteVersion(version: any) {
+    if (!this.selectedTemplate) return;
+    if (!confirm(`Are you sure you want to delete version ${version.version} draft? This will also delete all its field mappings.`)) return;
+
+    this.clearMessages();
+    this.apiService.deleteTemplateVersion(this.selectedTemplate.id, version.version).subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.success = `Version ${version.version} deleted.`;
+          this.loadTemplateVersions(this.selectedTemplate!.id);
+        }
+      },
+      error: (err) => this.error = err.error?.message || 'Failed to delete version'
     });
   }
 

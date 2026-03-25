@@ -168,15 +168,30 @@ public class TemplatesService : ITemplatesService
         Guid templateId,
         CreateVersionRequest? request = null)
     {
-        // New versions are always forked from the current Published version
-        var source = await _versionRepo.GetPublishedVersionAsync(templateId);
-        if (source is null)
-            return null;
+        // If a specific base version is requested, use it; otherwise fork from current Published
+        TemplateVersion? source;
+        if (request?.BaseVersion is int baseVersionNum)
+        {
+            source = await _versionRepo.GetByVersionAsync(templateId, baseVersionNum);
+            if (source is null)
+                return null; // Caller will return 404
+        }
+        else
+        {
+            // Default: fork from the current Published version
+            source = await _versionRepo.GetPublishedVersionAsync(templateId);
+            if (source is null)
+                return null;
+        }
+
+        // Determine next version number (always max+1 regardless of base)
+        var allVersions = await _versionRepo.GetAllVersionsAsync(templateId);
+        var nextVersion = (allVersions.Any() ? allVersions.Max(v => v.Version) : 0) + 1;
 
         var newVersion = new TemplateVersion
         {
             TemplateId = templateId,
-            Version = source.Version + 1,
+            Version = nextVersion,
             Status = TemplateVersionStatus.Draft,
             ValidationRules = source.ValidationRules,
             Metadata = source.Metadata
@@ -184,7 +199,7 @@ public class TemplatesService : ITemplatesService
 
         var created = await _versionRepo.CreateAsync(newVersion);
 
-        // Copy all field mappings from the source Published version
+        // Copy all field mappings from the base version
         var sourceMappings = await _mappingRepo.GetByTemplateVersionIdOrderedAsync(source.Id);
         if (sourceMappings.Count > 0)
         {
@@ -219,6 +234,24 @@ public class TemplatesService : ITemplatesService
 
         var published = await _versionRepo.PublishVersionAsync(templateId, version, publishedBy);
         return ToVersionResponse(published);
+    }
+
+    public async Task<bool> DeleteVersionAsync(Guid templateId, int version)
+    {
+        var target = await _versionRepo.GetByVersionAsync(templateId, version);
+        if (target is null)
+            return false;
+
+        // Restriction: Only Draft versions can be deleted to maintain history
+        if (target.Status != TemplateVersionStatus.Draft)
+            return false;
+
+        // New Restriction: Do not allow deleting the last version
+        var allVersions = await _versionRepo.GetAllVersionsAsync(templateId);
+        if (allVersions.Count <= 1)
+            return false;
+
+        return await _versionRepo.DeleteAsync(templateId, version);
     }
 
     /// <summary>Converts an empty or whitespace-only string to null so that jsonb columns

@@ -110,12 +110,17 @@ export class ApiService {
     return this.http.delete<void>(url);
   }
 
-  createTemplateVersion(templateId: string): Observable<ApiResponse<any>> {
-    return this.http.post<ApiResponse<any>>(`${this.apiUrl}/templates/${templateId}/versions`, {});
+  createTemplateVersion(templateId: string, baseVersion?: number): Observable<ApiResponse<any>> {
+    const body = baseVersion !== undefined ? { baseVersion } : {};
+    return this.http.post<ApiResponse<any>>(`${this.apiUrl}/templates/${templateId}/versions`, body);
   }
 
   publishTemplateVersion(templateId: string, version: number): Observable<ApiResponse<any>> {
     return this.http.post<ApiResponse<any>>(`${this.apiUrl}/templates/${templateId}/versions/${version}/publish`, {});
+  }
+
+  deleteTemplateVersion(templateId: string, version: number): Observable<ApiResponse<any>> {
+    return this.http.delete<ApiResponse<any>>(`${this.apiUrl}/templates/${templateId}/versions/${version}`);
   }
 
   duplicateTemplate(templateId: string): Observable<ApiResponse<FieldMappingTemplate>> {

@@ -32,4 +32,5 @@ public interface ITemplatesService
     /// or is not in Draft status.
     /// </summary>
     Task<TemplateVersionResponse?> PublishVersionAsync(Guid templateId, int version, string? publishedBy = null);
+    Task<bool> DeleteVersionAsync(Guid templateId, int version);
 }
