@@ -715,7 +715,7 @@ namespace Transflo.Platform.Transformer.Core.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("00000000-0000-0000-0000-000000000001"),
+                            Id = new Guid("b5f3a9c2-7d4e-4f8b-9a1c-3e6d2b0f8c47"),
                             CreatedAt = new DateTime(2026, 3, 11, 15, 16, 10, 223, DateTimeKind.Utc).AddTicks(3190),
                             CreatedBy = "System",
                             Description = "TruckMate Transportation Management System",
@@ -728,7 +728,7 @@ namespace Transflo.Platform.Transformer.Core.Migrations
                         },
                         new
                         {
-                            Id = new Guid("00000000-0000-0000-0000-000000000002"),
+                            Id = new Guid("a2c8e4d6-1f3b-4a7c-8e9d-5b0c2f6a4e83"),
                             CreatedAt = new DateTime(2026, 3, 11, 15, 16, 10, 223, DateTimeKind.Utc).AddTicks(3190),
                             CreatedBy = "System",
                             Description = "McLeod Transportation Management System",
