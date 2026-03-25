@@ -1,20 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Transflo.Platform.Transformer.Core.Data;
 using Transflo.Platform.Transformer.Core.Models;
+using Transflo.Platform.Transformer.Core.Repositories.Interfaces;
 
 namespace Transflo.Platform.Transformer.Core.Repositories;
-
-public interface IFieldMappingRepository
-{
-    Task<FieldMapping?> GetByIdAsync(Guid id);
-    Task<List<FieldMapping>> GetByTemplateVersionIdAsync(Guid templateVersionId);
-    Task<List<FieldMapping>> GetByTemplateVersionIdOrderedAsync(Guid templateVersionId);
-    Task<FieldMapping> CreateAsync(FieldMapping mapping);
-    Task<List<FieldMapping>> CreateBulkAsync(List<FieldMapping> mappings);
-    Task<FieldMapping> UpdateAsync(FieldMapping mapping);
-    Task DeleteAsync(Guid id);
-    Task DeleteByTemplateVersionIdAsync(Guid templateVersionId);
-}
 
 public class FieldMappingRepository : IFieldMappingRepository
 {

@@ -1,6 +1,7 @@
 using Transflo.Platform.Transformer.Core.DTOs;
 using Transflo.Platform.Transformer.Core.Models;
 using Transflo.Platform.Transformer.Core.Repositories;
+using Transflo.Platform.Transformer.Core.Repositories.Interfaces;
 using Transflo.Platform.Transformer.Core.Services.Interfaces;
 
 namespace Transflo.Platform.Transformer.Core.Services;

@@ -5,5 +5,6 @@ public enum TemplateStatus
     Draft,
     Published,
     Archived,
-    Deleted
+    Deleted,
+    Active
 }
