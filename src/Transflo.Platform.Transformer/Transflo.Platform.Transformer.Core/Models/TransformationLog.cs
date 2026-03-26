@@ -39,6 +39,14 @@ public class TransformationLog
 
     public Guid? UserId { get; set; }
 
+    [Column("message_summary")]
+    [MaxLength(500)]
+    public string? MessageSummary { get; set; }
+
+    [Column("correlation_id")]
+    [MaxLength(100)]
+    public string? CorrelationId { get; set; }
+
     [Column("source")]
     [MaxLength(200)]
     public string? Source { get; set; }

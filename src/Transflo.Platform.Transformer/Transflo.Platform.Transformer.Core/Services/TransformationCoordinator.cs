@@ -200,6 +200,8 @@ public class TransformationCoordinator : ITransformationCoordinator
                 ExecutionTimeMs = result.ExecutionTimeMs,
                 RecordCount = 1,
                 UserId = options?.UserId,
+                MessageSummary = BuildMessageSummary(status, result),
+                CorrelationId = options?.CorrelationId ?? Guid.NewGuid().ToString(),
                 Source = options?.Source ?? "API",
                 ExpiresAt = DateTime.UtcNow.AddDays(90)
             };
@@ -212,6 +214,22 @@ public class TransformationCoordinator : ITransformationCoordinator
             _logger.LogError(ex, "Failed to persist transformation log for template {TemplateId}", templateId);
         }
     }
+
+    private static string BuildMessageSummary(TransformationStatus status, TransformationResult result) =>
+        status switch
+        {
+            TransformationStatus.Success =>
+                $"Transformed {result.FieldsMapped} field(s) successfully.",
+            TransformationStatus.Warning =>
+                $"Transformation succeeded with {result.Warnings.Count} warning(s).",
+            TransformationStatus.PartialSuccess =>
+                $"Transformation partially succeeded: {result.Errors.Count} error(s), {result.Warnings.Count} warning(s).",
+            TransformationStatus.Error =>
+                result.Errors.Count > 0
+                    ? result.Errors[0].Message
+                    : "Transformation failed.",
+            _ => "Transformation completed."
+        };
 
     private static TransformationStatus DetermineStatus(TransformationResult result)
     {

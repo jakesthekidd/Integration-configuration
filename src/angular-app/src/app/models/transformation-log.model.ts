@@ -3,6 +3,7 @@ export type TransformationStatus = 'Success' | 'Warning' | 'PartialSuccess' | 'E
 export interface TransformationLogSummary {
   id: string;
   templateId: string;
+  templateName?: string;
   timestamp: string;
   status: TransformationStatus;
   executionTimeMs: number;

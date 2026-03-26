@@ -39,7 +39,7 @@ export class PrettyJsonPipe implements PipeTransform {
           </select>
         </div>
         <div class="filter-group">
-          <label>Template ID</label>
+          <label>Template</label>
           <input type="text" [(ngModel)]="filterTemplateId" placeholder="Filter by template ID…"
                  (keyup.enter)="load()" />
         </div>
@@ -91,7 +91,7 @@ export class PrettyJsonPipe implements PipeTransform {
             <tr>
               <th></th>
               <th>Status</th>
-              <th>Template ID</th>
+              <th>Template</th>
               <th>Timestamp</th>
               <th>Duration</th>
               <th>Source</th>
@@ -109,7 +109,7 @@ export class PrettyJsonPipe implements PipeTransform {
                   <span class="badge" [ngClass]="statusClass(log.status)">{{ statusLabel(log.status) }}</span>
                 </td>
                 <td class="template-id-cell">
-                  <code>{{ log.templateId }}</code>
+                  {{ log.templateName || log.templateId }}
                 </td>
                 <td>{{ log.timestamp | date:'MMM d, y HH:mm:ss' }}</td>
                 <td class="ms-cell">{{ log.executionTimeMs }} ms</td>
@@ -265,12 +265,9 @@ export class PrettyJsonPipe implements PipeTransform {
     .expand-cell { width: 32px; text-align: center; }
     .expand-icon { color: #3498db; font-size: 10px; }
 
-    .template-id-cell code {
-      font-size: 12px;
-      background: #f4f4f4;
-      padding: 2px 6px;
-      border-radius: 3px;
-      color: #555;
+    .template-id-cell {
+      font-weight: 500;
+      color: #2c3e50;
     }
     .ms-cell { font-variant-numeric: tabular-nums; }
     .muted { color: #aaa; }
