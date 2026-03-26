@@ -274,4 +274,35 @@ public class TemplatesServiceTests
         Assert.NotNull(result);
         Assert.Equal($"{SampleTemplate.Name} - Copy 2", result.Name);
     }
+
+    [Fact]
+    public async Task CreateVersionAsync_SetsBaseVersion_AndCopiesMappings()
+    {
+        _templateRepoMock
+            .Setup(r => r.GetByIdAsync(SampleTemplate.Id))
+            .ReturnsAsync(SampleTemplate);
+
+        var v1 = new TemplateVersion { Id = Guid.NewGuid(), TemplateId = SampleTemplate.Id, Version = 1, Status = TemplateVersionStatus.Published };
+        _versionRepoMock
+            .Setup(r => r.GetPublishedVersionAsync(SampleTemplate.Id))
+            .ReturnsAsync(v1);
+        _versionRepoMock
+            .Setup(r => r.GetAllVersionsAsync(SampleTemplate.Id))
+            .ReturnsAsync(new List<TemplateVersion> { v1 });
+
+        _versionRepoMock
+            .Setup(r => r.CreateAsync(It.IsAny<TemplateVersion>()))
+            .ReturnsAsync((TemplateVersion v) => { v.Id = Guid.NewGuid(); return v; });
+
+        _mappingRepoMock
+            .Setup(r => r.GetByTemplateVersionIdOrderedAsync(v1.Id))
+            .ReturnsAsync(new List<FieldMapping> { new() { SourcePath = "s" } });
+
+        var result = await _sut.CreateVersionAsync(SampleTemplate.Id);
+
+        Assert.NotNull(result);
+        Assert.Equal(2, result.Version);
+        Assert.Equal(1, result.BaseVersion);
+        _mappingRepoMock.Verify(r => r.CreateBulkAsync(It.Is<List<FieldMapping>>(l => l.Count == 1)), Times.Once);
+    }
 }

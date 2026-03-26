@@ -13,6 +13,9 @@ public class TemplateVersion : BaseEntity
     [Column("version")]
     public int Version { get; set; } = 1;
 
+    [Column("base_version")]
+    public int? BaseVersion { get; set; }
+
     [Column("status")]
     public TemplateVersionStatus Status { get; set; } = TemplateVersionStatus.Draft;
 

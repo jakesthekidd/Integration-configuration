@@ -223,6 +223,7 @@ type Screen = 'list' | 'detail' | 'version';
             <thead>
               <tr>
                 <th>Version</th>
+                <th>Base Version</th>
                 <th>Status</th>
                 <th>Created</th>
                 <th>Actions</th>
@@ -231,6 +232,10 @@ type Screen = 'list' | 'detail' | 'version';
             <tbody>
               <tr *ngFor="let v of templateVersions" class="clickable-row" (click)="openVersion(v)">
                 <td><span class="badge badge-version">v{{ v.version }}</span></td>
+                <td>
+                  <span class="badge badge-version" *ngIf="v.baseVersion">v{{ v.baseVersion }}</span>
+                  <span *ngIf="!v.baseVersion">—</span>
+                </td>
                 <td>
                   <span class="badge" [ngClass]="getVersionStatusClass(v.status)">{{ v.status }}</span>
                 </td>
@@ -249,14 +254,14 @@ type Screen = 'list' | 'detail' | 'version';
                           *ngIf="v.status !== 'Draft' && !hasAnyDraft() && selectedTemplate?.status !== 'Archived'"
                           (click)="createNewVersion(selectedTemplate!, v.version)"
                           title="Create a new draft based on this version">
-                    Fork
+                    Copy to new version
                   </button>
                   
                   <button class="btn-small btn-info" (click)="openVersion(v)">View Mappings</button>
                 </td>
               </tr>
               <tr *ngIf="templateVersions.length === 0">
-                <td colspan="4" class="no-data">No versions found.</td>
+                <td colspan="5" class="no-data">No versions found.</td>
               </tr>
             </tbody>
           </table>
@@ -960,8 +965,8 @@ export class TemplatesComponent implements OnInit {
 
   createNewVersion(template: FieldMappingTemplate, baseVersion?: number) {
     const msg = baseVersion
-      ? `Create a new draft version for "${template.name}" based on v${baseVersion}?`
-      : `Create a new draft version for "${template.name}" based on the latest published version?`;
+      ? `Create a new version for "${template.name}" based on v${baseVersion}?`
+      : `Create a new version for "${template.name}" based on the latest published version?`;
 
     if (!confirm(msg)) return;
 

@@ -258,6 +258,7 @@ public class TemplatesService : ITemplatesService
         {
             TemplateId = templateId,
             Version = nextVersion,
+            BaseVersion = source.Version,
             Status = TemplateVersionStatus.Draft,
             ValidationRules = source.ValidationRules,
             Metadata = source.Metadata
@@ -345,6 +346,7 @@ public class TemplatesService : ITemplatesService
         Id = v.Id,
         TemplateId = v.TemplateId,
         Version = v.Version,
+        BaseVersion = v.BaseVersion,
         Status = v.Status.ToString(),
         ValidationRules = v.ValidationRules,
         Metadata = v.Metadata,
