@@ -307,6 +307,7 @@ type Screen = 'list' | 'detail' | 'version';
           [templateVersionId]="selectedVersionObj.id"
           [templateName]="selectedTemplate.name + ' v' + selectedVersionObj.version"
           [sampleInputJson]="selectedTemplate.sampleInputJson"
+          [sourceSchema]="selectedTemplate.sourceSchema"
           [isReadonly]="isMappingReadonly()">
         </app-field-mappings>
       </ng-container>
