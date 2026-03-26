@@ -2,7 +2,6 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TmsSystemsComponent } from './components/tms-systems.component';
 import { TemplatesComponent } from './components/templates.component';
-import { FieldMappingsComponent } from './components/field-mappings.component';
 import { LookupTablesComponent } from './components/lookup-tables.component';
 import { TransformationTestComponent } from './components/transformation-test.component';
 import { TransformationLogsComponent } from './components/transformation-logs.component';
@@ -11,7 +10,7 @@ import { CustomersComponent } from './components/customers.component';
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, CustomersComponent, TmsSystemsComponent, TemplatesComponent, FieldMappingsComponent, LookupTablesComponent, TransformationTestComponent, TransformationLogsComponent],
+  imports: [CommonModule, CustomersComponent, TmsSystemsComponent, TemplatesComponent, LookupTablesComponent, TransformationTestComponent, TransformationLogsComponent],
   template: `
     <header>
       <h1>Field Mapping System</h1>
@@ -30,11 +29,6 @@ import { CustomersComponent } from './components/customers.component';
           [class.active]="currentTab === 'templates'"
           (click)="currentTab = 'templates'">
           Templates
-        </button>
-        <button
-          [class.active]="currentTab === 'mappings'"
-          (click)="currentTab = 'mappings'">
-          Field Mappings
         </button>
         <button
           [class.active]="currentTab === 'lookups'"
@@ -57,7 +51,6 @@ import { CustomersComponent } from './components/customers.component';
       <app-customers *ngIf="currentTab === 'customers'"></app-customers>
       <app-tms-systems *ngIf="currentTab === 'tms'"></app-tms-systems>
       <app-templates *ngIf="currentTab === 'templates'"></app-templates>
-      <app-field-mappings *ngIf="currentTab === 'mappings'"></app-field-mappings>
       <app-lookup-tables *ngIf="currentTab === 'lookups'"></app-lookup-tables>
       <app-transformation-test *ngIf="currentTab === 'test'"></app-transformation-test>
       <app-transformation-logs *ngIf="currentTab === 'logs'"></app-transformation-logs>
