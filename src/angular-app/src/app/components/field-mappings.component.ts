@@ -401,11 +401,11 @@ export class FieldMappingsComponent implements OnInit, OnChanges {
   }
 
   loadMappings() {
+          this.refreshPathSuggestions();
     this.apiService.getFieldMappings(this.templateId, this.templateVersionId).subscribe({
       next: (response) => {
         if (response.success && response.data) {
           this.mappings = response.data.mappings;
-          this.refreshPathSuggestions();
         }
       },
       error: (err) => {
