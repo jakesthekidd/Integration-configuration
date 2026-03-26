@@ -2,6 +2,7 @@ import { Component, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../services/api.service';
+import { GeneralService } from '../services/general.service';
 import { FieldMappingTemplate, CreateTemplateRequest, UpdateTemplateRequest } from '../models/template.model';
 import { FieldMappingsComponent } from './field-mappings.component';
 
@@ -794,7 +795,7 @@ export class TemplatesComponent implements OnInit {
   error: string = '';
   success: string = '';
 
-  constructor(private apiService: ApiService) { }
+  constructor(private apiService: ApiService, private generalService: GeneralService) { }
 
   ngOnInit() {
     this.loadTemplates();
@@ -968,17 +969,23 @@ export class TemplatesComponent implements OnInit {
       ? `Create a new version for "${template.name}" based on v${baseVersion}?`
       : `Create a new version for "${template.name}" based on the latest published version?`;
 
-    if (!confirm(msg)) return;
-
-    this.clearMessages();
-    this.apiService.createTemplateVersion(template.id, baseVersion).subscribe({
-      next: (response) => {
-        if (response.success) {
-          this.success = `New draft version created.`;
-          this.loadTemplateVersions(template.id);
-        }
-      },
-      error: (err) => this.error = err.error?.message || 'Failed to create new version'
+    this.generalService.confirm({
+      title: 'Create New Version',
+      text: msg,
+      confirmText: 'Yes, Create',
+      icon: 'question'
+    }).then((result: any) => {
+      if (!result.isConfirmed) return;
+      this.clearMessages();
+      this.apiService.createTemplateVersion(template.id, baseVersion).subscribe({
+        next: (response) => {
+          if (response.success) {
+            this.generalService.success('New draft version created.');
+            this.loadTemplateVersions(template.id);
+          }
+        },
+        error: (err) => this.error = err.error?.message || 'Failed to create new version'
+      });
     });
   }
 
@@ -991,82 +998,123 @@ export class TemplatesComponent implements OnInit {
   publishVersion(version: any) {
     if (!this.selectedTemplate) return;
     if (this.selectedTemplate.status === 'Archived') {
-      this.error = 'Cannot publish a version of an archived template.';
+      this.generalService.error('Cannot publish a version of an archived template.');
       return;
     }
-    if (!confirm(`Publish version ${version.version} of "${this.selectedTemplate.name}"?`)) return;
-    this.clearMessages();
-    this.apiService.publishTemplateVersion(this.selectedTemplate.id, version.version).subscribe({
-      next: (response) => {
-        if (response.success) {
-          this.success = `Version ${version.version} published successfully.`;
-          version.status = 'Published';
-          this.selectedVersionObj = { ...version, status: 'Published' };
-          this.loadTemplateVersions(this.selectedTemplate!.id);
-          this.loadTemplates();
-        }
-      },
-      error: (err) => this.error = err.error?.message || 'Failed to publish version'
+
+    this.generalService.confirm({
+      title: 'Publish Version',
+      text: `Publish version ${version.version} of "${this.selectedTemplate.name}"?`,
+      confirmText: 'Yes, Publish',
+      confirmColor: '#27ae60',
+      icon: 'question'
+    }).then((result: any) => {
+      if (!result.isConfirmed) return;
+      this.clearMessages();
+      this.apiService.publishTemplateVersion(this.selectedTemplate!.id, version.version).subscribe({
+        next: (response) => {
+          if (response.success) {
+            this.generalService.success(`Version ${version.version} published successfully.`);
+            version.status = 'Published';
+            this.selectedVersionObj = { ...version, status: 'Published' };
+            this.loadTemplateVersions(this.selectedTemplate!.id);
+            this.loadTemplates();
+          }
+        },
+        error: (err) => this.error = err.error?.message || 'Failed to publish version'
+      });
     });
   }
 
   deleteVersion(version: any) {
     if (!this.selectedTemplate) return;
-    if (!confirm(`Are you sure you want to delete version ${version.version} draft? This will also delete all its field mappings.`)) return;
 
-    this.clearMessages();
-    this.apiService.deleteTemplateVersion(this.selectedTemplate.id, version.version).subscribe({
-      next: (response) => {
-        if (response.success) {
-          this.success = `Version ${version.version} deleted.`;
-          this.loadTemplateVersions(this.selectedTemplate!.id);
-        }
-      },
-      error: (err) => this.error = err.error?.message || 'Failed to delete version'
+    this.generalService.confirm({
+      title: 'Delete Version Draft',
+      text: `Are you sure you want to delete version ${version.version} draft? This will also delete all its field mappings.`,
+      confirmText: 'Yes, Delete',
+      confirmColor: '#e74c3c',
+      icon: 'warning'
+    }).then((result: any) => {
+      if (!result.isConfirmed) return;
+      this.clearMessages();
+      this.apiService.deleteTemplateVersion(this.selectedTemplate!.id, version.version).subscribe({
+        next: (response) => {
+          if (response.success) {
+            this.generalService.success(`Version ${version.version} deleted.`);
+            this.loadTemplateVersions(this.selectedTemplate!.id);
+          }
+        },
+        error: (err) => this.error = err.error?.message || 'Failed to delete version'
+      });
     });
   }
 
   archiveTemplate(template: FieldMappingTemplate) {
-    if (!confirm(`Archive template "${template.name}"?`)) return;
-    this.clearMessages();
-    this.apiService.updateTemplate(template.id, { name: template.name, description: template.description, status: 'Archived' }).subscribe({
-      next: (response) => {
-        if (response.success) {
-          this.success = `Template "${template.name}" archived.`;
-          if (this.selectedTemplate?.id === template.id) {
-            this.selectedTemplate = { ...template, status: 'Archived' };
+    this.generalService.confirm({
+      title: 'Archive Template',
+      text: `Archive template "${template.name}"?`,
+      confirmText: 'Yes, Archive',
+      confirmColor: '#e74c3c',
+      icon: 'warning'
+    }).then((result: any) => {
+      if (!result.isConfirmed) return;
+      this.clearMessages();
+      this.apiService.updateTemplate(template.id, { name: template.name, description: template.description, status: 'Archived' }).subscribe({
+        next: (response) => {
+          if (response.success) {
+            this.generalService.success(`Template "${template.name}" archived.`);
+            if (this.selectedTemplate?.id === template.id) {
+              this.selectedTemplate = { ...template, status: 'Archived' };
+            }
+            this.loadTemplates();
           }
-          this.loadTemplates();
-        }
-      },
-      error: (err) => this.error = err.error?.message || 'Failed to archive template'
+        },
+        error: (err) => this.error = err.error?.message || 'Failed to archive template'
+      });
     });
   }
 
   reactivateTemplate(template: FieldMappingTemplate) {
-    if (!confirm(`Reactivate template "${template.name}"?`)) return;
-    this.clearMessages();
-    this.apiService.reactivateTemplate(template.id).subscribe({
-      next: () => {
-        this.success = `Template "${template.name}" reactivated.`;
-        if (this.selectedTemplate?.id === template.id) {
-          this.selectedTemplate = { ...template, status: 'Active' };
-        }
-        this.loadTemplates();
-      },
-      error: (err) => this.error = err.error?.message || 'Failed to reactivate'
+    this.generalService.confirm({
+      title: 'Reactivate Template',
+      text: `Reactivate template "${template.name}"?`,
+      confirmText: 'Yes, Reactivate',
+      confirmColor: '#27ae60',
+      icon: 'question'
+    }).then((result: any) => {
+      if (!result.isConfirmed) return;
+      this.clearMessages();
+      this.apiService.reactivateTemplate(template.id).subscribe({
+        next: () => {
+          this.generalService.success(`Template "${template.name}" reactivated.`);
+          if (this.selectedTemplate?.id === template.id) {
+            this.selectedTemplate = { ...template, status: 'Active' };
+          }
+          this.loadTemplates();
+        },
+        error: (err) => this.error = err.error?.message || 'Failed to reactivate'
+      });
     });
   }
 
   deleteTemplate(template: FieldMappingTemplate) {
-    if (!confirm(`Delete template "${template.name}"? This cannot be undone.`)) return;
-    this.clearMessages();
-    this.apiService.deleteTemplate(template.id, template.version).subscribe({
-      next: () => {
-        this.success = `Template "${template.name}" deleted.`;
-        this.loadTemplates();
-      },
-      error: (err) => this.error = err.error?.message || 'Failed to delete template'
+    this.generalService.confirm({
+      title: 'Delete Template',
+      text: `Delete template "${template.name}"? This cannot be undone.`,
+      confirmText: 'Yes, Delete',
+      confirmColor: '#e74c3c',
+      icon: 'warning'
+    }).then((result: any) => {
+      if (!result.isConfirmed) return;
+      this.clearMessages();
+      this.apiService.deleteTemplate(template.id, template.version).subscribe({
+        next: () => {
+          this.generalService.success(`Template "${template.name}" deleted.`);
+          this.loadTemplates();
+        },
+        error: (err) => this.error = err.error?.message || 'Failed to delete template'
+      });
     });
   }
 
