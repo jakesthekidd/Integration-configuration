@@ -346,12 +346,48 @@ type Screen = 'list' | 'detail' | 'version';
     .breadcrumb {
       display: flex;
       align-items: center;
-      gap: 8px;
-      font-size: 15px;
+      gap: 15px;
+      margin-bottom: 25px;
+      padding: 14px 22px;
+      background: #f8fafc;
+      border-radius: 12px;
+      font-size: 17px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+      border-left: 8px solid #3498db;
     }
 
-    .breadcrumb-sep {
-      color: #bdc3c7;
+    .breadcrumb button.btn-link {
+      color: #3498db;
+      text-decoration: none;
+      font-weight: 800;
+      padding: 0;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .breadcrumb button.btn-link:hover {
+      color: #1d4e89;
+      transform: scale(1.02);
+    }
+
+    .breadcrumb .breadcrumb-sep {
+      color: #cbd5e1;
+      font-weight: 200;
+      font-size: 22px;
+    }
+
+    .breadcrumb span:last-child {
+      color: #1e293b;
+      font-weight: 800;
+      background: #fff;
+      padding: 4px 12px;
+      border-radius: 6px;
+      box-shadow: inset 0 0 0 1px #e2e8f0;
     }
 
     .btn-link {
@@ -793,6 +829,7 @@ export class TemplatesComponent implements OnInit {
   duplicatedTemplateId: string | null = null;
 
   // --- Shared ---
+  isInitialLoading: boolean = false;
   error: string = '';
   success: string = '';
 
@@ -1015,7 +1052,7 @@ export class TemplatesComponent implements OnInit {
       this.apiService.publishTemplateVersion(this.selectedTemplate!.id, version.version).subscribe({
         next: (response) => {
           if (response.success) {
-            this.generalService.success(`Version ${version.version} published successfully.`);
+            this.generalService.success('Version ' + version.version + ' published successfully.');
             version.status = 'Published';
             this.selectedVersionObj = { ...version, status: 'Published' };
             this.loadTemplateVersions(this.selectedTemplate!.id);
@@ -1042,7 +1079,7 @@ export class TemplatesComponent implements OnInit {
       this.apiService.deleteTemplateVersion(this.selectedTemplate!.id, version.version).subscribe({
         next: (response) => {
           if (response.success) {
-            this.generalService.success(`Version ${version.version} deleted.`);
+            this.generalService.success('Version ' + version.version + ' deleted.');
             this.loadTemplateVersions(this.selectedTemplate!.id);
           }
         },
@@ -1064,7 +1101,7 @@ export class TemplatesComponent implements OnInit {
       this.apiService.updateTemplate(template.id, { name: template.name, description: template.description, status: 'Archived' }).subscribe({
         next: (response) => {
           if (response.success) {
-            this.generalService.success(`Template "${template.name}" archived.`);
+            this.generalService.success('Template "' + template.name + '" archived.');
             if (this.selectedTemplate?.id === template.id) {
               this.selectedTemplate = { ...template, status: 'Archived' };
             }
@@ -1088,7 +1125,7 @@ export class TemplatesComponent implements OnInit {
       this.clearMessages();
       this.apiService.reactivateTemplate(template.id).subscribe({
         next: () => {
-          this.generalService.success(`Template "${template.name}" reactivated.`);
+          this.generalService.success('Template "' + template.name + '" reactivated.');
           if (this.selectedTemplate?.id === template.id) {
             this.selectedTemplate = { ...template, status: 'Active' };
           }
@@ -1111,7 +1148,7 @@ export class TemplatesComponent implements OnInit {
       this.clearMessages();
       this.apiService.deleteTemplate(template.id, template.version).subscribe({
         next: () => {
-          this.generalService.success(`Template "${template.name}" deleted.`);
+          this.generalService.success('Template "' + template.name + '" deleted.');
           this.loadTemplates();
         },
         error: (err) => this.error = err.error?.message || 'Failed to delete template'
