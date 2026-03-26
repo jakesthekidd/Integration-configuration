@@ -1,7 +1,6 @@
 using Moq;
 using Transflo.Platform.Transformer.Core.DTOs;
 using Transflo.Platform.Transformer.Core.Models;
-using Transflo.Platform.Transformer.Core.Repositories;
 using Transflo.Platform.Transformer.Core.Repositories.Interfaces;
 using Transflo.Platform.Transformer.Core.Services;
 
@@ -22,14 +21,6 @@ public class TemplatesServiceTests
         Status = TemplateStatus.Draft,
         SourceSchema = "Source",
         TargetSchema = "Target"
-    };
-
-    private static readonly TemplateVersion SampleVersion = new()
-    {
-        Id = Guid.NewGuid(),
-        TemplateId = SampleTemplate.Id,
-        Version = 1,
-        Status = TemplateVersionStatus.Published
     };
 
     public TemplatesServiceTests()
@@ -182,44 +173,105 @@ public class TemplatesServiceTests
     }
 
     [Fact]
-    public async Task DuplicateAsync_CreatesNewTemplateWithCopySuffix_AndCopiesMappings()
+    public async Task DuplicateAsync_Default_IncludeAllVersions_CopiesAllVersions()
     {
         _templateRepoMock
             .Setup(r => r.GetByIdAsync(SampleTemplate.Id))
             .ReturnsAsync(SampleTemplate);
+        
+        _templateRepoMock
+            .Setup(r => r.GetAllAsync())
+            .ReturnsAsync(new List<Template>());
             
+        var v1 = new TemplateVersion { Id = Guid.NewGuid(), TemplateId = SampleTemplate.Id, Version = 1, Status = TemplateVersionStatus.Superseded };
+        var v2 = new TemplateVersion { Id = Guid.NewGuid(), TemplateId = SampleTemplate.Id, Version = 2, Status = TemplateVersionStatus.Published };
+        
         _versionRepoMock
-            .Setup(r => r.GetPublishedVersionAsync(SampleTemplate.Id))
-            .ReturnsAsync(SampleVersion);
+            .Setup(r => r.GetAllVersionsAsync(SampleTemplate.Id))
+            .ReturnsAsync(new List<TemplateVersion> { v1, v2 });
 
-        Template? savedTemplate = null;
         _templateRepoMock
             .Setup(r => r.CreateAsync(It.IsAny<Template>()))
-            .Callback<Template>(t => savedTemplate = t)
-            .ReturnsAsync((Template t) => t);
+            .ReturnsAsync((Template t) => { t.Id = Guid.NewGuid(); return t; });
             
-        TemplateVersion? savedVersion = null;
         _versionRepoMock
             .Setup(r => r.CreateAsync(It.IsAny<TemplateVersion>()))
-            .Callback<TemplateVersion>(v => savedVersion = v)
-            .ReturnsAsync((TemplateVersion v) => v);
+            .ReturnsAsync((TemplateVersion v) => { v.Id = Guid.NewGuid(); return v; });
 
-        var sourceMappings = new List<FieldMapping>
-        {
-            new() { Id = Guid.NewGuid(), SourcePath = "a", TargetPath = "b", TemplateVersionId = SampleVersion.Id }
-        };
         _mappingRepoMock
-            .Setup(r => r.GetByTemplateVersionIdOrderedAsync(SampleVersion.Id))
-            .ReturnsAsync(sourceMappings);
-        _mappingRepoMock
-            .Setup(r => r.CreateBulkAsync(It.IsAny<List<FieldMapping>>()))
-            .ReturnsAsync(sourceMappings);
+            .Setup(r => r.GetByTemplateVersionIdOrderedAsync(It.IsAny<Guid>()))
+            .ReturnsAsync(new List<FieldMapping>());
 
         var result = await _sut.DuplicateAsync(SampleTemplate.Id);
 
         Assert.NotNull(result);
-        Assert.Contains("Copy", result.Name);
-        _mappingRepoMock.Verify(r => r.CreateBulkAsync(It.Is<List<FieldMapping>>(
-            list => list.Count == 1 && list[0].SourcePath == "a")), Times.Once);
+        Assert.Equal($"{SampleTemplate.Name} - Copy", result.Name);
+        _versionRepoMock.Verify(r => r.CreateAsync(It.Is<TemplateVersion>(v => v.Version == 1)), Times.Once);
+        _versionRepoMock.Verify(r => r.CreateAsync(It.Is<TemplateVersion>(v => v.Version == 2)), Times.Once);
+    }
+
+    [Fact]
+    public async Task DuplicateAsync_WithLastPublishedOnly_CopiesOnlyPublishedToV1()
+    {
+        _templateRepoMock
+            .Setup(r => r.GetByIdAsync(SampleTemplate.Id))
+            .ReturnsAsync(SampleTemplate);
+
+        _templateRepoMock
+            .Setup(r => r.GetAllAsync())
+            .ReturnsAsync(new List<Template>());
+            
+        var vPublished = new TemplateVersion { Id = Guid.NewGuid(), TemplateId = SampleTemplate.Id, Version = 2, Status = TemplateVersionStatus.Published };
+        
+        _versionRepoMock
+            .Setup(r => r.GetPublishedVersionAsync(SampleTemplate.Id))
+            .ReturnsAsync(vPublished);
+
+        _templateRepoMock
+            .Setup(r => r.CreateAsync(It.IsAny<Template>()))
+            .ReturnsAsync((Template t) => { t.Id = Guid.NewGuid(); return t; });
+            
+        _versionRepoMock
+            .Setup(r => r.CreateAsync(It.IsAny<TemplateVersion>()))
+            .ReturnsAsync((TemplateVersion v) => { v.Id = Guid.NewGuid(); return v; });
+
+        _mappingRepoMock
+            .Setup(r => r.GetByTemplateVersionIdOrderedAsync(vPublished.Id))
+            .ReturnsAsync(new List<FieldMapping> { new() { SourcePath = "src", TargetPath = "tgt" } });
+
+        var result = await _sut.DuplicateAsync(SampleTemplate.Id, new DuplicateTemplateRequest { IncludeAllVersions = false });
+
+        Assert.NotNull(result);
+        Assert.Equal($"{SampleTemplate.Name} - Copy", result.Name);
+        _versionRepoMock.Verify(r => r.CreateAsync(It.Is<TemplateVersion>(v => v.Version == 1 && v.Status == TemplateVersionStatus.Draft)), Times.Once);
+        _versionRepoMock.Verify(r => r.CreateAsync(It.Is<TemplateVersion>(v => v.Version != 1)), Times.Never);
+        _mappingRepoMock.Verify(r => r.CreateBulkAsync(It.Is<List<FieldMapping>>(l => l.Count == 1)), Times.Once);
+    }
+
+    [Fact]
+    public async Task DuplicateAsync_WithExistingCopy_AppendsCounter()
+    {
+        _templateRepoMock
+            .Setup(r => r.GetByIdAsync(SampleTemplate.Id))
+            .ReturnsAsync(SampleTemplate);
+        
+        var existingCopy = new Template { Name = $"{SampleTemplate.Name} - Copy" };
+        var existingCopy1 = new Template { Name = $"{SampleTemplate.Name} - Copy 1" };
+        _templateRepoMock
+            .Setup(r => r.GetAllAsync())
+            .ReturnsAsync(new List<Template> { existingCopy, existingCopy1 });
+
+        _templateRepoMock
+            .Setup(r => r.CreateAsync(It.IsAny<Template>()))
+            .ReturnsAsync((Template t) => { t.Id = Guid.NewGuid(); return t; });
+
+        _versionRepoMock
+            .Setup(r => r.GetAllVersionsAsync(SampleTemplate.Id))
+            .ReturnsAsync(new List<TemplateVersion>());
+
+        var result = await _sut.DuplicateAsync(SampleTemplate.Id);
+
+        Assert.NotNull(result);
+        Assert.Equal($"{SampleTemplate.Name} - Copy 2", result.Name);
     }
 }

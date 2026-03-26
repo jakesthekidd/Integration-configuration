@@ -123,9 +123,9 @@ export class ApiService {
     return this.http.delete<ApiResponse<any>>(`${this.apiUrl}/templates/${templateId}/versions/${version}`);
   }
 
-  duplicateTemplate(templateId: string): Observable<ApiResponse<FieldMappingTemplate>> {
+  duplicateTemplate(templateId: string, options?: { includeAllVersions: boolean }): Observable<ApiResponse<FieldMappingTemplate>> {
     return this.http.post<ApiResponse<FieldMappingTemplate>>(
-      `${this.apiUrl}/templates/${templateId}/duplicate`, {}
+      `${this.apiUrl}/templates/${templateId}/duplicate`, options ?? {}
     );
   }
 

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../services/api.service';
@@ -27,7 +27,10 @@ type Screen = 'list' | 'detail' | 'version';
         </div>
 
         <div *ngIf="error" class="error">{{ error }}</div>
-        <div *ngIf="success" class="success">{{ success }}</div>
+        <div *ngIf="success" class="success">
+          {{ success }}
+          <button *ngIf="duplicatedTemplateId" class="btn-link" style="color: white; text-decoration: underline; margin-left: 10px;" (click)="viewDuplicated()">View it</button>
+        </div>
 
         <!-- Create Form -->
         <div *ngIf="showCreateForm" class="form-container">
@@ -126,14 +129,25 @@ type Screen = 'list' | 'detail' | 'version';
           </div>
           <div class="header-actions">
             <button class="btn-small btn-info" (click)="startEdit(selectedTemplate)">Edit</button>
-            <button class="btn-small btn-duplicate" (click)="duplicateTemplate(selectedTemplate)">Duplicate</button>
+            <div class="dropdown">
+              <button class="btn-small btn-duplicate dropdown-toggle" (click)="toggleDuplicateDropdown($event)">
+                Duplicate ▾
+              </button>
+              <div class="dropdown-menu" [class.show]="showDuplicateDropdown" (click)="$event.stopPropagation()">
+                <button type="button" (click)="duplicateTemplate(selectedTemplate!, true)">Copy with all versions</button>
+                <button type="button" (click)="duplicateTemplate(selectedTemplate!, false)">Copy with last version</button>
+              </div>
+            </div>
             <button class="btn-small btn-archive" *ngIf="selectedTemplate.status !== 'Archived'" (click)="archiveTemplate(selectedTemplate)">Archive</button>
             <button class="btn-small btn-reactivate" *ngIf="selectedTemplate.status === 'Archived'" (click)="reactivateTemplate(selectedTemplate)">Reactivate</button>
           </div>
         </div>
 
         <div *ngIf="error" class="error">{{ error }}</div>
-        <div *ngIf="success" class="success">{{ success }}</div>
+        <div *ngIf="success" class="success">
+          {{ success }}
+          <button *ngIf="duplicatedTemplateId" class="btn-link" style="color: white; text-decoration: underline; margin-left: 10px;" (click)="viewDuplicated()">View it</button>
+        </div>
 
         <!-- Edit Form -->
         <div *ngIf="editingTemplate" class="form-container">
@@ -517,6 +531,61 @@ type Screen = 'list' | 'detail' | 'version';
       background: #7d3c98;
     }
 
+    .dropdown {
+      position: relative;
+      display: inline-block;
+    }
+
+    .dropdown-toggle::after {
+      content: "";
+      display: inline-block;
+      margin-left: 0.255em;
+      vertical-align: 0.255em;
+    }
+
+    .dropdown-menu {
+      position: absolute;
+      top: 100%;
+      right: 0;
+      z-index: 1000;
+      display: none;
+      min-width: 220px;
+      padding: 5px 0;
+      margin: 2px 0 0;
+      font-size: 13px;
+      color: #212529;
+      text-align: left;
+      list-style: none;
+      background-color: #fff;
+      background-clip: padding-box;
+      border: 1px solid rgba(0,0,0,.15);
+      border-radius: 4px;
+      box-shadow: 0 0.5rem 1rem rgba(0,0,0,.175);
+    }
+
+    .dropdown-menu.show {
+      display: block;
+    }
+
+    .dropdown-menu button {
+      display: block;
+      width: 100%;
+      padding: 8px 16px;
+      clear: both;
+      font-weight: 400;
+      color: #212529;
+      text-align: inherit;
+      white-space: nowrap;
+      background-color: transparent;
+      border: 0;
+      cursor: pointer;
+    }
+
+    .dropdown-menu button:hover {
+      background-color: #f8f9fa;
+      color: #16181b;
+    }
+
     .btn-publish {
       background: #27ae60;
       color: white;
@@ -713,6 +782,8 @@ export class TemplatesComponent implements OnInit {
   templateVersions: any[] = [];
   editingTemplate: FieldMappingTemplate | null = null;
   editRequest: UpdateTemplateRequest = this.getEmptyEditRequest();
+  showDuplicateDropdown: boolean = false;
+  duplicatedTemplateId: string | null = null;
 
   // --- Shared ---
   error: string = '';
@@ -754,6 +825,28 @@ export class TemplatesComponent implements OnInit {
     this.selectedVersionObj = version;
     this.currentScreen = 'version';
     this.clearMessages();
+  }
+
+  viewDuplicated() {
+    if (!this.duplicatedTemplateId) return;
+    this.apiService.getTemplateById(this.duplicatedTemplateId).subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.openDetail(response.data);
+          this.duplicatedTemplateId = null;
+        }
+      }
+    });
+  }
+
+  toggleDuplicateDropdown(event: Event) {
+    event.stopPropagation();
+    this.showDuplicateDropdown = !this.showDuplicateDropdown;
+  }
+
+  @HostListener('document:click')
+  closeDropdowns() {
+    this.showDuplicateDropdown = false;
   }
 
   // ===== Data Loading =====
@@ -845,12 +938,15 @@ export class TemplatesComponent implements OnInit {
     });
   }
 
-  duplicateTemplate(template: FieldMappingTemplate) {
+  duplicateTemplate(template: FieldMappingTemplate, includeAllVersions: boolean = true) {
     this.clearMessages();
-    this.apiService.duplicateTemplate(template.id).subscribe({
+    this.showDuplicateDropdown = false;
+    this.apiService.duplicateTemplate(template.id, { includeAllVersions }).subscribe({
       next: (response) => {
         if (response.success) {
-          this.success = `Template "${response.data?.name}" created as a copy.`;
+          const mode = includeAllVersions ? 'with all versions' : 'with last version';
+          this.success = `Template "${response.data?.name}" created as a copy (${mode}).`;
+          this.duplicatedTemplateId = response.data?.id ?? null;
           this.loadTemplates();
         }
       },
@@ -1043,6 +1139,7 @@ export class TemplatesComponent implements OnInit {
   private clearMessages() {
     this.error = '';
     this.success = '';
+    this.duplicatedTemplateId = null;
   }
 
   private getEmptyCreateRequest(): CreateTemplateRequest {

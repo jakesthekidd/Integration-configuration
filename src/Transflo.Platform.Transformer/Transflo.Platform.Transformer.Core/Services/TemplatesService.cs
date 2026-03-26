@@ -102,18 +102,31 @@ public class TemplatesService : ITemplatesService
         return true;
     }
 
-    public async Task<TemplateResponse?> DuplicateAsync(Guid templateId)
+    public async Task<TemplateResponse?> DuplicateAsync(Guid templateId, DuplicateTemplateRequest? request = null)
     {
+        var includeAllVersions = request?.IncludeAllVersions ?? true;
         var source = await _templateRepo.GetByIdAsync(templateId);
         if (source is null)
             return null;
 
-        var sourceVersion = await _versionRepo.GetPublishedVersionAsync(templateId);
+        var allTemplates = await _templateRepo.GetAllAsync();
+        var baseName = $"{source.Name} - Copy";
+        var finalName = baseName;
+        
+        if (allTemplates.Any(t => string.Equals(t.Name, baseName, StringComparison.OrdinalIgnoreCase)))
+        {
+            int counter = 1;
+            while (allTemplates.Any(t => string.Equals(t.Name, $"{baseName} {counter}", StringComparison.OrdinalIgnoreCase)))
+            {
+                counter++;
+            }
+            finalName = $"{baseName} {counter}";
+        }
 
         var copy = new Template
         {
             Id = Guid.NewGuid(),
-            Name = $"{source.Name} - Copy",
+            Name = finalName,
             Description = source.Description,
             Status = TemplateStatus.Active,
             SourceSchema = source.SourceSchema,
@@ -122,41 +135,93 @@ public class TemplatesService : ITemplatesService
 
         var created = await _templateRepo.CreateAsync(copy);
 
-        var newVersion = new TemplateVersion
+        if (includeAllVersions)
         {
-            TemplateId = created.Id,
-            Version = 1,
-            Status = TemplateVersionStatus.Draft,
-            ValidationRules = sourceVersion?.ValidationRules,
-            Metadata = sourceVersion?.Metadata
-        };
-
-        var createdVersion = await _versionRepo.CreateAsync(newVersion);
-
-        if (sourceVersion is not null)
-        {
-            var sourceMappings = await _mappingRepo.GetByTemplateVersionIdOrderedAsync(sourceVersion.Id);
-            if (sourceMappings.Count > 0)
+            var sourceVersions = await _versionRepo.GetAllVersionsAsync(templateId);
+            foreach (var sv in sourceVersions.OrderBy(v => v.Version))
             {
-                var copiedMappings = sourceMappings.Select(m => new FieldMapping
+                var newVersion = new TemplateVersion
                 {
-                    Id = Guid.NewGuid(),
-                    TemplateVersionId = createdVersion.Id,
-                    SourcePath = m.SourcePath,
-                    TargetPath = m.TargetPath,
-                    TransformationType = m.TransformationType,
-                    TransformationConfig = m.TransformationConfig,
-                    ExecutionOrder = m.ExecutionOrder,
-                    IsRequired = m.IsRequired,
-                    DefaultValue = m.DefaultValue,
-                    ValidationRules = m.ValidationRules
-                }).ToList();
+                    TemplateId = created.Id,
+                    Version = sv.Version,
+                    Status = sv.Status,
+                    ValidationRules = sv.ValidationRules,
+                    Metadata = sv.Metadata,
+                    PublishedAt = sv.PublishedAt,
+                    PublishedBy = sv.PublishedBy
+                };
+                var createdVersion = await _versionRepo.CreateAsync(newVersion);
 
-                await _mappingRepo.CreateBulkAsync(copiedMappings);
+                var sourceMappings = await _mappingRepo.GetByTemplateVersionIdOrderedAsync(sv.Id);
+                if (sourceMappings.Count > 0)
+                {
+                    var copiedMappings = sourceMappings.Select(m => new FieldMapping
+                    {
+                        Id = Guid.NewGuid(),
+                        TemplateVersionId = createdVersion.Id,
+                        SourcePath = m.SourcePath,
+                        TargetPath = m.TargetPath,
+                        TransformationType = m.TransformationType,
+                        TransformationConfig = m.TransformationConfig,
+                        ExecutionOrder = m.ExecutionOrder,
+                        IsRequired = m.IsRequired,
+                        DefaultValue = m.DefaultValue,
+                        ValidationRules = m.ValidationRules
+                    }).ToList();
+
+                    await _mappingRepo.CreateBulkAsync(copiedMappings);
+                }
+            }
+        }
+        else
+        {
+            // Copy only the published version (or latest if none published) to v1
+            var sourceVersion = await _versionRepo.GetPublishedVersionAsync(templateId);
+            if (sourceVersion is null)
+            {
+                // Fallback to latest version if no published version
+                var allVersions = await _versionRepo.GetAllVersionsAsync(templateId);
+                sourceVersion = allVersions.OrderByDescending(v => v.Version).FirstOrDefault();
+            }
+
+            var newVersion = new TemplateVersion
+            {
+                TemplateId = created.Id,
+                Version = 1,
+                Status = TemplateVersionStatus.Draft,
+                ValidationRules = sourceVersion?.ValidationRules,
+                Metadata = sourceVersion?.Metadata
+            };
+
+            var createdVersion = await _versionRepo.CreateAsync(newVersion);
+
+            if (sourceVersion is not null)
+            {
+                var sourceMappings = await _mappingRepo.GetByTemplateVersionIdOrderedAsync(sourceVersion.Id);
+                if (sourceMappings.Count > 0)
+                {
+                    var copiedMappings = sourceMappings.Select(m => new FieldMapping
+                    {
+                        Id = Guid.NewGuid(),
+                        TemplateVersionId = createdVersion.Id,
+                        SourcePath = m.SourcePath,
+                        TargetPath = m.TargetPath,
+                        TransformationType = m.TransformationType,
+                        TransformationConfig = m.TransformationConfig,
+                        ExecutionOrder = m.ExecutionOrder,
+                        IsRequired = m.IsRequired,
+                        DefaultValue = m.DefaultValue,
+                        ValidationRules = m.ValidationRules
+                    }).ToList();
+
+                    await _mappingRepo.CreateBulkAsync(copiedMappings);
+                }
             }
         }
 
-        return ToResponse(created);
+        // Reload to get versions for the response
+        var result = await _templateRepo.GetByIdAsync(created.Id);
+        return result is null ? ToResponse(created) : ToResponse(result);
     }
 
     public async Task<TemplateVersionResponse[]> GetVersionsAsync(Guid templateId)
