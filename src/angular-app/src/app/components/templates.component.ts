@@ -385,10 +385,8 @@ type Screen = 'list' | 'detail' | 'version';
     .breadcrumb span:last-child {
       color: #1e293b;
       font-weight: 800;
-      background: #fff;
       padding: 4px 12px;
       border-radius: 6px;
-      box-shadow: inset 0 0 0 1px #e2e8f0;
     }
 
     .btn-link {
