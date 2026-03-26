@@ -396,7 +396,6 @@ export class FieldMappingsComponent implements OnInit, OnChanges {
   refreshMappingData() {
     if (this.templateId && this.templateVersionId) {
       this.loadMappings();
-      //this.loadSourcePathsFromSampleJson();
       this.loadSourcePathsFromSourceSchema();
     }
   }
@@ -443,7 +442,7 @@ export class FieldMappingsComponent implements OnInit, OnChanges {
                 if (response.success && response.data?.fields) {
                     const parsedPaths: string[] = Object.keys(response.data.fields);
                     this.sourcePaths = [...new Set([...this.sourcePaths, ...parsedPaths])].sort();
-                    console.log(this.sourcePaths); alert(this.sourcePaths);
+                    console.log(this.sourcePaths);
                 }
             },
             error: (err) => console.warn('Could not parse sample JSON for path suggestions', err)
