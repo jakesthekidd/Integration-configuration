@@ -108,6 +108,7 @@ type Screen = 'list' | 'detail' | 'version';
                 <td class="description-cell">{{ template.description || '—' }}</td>
                 <td>{{ formatDate(template.createdAt) }}</td>
                 <td class="actions-cell" (click)="$event.stopPropagation()">
+                  <button class="btn-small btn-info" (click)="openDetail(template)" title="View Template Details">View</button>
                   <button class="btn-small btn-danger" (click)="deleteTemplate(template)" title="Delete">Delete</button>
                 </td>
               </tr>
