@@ -112,7 +112,7 @@ export class PrettyJsonPipe implements PipeTransform {
                 <td class="template-id-cell">
                   {{ log.templateName || log.templateId }}
                 </td>
-                <td class="message-cell">{{ log.messageSummary || '—' }}</td>
+                <td class="message-cell" [title]="log.messageSummary || ''">{{ log.messageSummary || '—' }}</td>
                 <td class="correlation-cell"><code>{{ log.correlationId || '—' }}</code></td>
                 <td>{{ log.timestamp | date:'MMM d, y HH:mm:ss' }}</td>
                 <td class="ms-cell">{{ log.durationMs }} ms</td>
@@ -135,6 +135,18 @@ export class PrettyJsonPipe implements PipeTransform {
                             <strong>{{ e.errorCode }}</strong>
                             <span *ngIf="e.sourcePath" class="path-chip">{{ e.sourcePath }} → {{ e.fieldPath }}</span>
                             <span class="error-msg">{{ e.message }}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Warnings panel -->
+                      <div *ngIf="parsedWarnings.length > 0" class="detail-section warning-section">
+                        <div class="section-title warning-title">Warnings ({{ parsedWarnings.length }})</div>
+                        <div class="error-list">
+                          <div *ngFor="let w of parsedWarnings" class="error-item">
+                            <strong>{{ w.code }}</strong>
+                            <span *ngIf="w.sourcePath" class="path-chip warning-chip">{{ w.sourcePath }} → {{ w.targetPath }}</span>
+                            <span class="error-msg">{{ w.message }}</span>
                           </div>
                         </div>
                       </div>
@@ -356,6 +368,17 @@ export class PrettyJsonPipe implements PipeTransform {
       border-radius: 6px;
       padding: 14px;
     }
+    .warning-section {
+      background: #fffbf0;
+      border: 1px solid #fde68a;
+      border-radius: 6px;
+      padding: 14px;
+    }
+    .warning-title { color: #92400e; }
+    .warning-chip {
+      background: #fef3c7;
+      color: #92400e;
+    }
     .error-list { display: flex; flex-direction: column; gap: 8px; }
     .error-item {
       display: flex;
@@ -381,6 +404,7 @@ export class TransformationLogsComponent implements OnInit {
   logs: TransformationLogSummary[] = [];
   detail: TransformationLogDetail | null = null;
   parsedErrors: any[] = [];
+  parsedWarnings: any[] = [];
 
   filterStatus = '';
   filterTemplateId = '';
@@ -435,11 +459,13 @@ export class TransformationLogsComponent implements OnInit {
       this.selectedId = null;
       this.detail = null;
       this.parsedErrors = [];
+      this.parsedWarnings = [];
       return;
     }
     this.selectedId = log.id;
     this.detail = null;
     this.parsedErrors = [];
+    this.parsedWarnings = [];
     this.detailError = '';
     this.detailLoading = true;
 
@@ -447,7 +473,8 @@ export class TransformationLogsComponent implements OnInit {
       next: (res) => {
         if (res.success && res.data) {
           this.detail = res.data;
-          this.parsedErrors = this.parseErrors(res.data.errors);
+          this.parsedErrors = this.parseJson(res.data.errors);
+          this.parsedWarnings = this.parseJson(res.data.warnings);
         }
         this.detailLoading = false;
       },
@@ -459,9 +486,9 @@ export class TransformationLogsComponent implements OnInit {
     });
   }
 
-  private parseErrors(errorsJson: string | undefined): any[] {
-    if (!errorsJson) return [];
-    try { return JSON.parse(errorsJson); } catch { return []; }
+  private parseJson(json: string | undefined): any[] {
+    if (!json) return [];
+    try { return JSON.parse(json); } catch { return []; }
   }
 
   statusClass(status: string): Record<string, boolean> {

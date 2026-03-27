@@ -88,7 +88,8 @@ public class TransformationLogsController : ControllerBase
             log.ExpiresAt,
             log.InputData,
             log.OutputData,
-            log.Errors
+            log.Errors,
+            log.Warnings
         }));
     }
 }

@@ -12,6 +12,11 @@ namespace Transflo.Platform.Transformer.Core.Services;
 
 public class TransformationCoordinator : ITransformationCoordinator
 {
+    private static readonly JsonSerializerOptions CamelCaseOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+    };
+
     private readonly ITemplateRepository _templateRepository;
     private readonly IFieldMappingRepository _mappingRepository;
     private readonly ITransformationLogRepository _logRepository;
@@ -48,6 +53,7 @@ public class TransformationCoordinator : ITransformationCoordinator
         }
 
         var result = await _transformationService.TransformAsync(sourceJson, resolution.Template!, resolution.Mappings!);
+        result.MessageSummary = BuildMessageSummary(DetermineStatus(result), result);
         await PersistLogAsync(sourceJson, templateId, result, options);
         return result;
     }
@@ -65,7 +71,9 @@ public class TransformationCoordinator : ITransformationCoordinator
             return resolution.EarlyResult!;
         }
 
-        return await _transformationService.TransformAsync(sourceJson, resolution.Template!, resolution.Mappings!);
+        var result = await _transformationService.TransformAsync(sourceJson, resolution.Template!, resolution.Mappings!);
+        result.MessageSummary = BuildMessageSummary(DetermineStatus(result), result);
+        return result;
     }
 
     public async Task<BatchTransformResult> TransformBatchAsync(
@@ -195,7 +203,10 @@ public class TransformationCoordinator : ITransformationCoordinator
                 InputData = sourceJson,
                 OutputData = result.OutputJson,
                 Errors = result.Errors.Count > 0
-                    ? JsonSerializer.Serialize(result.Errors)
+                    ? JsonSerializer.Serialize(result.Errors, CamelCaseOptions)
+                    : null,
+                Warnings = result.Warnings.Count > 0
+                    ? JsonSerializer.Serialize(result.Warnings, CamelCaseOptions)
                     : null,
                 ExecutionTimeMs = result.ExecutionTimeMs,
                 RecordCount = 1,

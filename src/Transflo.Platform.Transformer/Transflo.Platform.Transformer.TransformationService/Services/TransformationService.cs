@@ -297,9 +297,8 @@ public class TransformationService : ITransformationService
                                   : $": source path '{mapping.SourcePath}' returned no value.")
                 });
             }
-
-            if (!string.IsNullOrEmpty(mapping.SourcePath) &&
-                mapping.TransformationType != TransformationType.Constant)
+            else if (!string.IsNullOrEmpty(mapping.SourcePath) &&
+                     mapping.TransformationType != TransformationType.Constant)
             {
                 warnings.Add(new TransformationWarning
                 {

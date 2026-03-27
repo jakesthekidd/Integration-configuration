@@ -21,6 +21,7 @@ export interface TransformationLogDetail extends TransformationLogSummary {
   inputData?: string;
   outputData?: string;
   errors?: string;
+  warnings?: string;
 }
 
 export interface TransformationLogListResponse {

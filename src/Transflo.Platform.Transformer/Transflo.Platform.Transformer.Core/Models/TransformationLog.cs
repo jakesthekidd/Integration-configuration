@@ -31,6 +31,9 @@ public class TransformationLog
     [Column("errors", TypeName = "jsonb")]
     public string? Errors { get; set; }
 
+    [Column("warnings", TypeName = "jsonb")]
+    public string? Warnings { get; set; }
+
     [Column("execution_time_ms")]
     public long ExecutionTimeMs { get; set; }
 
