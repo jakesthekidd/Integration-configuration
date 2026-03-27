@@ -6,7 +6,9 @@ export interface TransformationLogSummary {
   templateName?: string;
   timestamp: string;
   status: TransformationStatus;
-  executionTimeMs: number;
+  durationMs: number;
+  messageSummary?: string;
+  correlationId?: string;
   recordCount: number;
   source?: string;
   userId?: string;

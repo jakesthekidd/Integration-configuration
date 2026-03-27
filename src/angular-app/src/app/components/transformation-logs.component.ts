@@ -92,10 +92,11 @@ export class PrettyJsonPipe implements PipeTransform {
               <th></th>
               <th>Status</th>
               <th>Template</th>
+              <th>Message</th>
+              <th>Correlation ID</th>
               <th>Timestamp</th>
               <th>Duration</th>
               <th>Source</th>
-              <th>User</th>
               <th>Expires</th>
             </tr>
           </thead>
@@ -111,22 +112,23 @@ export class PrettyJsonPipe implements PipeTransform {
                 <td class="template-id-cell">
                   {{ log.templateName || log.templateId }}
                 </td>
+                <td class="message-cell">{{ log.messageSummary || '—' }}</td>
+                <td class="correlation-cell"><code>{{ log.correlationId || '—' }}</code></td>
                 <td>{{ log.timestamp | date:'MMM d, y HH:mm:ss' }}</td>
-                <td class="ms-cell">{{ log.executionTimeMs }} ms</td>
+                <td class="ms-cell">{{ log.durationMs }} ms</td>
                 <td>{{ log.source || '—' }}</td>
-                <td>{{ log.userId || '—' }}</td>
                 <td class="muted">{{ log.expiresAt | date:'mediumDate' }}</td>
               </tr>
 
               <!-- Expanded detail row -->
               <tr *ngIf="selectedId === log.id" class="detail-row">
-                <td colspan="8">
+                <td colspan="9">
                   <div class="detail-panel" *ngIf="!detailLoading">
                     <div *ngIf="detailError" class="alert alert-error">{{ detailError }}</div>
 
                     <div class="detail-grid" *ngIf="detail">
                       <!-- Errors panel -->
-                      <div *ngIf="parsedErrors.length > 0" class="detail-section full-width error-section">
+                      <div *ngIf="parsedErrors.length > 0" class="detail-section error-section">
                         <div class="section-title error-title">Errors ({{ parsedErrors.length }})</div>
                         <div class="error-list">
                           <div *ngFor="let e of parsedErrors" class="error-item">
@@ -155,12 +157,12 @@ export class PrettyJsonPipe implements PipeTransform {
             </ng-container>
 
             <tr *ngIf="logs.length === 0 && !loading">
-              <td colspan="8" class="no-data">
+              <td colspan="9" class="no-data">
                 No transformation logs found. Run a transformation on the "Test Transform" tab to generate logs.
               </td>
             </tr>
             <tr *ngIf="loading">
-              <td colspan="8" class="no-data">Loading…</td>
+              <td colspan="9" class="no-data">Loading…</td>
             </tr>
           </tbody>
         </table>
@@ -269,6 +271,20 @@ export class PrettyJsonPipe implements PipeTransform {
       font-weight: 500;
       color: #2c3e50;
     }
+    .message-cell {
+      max-width: 260px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: #444;
+    }
+    .correlation-cell code {
+      font-size: 11px;
+      background: #f4f4f4;
+      padding: 2px 6px;
+      border-radius: 3px;
+      color: #666;
+    }
     .ms-cell { font-variant-numeric: tabular-nums; }
     .muted { color: #aaa; }
     .no-data { text-align: center; color: #999; font-style: italic; padding: 50px; }
@@ -304,7 +320,9 @@ export class PrettyJsonPipe implements PipeTransform {
       grid-template-columns: 1fr 1fr;
       gap: 20px;
     }
-    .full-width { grid-column: 1 / -1; }
+    @media (max-width: 1100px) {
+      .detail-grid { grid-template-columns: 1fr; }
+    }
 
     .detail-section {}
     .section-title {
@@ -324,10 +342,11 @@ export class PrettyJsonPipe implements PipeTransform {
       padding: 14px;
       border-radius: 5px;
       overflow: auto;
-      max-height: 340px;
+      max-height: 480px;
       margin: 0;
       white-space: pre;
       font-family: 'Consolas', 'Menlo', monospace;
+      word-break: break-all;
     }
 
     /* Error list */
@@ -376,7 +395,7 @@ export class TransformationLogsComponent implements OnInit {
   get total() { return this.logs.length; }
   get avgMs(): string {
     if (!this.logs.length) return '—';
-    const avg = this.logs.reduce((s, l) => s + l.executionTimeMs, 0) / this.logs.length;
+    const avg = this.logs.reduce((s, l) => s + (l.durationMs ?? 0), 0) / this.logs.length;
     return avg.toFixed(0);
   }
   get counts(): Record<string, number> {
