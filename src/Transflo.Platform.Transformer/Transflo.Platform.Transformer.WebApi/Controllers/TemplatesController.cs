@@ -89,9 +89,9 @@ public class TemplatesController : ControllerBase
     [HttpPost("{templateId}/duplicate")]
     [ProducesResponseType(typeof(ApiResponse<TemplateResponse>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ApiResponse<TemplateResponse>), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Duplicate(Guid templateId)
+    public async Task<IActionResult> Duplicate(Guid templateId, [FromBody] DuplicateTemplateRequest? request)
     {
-        var response = await _service.DuplicateAsync(templateId);
+        var response = await _service.DuplicateAsync(templateId, request);
         if (response is null)
             return NotFound(ApiResponse<TemplateResponse>.ErrorResponse($"Template not found: {templateId}"));
 

@@ -1,0 +1,88 @@
+name: Carrier UI Direct Hotfix CD
+
+variables:
+  tags: |
+    latest
+    $(Build.BuildId)-dev
+
+trigger: none
+pr: none
+
+pool:
+  vmImage: ubuntu-latest
+
+stages:
+  - stage: Dev_Deploy
+    displayName: Dev Deploy
+    jobs:
+      - job: Dev_Deploy
+        variables:
+          - template: /pipelines/templates/variables-dev.yaml
+        steps:
+          - template: /pipelines/templates/ui/build_push_and_deploy.yaml
+            parameters:
+              ENVIRONMENT: "dev"
+              S3_BUCKET_NAME: "wfai-app-dev"
+              CLOUDFRONT_DISTRIBUTION_ID: "E1Q2YIPEZHLHGY"
+              PROJECT_ABBREVIATION: "carrier"
+              PROJECT_NAME: "carrier-workflow"
+
+  - stage: qa_promote_and_deploy
+    displayName: Promote & Deploy to QA
+    trigger: manual
+    jobs:
+    - job: manual_validation
+      displayName: Manual Validation
+      pool: server
+      steps:
+      - task: ManualValidation@1
+        inputs:
+          approvers: |
+            [Workflow AI]\QA-Approvers
+          instructions: 'Please validate the promotion of the ECR image before deploying to QA.'
+          onTimeout: 'reject'
+          allowApproversToApproveTheirOwnRuns: true
+        timeoutInMinutes: 1440
+    - job: deploy_to_qa
+      displayName: Deploy to QA
+      dependsOn: manual_validation
+      variables:
+        - template: /pipelines/templates/variables-qa.yaml
+      steps:
+        - template: /pipelines/templates/ui/build_push_and_deploy.yaml
+          parameters:
+            ENVIRONMENT: "qa"
+            S3_BUCKET_NAME: "wfai-app-qa"
+            CLOUDFRONT_DISTRIBUTION_ID: "EM4IANTD2TDKX"
+            PROJECT_ABBREVIATION: "carrier"
+            PROJECT_NAME: "carrier-workflow"
+
+  - stage: prod_promote_and_deploy
+    displayName: Promote & Deploy to Prod
+    trigger: manual
+    jobs:
+    - job: manual_validation
+      displayName: Manual Validation
+      pool: server
+      steps:
+      - task: ManualValidation@1
+        inputs:
+          approvers: |
+            [Workflow AI]\Prod-Approvers
+          instructions: 'Please validate the promotion of the ECR image before deploying to Prod.'
+          onTimeout: 'reject'
+          allowApproversToApproveTheirOwnRuns: true
+        timeoutInMinutes: 1440
+    - job: deploy_to_Prod
+      displayName: Deploy to Prod
+      dependsOn: manual_validation
+      variables:
+        - template: /pipelines/templates/variables-prod.yaml
+      steps:
+        - template: /pipelines/templates/ui/build_push_and_deploy.yaml
+          parameters:
+            ENVIRONMENT: "prod"
+            S3_BUCKET_NAME: "wfai-app-prod"
+            CLOUDFRONT_DISTRIBUTION_ID: "E1X3LXYARLCIU1"
+            PROJECT_ABBREVIATION: "carrier"
+            PROJECT_NAME: "carrier-workflow"

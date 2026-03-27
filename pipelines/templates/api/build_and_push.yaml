@@ -1,0 +1,72 @@
+---
+parameters:
+- name: IMAGE_NAME
+  type: string
+- name: tag
+  type: string  
+- name: PROJECT_FILE
+  type: string
+  default: false
+- name: TEST_FILES
+  type: string
+  default: false
+
+steps:
+  - script: |
+      aws --version
+    displayName: Verify AWS CLI
+
+  - script: |
+      aws ecr get-login-password --region $(AWS_REGION) | docker login --username AWS --password-stdin $(ECR_REPOSITORY_URI)
+    env:
+      AWS_ACCESS_KEY_ID: $(AWS_ACCESS_KEY_ID)
+      AWS_SECRET_ACCESS_KEY: $(AWS_SECRET_ACCESS_KEY)
+    displayName: Login to ECR
+
+  - task: DotNetCoreCLI@2
+    displayName: "Version of build tools"
+    inputs:
+      command: custom
+      custom: "--info"
+    continueOnError: true
+    timeoutInMinutes: 1
+
+  - task: NuGetAuthenticate@1
+    displayName: "NuGet Authenticate"
+
+  - task: DotNetCoreCLI@2
+    displayName: Restore
+    inputs:
+      command: restore
+      projects: ${{ parameters.PROJECT_FILE }}
+    timeoutInMinutes: 4
+
+  - task: DotNetCoreCLI@2
+    displayName: Build
+    inputs:
+      projects: ${{ parameters.PROJECT_FILE }}
+      arguments: "--configuration Release"
+
+  - task: DotNetCoreCLI@2
+    displayName: 'Publish API Container'
+    inputs:
+      command: publish
+      publishWebProjects: false
+      projects: ${{ parameters.PROJECT_FILE }}
+      arguments: "--configuration Release --self-contained false --os linux --arch x64 -p:PublishProfile=DefaultContainer -p:ContainerRepository=${{ parameters.IMAGE_NAME }} -p:ContainerImageTag=$(Build.BuildId) -p:ContainerPush=false"
+  
+  - script: |
+      echo "🔹 Loading Docker image into local environment..."
+      docker load < "$(Build.ArtifactStagingDirectory)/${{ parameters.IMAGE_NAME }}.tar"
+
+      echo "🔹 Preparing to tag and push images..."
+      tags="${{ parameters.tag }}"
+      IFS=$'\n' read -r -d '' -a tag_array <<< "$tags" || true
+
+      for tag in "${tag_array[@]}"; do
+        sanitized_tag=$(echo "$tag" | tr -cd '[:alnum:]_.-')  # Ensure valid Docker tag format
+        echo "🔹 Tagging ${{ parameters.IMAGE_NAME }}:$(Build.BuildId) as ${{ parameters.IMAGE_NAME }}:$sanitized_tag"
+        docker tag "${{ parameters.IMAGE_NAME }}:$(Build.BuildId)" "$(ECR_REPOSITORY_URI)/${{ parameters.IMAGE_NAME }}:$sanitized_tag"
+        docker push "$(ECR_REPOSITORY_URI)/${{ parameters.IMAGE_NAME }}:$sanitized_tag"
+      done
+    displayName: 'Tag & Push Docker Images to ECR'

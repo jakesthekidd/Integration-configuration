@@ -1,0 +1,27 @@
+name: Workflow UI PR Check
+
+trigger: none
+pr:
+  branches:
+    # run on PRs from any branch
+    include:
+      - '*'
+  paths:
+    include:
+      - src/frontend/**
+    exclude:
+      - src/backend/**
+      - src/infrastructure/**
+      - src/api-gateway/**
+
+stages:
+  - stage: Check
+    jobs:
+      - job: Check
+        pool:
+          vmImage: "ubuntu-latest"
+        steps:
+          - template: /pipelines/templates/ui/check.yaml
+            parameters:
+              PROJECT_ABBREVIATION: "carrier"
+              PROJECT_NAME: "carrier-workflow"

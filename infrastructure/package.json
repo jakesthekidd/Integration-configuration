@@ -1,0 +1,43 @@
+{
+    "name": "platform-transformer",
+    "version": "1.0.0",
+    "description": "Platform Transformer infrastructure stack written in CDK.",
+    "type": "module",
+    "scripts": {
+        "build": "tsc",
+        "build-windows": "if exist dist rmdir /s /q dist && npx tsup",
+        "diff-dev": "dotenvx run --env ENV=dev -f ../.env.dev --quiet -- cdk diff",
+        "diff-qa": "dotenvx run --env ENV=qa -f ../.env.qa --quiet -- cdk diff",
+        "diff-prod": "dotenvx run --env ENV=prod -f ../.env.prod --quiet -- cdk diff",
+        "synth-dev": "dotenvx run --env ENV=dev -f ../.env.dev --quiet -- cdk synth",
+        "synth-qa": "dotenvx run --env ENV=qa -f ../.env.qa --quiet -- cdk synth",
+        "synth-prod": "dotenvx run --env ENV=prod -f ../.env.prod --quiet -- cdk synth",
+        "create-dev": "dotenvx run --env ENV=dev -f ../.env.dev --quiet -- cdk deploy",
+        "create-qa": "dotenvx run --env ENV=qa -f ../.env.qa --quiet -- cdk deploy",
+        "create-prod": "dotenvx run --env ENV=prod -f ../.env.prod --quiet -- cdk deploy",
+        "destroy-dev": "dotenvx run --env ENV=dev -f ../.env.dev --quiet -- cdk destroy ",
+        "destroy-qa": "dotenvx run --env ENV=qa -f ../.env.qa --quiet -- cdk destroy",
+        "destroy-prod": "dotenvx run --env ENV=prod -f ../.env.prod --quiet -- cdk destroy"
+    },
+    "dependencies": {
+        "@aws-cdk/aws-apprunner-alpha": "^2.159.1-alpha.0",
+        "@aws-solutions-constructs/aws-cloudfront-s3": "2.71.0",
+        "@dotenvx/dotenvx": "^1.14.1",
+        "aws-cdk": "2.175.1",
+        "aws-cdk-lib": "2.175.1",
+        "case-anything": "^3.1.0",
+        "cdk-docker-image-deployment": "^0.0.663",
+        "cdk-ecr-deployment": "^3.0.111",
+        "constructs": "^10.3.0",
+        "deploy-time-build": "^0.3.21",
+        "infrastructure-templates": "^1.1.77",
+        "short-unique-id": "^5.2.0",
+        "typescript": "^5.6.2"
+    },
+    "devDependencies": {
+        "@types/node": "^22.5.5",
+        "cross-env": "^7.0.3",
+        "tsup": "^8.3.0",
+        "tsx": "^4.19.1"
+    }
+}

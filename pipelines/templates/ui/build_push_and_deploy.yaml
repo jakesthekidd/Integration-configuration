@@ -1,0 +1,93 @@
+parameters:
+  - name: ENVIRONMENT
+    type: string
+  - name: S3_BUCKET_NAME
+    type: string
+  - name: CLOUDFRONT_DISTRIBUTION_ID
+    type: string
+  - name: WebApplicationsPath
+    type: string
+    default: "$(System.DefaultWorkingDirectory)/src/frontend/web"
+  - name: PROJECT_ABBREVIATION
+    type: string
+    default: false
+  - name: PROJECT_NAME
+    type: string
+    default: false
+  - name: BUILD_DIR
+    type: string
+    default: "$(System.DefaultWorkingDirectory)/src/frontend/web/dist/carrier-workflow/"
+
+steps:
+
+  - script: |
+      echo "##vso[build.updatebuildnumber]$(Build.BuildId)"
+    displayName: "Set Build Name Immediately"
+    condition: always()
+    
+  - task: npmAuthenticate@0
+    displayName: "Npm Authenticate"
+    inputs:
+      workingFile: "${{ parameters.WebApplicationsPath }}/.npmrc"    
+
+  - task: Npm@1
+    displayName: install
+    inputs:
+      command: custom
+      workingDir: ${{ parameters.WebApplicationsPath }}
+      verbose: false
+      customCommand: "install"
+    timeoutInMinutes: 5
+
+  - task: Npm@1
+    displayName: build
+    inputs:
+      command: custom
+      workingDir: ${{ parameters.WebApplicationsPath }}
+      verbose: false
+      customCommand: "run build"
+    timeoutInMinutes: 5
+  
+  # Configure the Angular app-config
+  - script: |
+      # Construct the source file path based on the environment
+      SOURCE_FILE="$APP_CONFIG_DIR/app-config.$ENVIRONMENT.json"
+
+      # Define the destination file path
+      DESTINATION_FILE="$APP_CONFIG_DIR/app-config.json"
+      
+      # Replace the generic config with the environment-specific app-config.json
+      cp "$SOURCE_FILE" "$DESTINATION_FILE"
+    displayName: "Configure Angular App for ${{ parameters.ENVIRONMENT }} Deploy Environment"
+    env:
+      ENVIRONMENT: ${{ parameters.ENVIRONMENT }}
+      APP_CONFIG_DIR: "${{ parameters.BUILD_DIR }}browser/assets/app-config"
+
+  # Remove old files from S3 Bucket
+  - script: |
+      aws s3 rm s3://$S3_BUCKET_NAME --recursive --region $AWS_REGION
+    displayName: 'Remove old files from S3 Bucket'
+    env:
+      AWS_ACCESS_KEY_ID: $(AWS_ACCESS_KEY_ID)
+      AWS_SECRET_ACCESS_KEY: $(AWS_SECRET_ACCESS_KEY)
+      AWS_REGION: $(AWS_REGION)
+      S3_BUCKET_NAME: ${{ parameters.S3_BUCKET_NAME }}
+
+  # Upload new files to S3 bucket
+  - script: |
+      aws s3 sync ${{ parameters.BUILD_DIR }}browser/ s3://$S3_BUCKET_NAME --region $AWS_REGION
+    displayName: 'Upload new files to S3 bucket'
+    env:
+      AWS_ACCESS_KEY_ID: $(AWS_ACCESS_KEY_ID)
+      AWS_SECRET_ACCESS_KEY: $(AWS_SECRET_ACCESS_KEY)
+      AWS_REGION: $(AWS_REGION)
+      S3_BUCKET_NAME: ${{ parameters.S3_BUCKET_NAME }}
+
+  # Invalidate CloudFront distro
+  - script: |
+      aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_DISTRIBUTION_ID --paths "/*"
+    displayName: 'Invalidate CloudFront distro'
+    env:
+      AWS_ACCESS_KEY_ID: $(AWS_ACCESS_KEY_ID)
+      AWS_SECRET_ACCESS_KEY: $(AWS_SECRET_ACCESS_KEY)
+      CLOUDFRONT_DISTRIBUTION_ID: ${{ parameters.CLOUDFRONT_DISTRIBUTION_ID }}

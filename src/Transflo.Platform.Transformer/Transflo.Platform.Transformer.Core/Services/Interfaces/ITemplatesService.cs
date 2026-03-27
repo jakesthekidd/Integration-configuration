@@ -11,7 +11,7 @@ public interface ITemplatesService
     /// <summary>Returns false when the template does not exist.</summary>
     Task<bool> DeleteAsync(Guid templateId);
     Task<bool> ReactivateAsync(Guid templateId);
-    Task<TemplateResponse?> DuplicateAsync(Guid templateId);
+    Task<TemplateResponse?> DuplicateAsync(Guid templateId, DuplicateTemplateRequest? request = null);
 
     // ── Version lifecycle ────────────────────────────────────────────────────
 

@@ -1,0 +1,30 @@
+name: "CI Check Transformer"
+
+pool:
+  vmImage: ubuntu-latest
+
+trigger: none
+pr:
+  branches:
+    # run on PRs from any branch
+    include:
+      - '*'
+  paths:
+    include:
+      - src/Transflo.Platform.Transformer/**
+    exclude:
+      - src/angular-app/**
+      - src/infrastructure/**
+stages:
+- stage: Check
+  displayName: Check transformer Images
+  jobs:
+  - job: build_transformer_api
+    displayName: Build Transformer API
+    variables:
+    - template: /pipelines/templates/variables-dev.yaml
+    steps:
+    - template: /pipelines/templates/shared/api_and_lambda_check.yaml
+      parameters:
+        PROJECT_FILE: "$(System.DefaultWorkingDirectory)/src/Transflo.Platform.Transformer/Transflo.Platform.Transformer.WebApi/Transflo.Platform.Transformer.WebApi.csproj"
+        TEST_FILES: "$(System.DefaultWorkingDirectory)/src/Transflo.Platform.Transformer/**/*.Tests.csproj"

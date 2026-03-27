@@ -1,0 +1,20 @@
+parameters:
+  - name: ECS_CLUSTER_NAME
+    type: string
+    default: false
+  - name: ECS_SERVICE_NAME
+    type: string
+    default: false
+
+steps:
+  - checkout: self
+    fetchDepth: 1
+
+  # Force a deployment of the ECS service so it fetches the latest image
+  - script: |
+      aws ecs update-service --cluster ${{ parameters.ECS_CLUSTER_NAME }} --service ${{ parameters.ECS_SERVICE_NAME }} --force-new-deployment
+    displayName: "Force a deployment of the ECS service so it fetches the latest image"
+    env:
+      AWS_ACCESS_KEY_ID: $(AWS_ACCESS_KEY_ID)
+      AWS_SECRET_ACCESS_KEY: $(AWS_SECRET_ACCESS_KEY)
+      AWS_DEFAULT_REGION: $(AWS_REGION)

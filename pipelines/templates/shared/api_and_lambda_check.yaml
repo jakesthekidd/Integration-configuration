@@ -1,0 +1,61 @@
+parameters:
+  - name: PROJECT_FILE
+    type: string
+    default: false
+  - name: TEST_FILES
+    type: string
+    default: ''
+
+steps:
+  - task: DotNetCoreCLI@2
+    displayName: "Version of build tools"
+    inputs:
+      command: custom
+      custom: "--info"
+    timeoutInMinutes: 1
+
+  - task: NuGetAuthenticate@1
+    displayName: "NuGet Authenticate"
+
+  - task: DotNetCoreCLI@2
+    displayName: Restore
+    inputs:
+      command: restore
+      projects: ${{ parameters.PROJECT_FILE }}
+    timeoutInMinutes: 4
+
+  - task: DotNetCoreCLI@2
+    displayName: Audit
+    inputs:
+      command: custom
+      projects: ${{ parameters.PROJECT_FILE }}
+      custom: list
+      arguments: "package --vulnerable --include-transitive"
+    timeoutInMinutes: 1
+
+  - task: DotNetCoreCLI@2
+    displayName: Format
+    inputs:
+      command: custom
+      projects: ${{ parameters.PROJECT_FILE }}
+      custom: format
+      arguments: "--verify-no-changes"
+
+  - task: DotNetCoreCLI@2
+    displayName: Build
+    inputs:
+      projects: ${{ parameters.PROJECT_FILE }}
+      arguments: "--configuration Release"
+
+  - task: DotNetCoreCLI@2
+    displayName: Test
+    condition: ne('${{ parameters.TEST_FILES }}', '')
+    inputs:
+      command: test
+      projects: ${{ parameters.TEST_FILES }}
+      arguments: '--configuration Release --collect "Code coverage"'
+      publishTestResults: true
+    env:
+      AWS_ACCESS_KEY_ID: $(AWS_ACCESS_KEY_ID)
+      AWS_SECRET_ACCESS_KEY: $(AWS_SECRET_ACCESS_KEY)
+    timeoutInMinutes: 5

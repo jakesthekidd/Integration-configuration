@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Transflo.Platform.Transformer.Core.Data;
@@ -11,13 +12,15 @@ using Transflo.Platform.Transformer.Core.Data;
 namespace Transflo.Platform.Transformer.Core.Migrations
 {
     [DbContext(typeof(FieldMappingDbContext))]
-    partial class FieldMappingDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260326202521_AddBaseVersionToTemplateVersion")]
+    partial class AddBaseVersionToTemplateVersion
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.14")
+                .HasAnnotation("ProductVersion", "8.0.0")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -573,6 +576,36 @@ namespace Transflo.Platform.Transformer.Core.Migrations
                         .IsUnique();
 
                     b.ToTable("tms_systems");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000001"),
+                            CreatedAt = new DateTime(2026, 3, 26, 20, 25, 20, 639, DateTimeKind.Utc).AddTicks(2069),
+                            CreatedBy = "System",
+                            Description = "TruckMate Transportation Management System",
+                            DisplayName = "TruckMate TMS",
+                            IsActive = true,
+                            IsDeleted = false,
+                            Name = "TruckMate",
+                            Revision = 1,
+                            UpdatedAt = new DateTime(2026, 3, 26, 20, 25, 20, 639, DateTimeKind.Utc).AddTicks(2069),
+                            Version = "1.0"
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000002"),
+                            CreatedAt = new DateTime(2026, 3, 26, 20, 25, 20, 639, DateTimeKind.Utc).AddTicks(2069),
+                            CreatedBy = "System",
+                            Description = "McLeod Transportation Management System",
+                            DisplayName = "McLeod Software",
+                            IsActive = true,
+                            IsDeleted = false,
+                            Name = "McLeod",
+                            Revision = 1,
+                            UpdatedAt = new DateTime(2026, 3, 26, 20, 25, 20, 639, DateTimeKind.Utc).AddTicks(2069),
+                            Version = "1.0"
+                        });
                 });
 
             modelBuilder.Entity("Transflo.Platform.Transformer.Core.Models.TransformationLog", b =>
@@ -581,11 +614,6 @@ namespace Transflo.Platform.Transformer.Core.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
                         .HasColumnName("id");
-
-                    b.Property<string>("CorrelationId")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("correlation_id");
 
                     b.Property<string>("Errors")
                         .HasColumnType("jsonb")
@@ -602,11 +630,6 @@ namespace Transflo.Platform.Transformer.Core.Migrations
                     b.Property<string>("InputData")
                         .HasColumnType("jsonb")
                         .HasColumnName("input_data");
-
-                    b.Property<string>("MessageSummary")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)")
-                        .HasColumnName("message_summary");
 
                     b.Property<string>("OutputData")
                         .HasColumnType("jsonb")
@@ -638,13 +661,7 @@ namespace Transflo.Platform.Transformer.Core.Migrations
                     b.Property<Guid?>("UserId")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("Warnings")
-                        .HasColumnType("jsonb")
-                        .HasColumnName("warnings");
-
                     b.HasKey("Id");
-
-                    b.HasIndex("CorrelationId");
 
                     b.HasIndex("ExpiresAt");
 

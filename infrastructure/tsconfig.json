@@ -1,0 +1,23 @@
+{
+    "compilerOptions": {
+        "target": "ES2022",
+        "module": "ES2022",
+        "moduleResolution": "Bundler",
+        "esModuleInterop": true,
+        "forceConsistentCasingInFileNames": true,
+        "strict": true,
+        "noImplicitAny": true,
+        "skipLibCheck": true,
+        "sourceMap": true,
+        "lib": ["ES2022"],
+        "outDir": "dist",
+        "declaration": true,
+        "baseUrl": ".",
+        "paths": {
+            "infrastructure-templates": ["node_modules/infrastructure-templates"],
+            "*": ["node_modules/*"]
+        }
+    },
+    "include": ["**/*.ts"],
+    "exclude": ["node_modules", "dist", "**/*.d.ts"]
+}
