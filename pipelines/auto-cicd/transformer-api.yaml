@@ -134,4 +134,4 @@ stages:
     - template: /pipelines/templates/api/deploy.yaml
       parameters:
         ECS_CLUSTER_NAME: "Prod-Cluster"
-        # ECS_SERVICE_NAME: "transformerapiStack-platformtransformerapiStackecsecsserviceServiceA1814572-R1KDjxoIA3rc"      
+        # ECS_SERVICE_NAME: "transformerapiStack-platformtransformerapiStackecsecsserviceServiceA1814572-R1KDjxoIA3rc"
