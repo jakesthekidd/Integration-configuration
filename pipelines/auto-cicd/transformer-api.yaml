@@ -1,0 +1,137 @@
+name: "Transformer Automated CI/CD"
+
+variables:
+  mainBranch: ${{ eq(variables['Build.SourceBranchName'], 'main') }}
+  tags: |
+    latest
+    $(Build.BuildId)-dev
+
+trigger:
+  branches:
+    include:
+    - main
+  paths:
+    include:
+    - src/Transflo.Platform.Transformer/*
+  batch: true
+pr: none
+
+pool:
+  vmImage: ubuntu-latest
+
+stages:
+- stage: transformer_api
+  displayName: Build & Push DEV Transformer Image
+  condition: eq(variables['mainBranch'], 'true')
+  jobs:
+  - job:
+    variables:
+    - template: /pipelines/templates/variables-dev.yaml
+    steps:
+    - template: /pipelines/templates/api/build_and_push.yaml
+      parameters:
+        IMAGE_NAME: platform-ue1-ecr-tranformer-api
+        PROJECT_FILE: "$(System.DefaultWorkingDirectory)/src/Transflo.Platform.Transformer/Transflo.Platform.Transformer.WebApi/Transflo.Platform.Transformer.WebApi.csproj"
+        TEST_FILES: "$(System.DefaultWorkingDirectory)/src/Transflo.Platform.Transformer/Transflo.Platform.Transformer.TransformationService.Tests/**/*.Tests.csproj"
+        tag: ${{ variables.tags }}
+
+- stage: dev_deploy
+  displayName: Deploy to DEV
+  condition: succeeded()
+  dependsOn:
+  - transformer_api
+  jobs:
+  - job:
+    variables:
+    - template: /pipelines/templates/variables-dev.yaml
+    steps:
+    - template: /pipelines/templates/api/deploy.yaml
+      parameters:
+        ECS_CLUSTER_NAME: "Dev-Cluster"
+        ECS_SERVICE_NAME: "transformerapiStack-platformtransformerapiStackecsecsserviceServiceA1814572-R1KDjxoIA3rc"
+
+- stage: qa_promote_and_deploy
+  displayName: Promote & Deploy to QA
+  trigger: manual
+  jobs:
+  - job: manual_validation
+    displayName: Manual Validation
+    pool: server
+    steps:
+    - task: ManualValidation@1
+      inputs:
+        approvers: |
+          [Workflow AI]\Platform-QA-Approvers
+        instructions: 'Please validate the promotion of the ECR image before deploying to QA.'
+        onTimeout: 'reject'
+        allowApproversToApproveTheirOwnRuns: true
+      timeoutInMinutes: 1440
+
+  - job: promote_ecr_image
+    displayName: Promote ECR Image
+    dependsOn: manual_validation
+    steps:
+    - template: /pipelines/templates/shared/ecr_promote_tags.yaml
+      parameters:
+        imageName: platform-ue1-ecr-tranformer-api
+        sourceTag: $(Build.BuildId)-dev
+        targetTag: $(Build.BuildId)-qa
+        latestTag: 'latest'
+        sourceEcrUri: 563171196787.dkr.ecr.us-east-1.amazonaws.com
+        targetEcrUri: 624164147597.dkr.ecr.us-east-1.amazonaws.com
+        sourceAWSCredentials: "AWS-DEV"
+        targetAWSCredentials: "AWS-QA"
+
+  - job: deploy_to_qa
+    displayName: Deploy to QA
+    dependsOn: promote_ecr_image
+    variables:
+    - template: /pipelines/templates/variables-qa.yaml
+    steps:
+    - template: /pipelines/templates/api/deploy.yaml
+      parameters:
+        ECS_CLUSTER_NAME: "QA-Cluster"
+        # ECS_SERVICE_NAME: "transformerapiStack-platformtransformerapiStackecsecsserviceServiceA1814572-R1KDjxoIA3rc"
+
+- stage: prod_promote_and_deploy
+  displayName: Promote & Deploy to Prod
+  trigger: manual
+  jobs:
+  - job: manual_validation
+    displayName: Manual Validation
+    pool: server
+    steps:
+    - task: ManualValidation@1
+      inputs:
+        approvers: |
+          [Workflow AI]\Platform-Prod-Approvers
+        instructions: 'Please validate the promotion of the ECR image before deploying to Prod.'
+        onTimeout: 'reject'
+        allowApproversToApproveTheirOwnRuns: true
+      timeoutInMinutes: 1440
+
+  - job: promote_ecr_image
+    displayName: Promote ECR Image
+    dependsOn: manual_validation
+    steps:
+    - template: /pipelines/templates/shared/ecr_promote_tags.yaml
+      parameters:
+        imageName: platform-ue1-ecr-tranformer-api
+        sourceTag: $(Build.BuildId)-qa
+        targetTag: $(Build.BuildId)-prod
+        latestTag: 'latest'
+        sourceEcrUri: 624164147597.dkr.ecr.us-east-1.amazonaws.com
+        targetEcrUri: 234750853127.dkr.ecr.us-east-1.amazonaws.com
+        sourceAWSCredentials: "AWS-QA"
+        targetAWSCredentials: "AWS-PROD"
+
+  - job: deploy_to_prod
+    displayName: Deploy to Prod
+    dependsOn: promote_ecr_image
+    variables:
+    - template: /pipelines/templates/variables-prod.yaml
+    steps:
+    - template: /pipelines/templates/api/deploy.yaml
+      parameters:
+        ECS_CLUSTER_NAME: "Prod-Cluster"
+        # ECS_SERVICE_NAME: "transformerapiStack-platformtransformerapiStackecsecsserviceServiceA1814572-R1KDjxoIA3rc"      

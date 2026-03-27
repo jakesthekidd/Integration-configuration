@@ -1,0 +1,47 @@
+---
+parameters:
+  - name: imageName
+    type: string
+  - name: sourceTag
+    type: string
+  - name: targetTag
+    type: string
+  - name: latestTag
+    type: string
+  - name: sourceEcrUri
+    type: string
+  - name: targetEcrUri
+    type: string
+  - name: sourceAWSCredentials
+    type: string
+    default: 'AWS-Creds-Dev'
+  - name: targetAWSCredentials
+    type: string
+    default: 'AWS-Creds-QA'
+  - name: aws_region
+    type: string
+    default: us-east-1
+
+steps:
+  - task: AWSShellScript@1
+    inputs:
+      awsCredentials: ${{ parameters.sourceAWSCredentials }}
+      regionName: ${{ parameters.aws_region }}
+      scriptType: 'inline'
+      inlineScript: |
+        aws ecr get-login-password --region ${{ parameters.aws_region }} | docker login --username AWS --password-stdin ${{ parameters.sourceEcrUri }}
+        echo "Pulling image from Source ECR..."
+        docker pull ${{ parameters.sourceEcrUri }}/${{ parameters.imageName }}:${{ parameters.sourceTag }}
+        echo "Re-Tagging image to Target ECR..."
+        docker tag ${{ parameters.sourceEcrUri }}/${{ parameters.imageName }}:${{ parameters.sourceTag }} ${{ parameters.targetEcrUri }}/${{ parameters.imageName }}:${{ parameters.targetTag }}
+        docker tag ${{ parameters.sourceEcrUri }}/${{ parameters.imageName }}:${{ parameters.sourceTag }} ${{ parameters.targetEcrUri }}/${{ parameters.imageName }}:${{ parameters.latestTag }}
+  - task: AWSShellScript@1
+    inputs:
+      awsCredentials: ${{ parameters.targetAWSCredentials }}
+      regionName: ${{ parameters.aws_region }}
+      scriptType: 'inline'
+      inlineScript: |
+        aws ecr get-login-password --region ${{ parameters.aws_region }} | docker login --username AWS --password-stdin ${{ parameters.targetEcrUri }}
+        echo "Pushing image to Target ECR..."
+        docker push ${{ parameters.targetEcrUri }}/${{ parameters.imageName }}:${{ parameters.targetTag }}
+        docker push ${{ parameters.targetEcrUri }}/${{ parameters.imageName }}:${{ parameters.latestTag }}

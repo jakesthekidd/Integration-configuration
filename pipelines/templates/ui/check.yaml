@@ -1,0 +1,86 @@
+parameters:
+  - name: WebApplicationsPath
+    type: string
+    default: "$(System.DefaultWorkingDirectory)/src/frontend/web"
+  - name: PROJECT_ABBREVIATION
+    type: string
+    default: false
+  - name: PROJECT_NAME
+    type: string
+    default: false
+
+steps:
+  - checkout: self
+    fetchDepth: 1
+
+  - task: Npm@1
+    displayName: "version of build tools"
+    inputs:
+      command: custom
+      workingDir: ${{ parameters.WebApplicationsPath }}
+      verbose: false
+      customCommand: version
+    timeoutInMinutes: 1
+
+  - task: npmAuthenticate@0
+    displayName: "Npm Authenticate"
+    inputs:
+      workingFile: "${{ parameters.WebApplicationsPath }}/.npmrc"
+
+  - task: Npm@1
+    displayName: install
+    inputs:
+      command: custom
+      workingDir: ${{ parameters.WebApplicationsPath }}
+      verbose: false
+      customCommand: "install"
+    timeoutInMinutes: 5
+
+  - task: Npm@1
+    displayName: audit
+    inputs:
+      command: custom
+      workingDir: ${{ parameters.WebApplicationsPath }}
+      verbose: false
+      customCommand: audit
+    continueOnError: true
+    timeoutInMinutes: 1
+
+  - task: Npm@1
+    displayName: format
+    inputs:
+      command: custom
+      workingDir: ${{ parameters.WebApplicationsPath }}
+      verbose: false
+      customCommand: "run format"
+    continueOnError: false
+    timeoutInMinutes: 2
+
+  - task: Npm@1
+    displayName: lint
+    inputs:
+      command: custom
+      workingDir: ${{ parameters.WebApplicationsPath }}
+      verbose: false
+      customCommand: "run lint"
+    continueOnError: false
+    timeoutInMinutes: 5
+
+  - task: Npm@1
+    displayName: test
+    inputs:
+      command: custom
+      workingDir: ${{ parameters.WebApplicationsPath }}
+      verbose: false
+      customCommand: "run test:ci"
+    continueOnError: false
+    timeoutInMinutes: 5
+
+  - task: Npm@1
+    displayName: build
+    inputs:
+      command: custom
+      workingDir: ${{ parameters.WebApplicationsPath }}
+      verbose: false
+      customCommand: "run build"
+    timeoutInMinutes: 5

@@ -1,0 +1,42 @@
+name: "Transformer Direct Dev CI/CD"
+
+variables:
+  tags: |
+    latest
+    $(Build.BuildId)-dev
+
+trigger: none
+pr: none
+
+pool:
+  vmImage: ubuntu-latest
+
+stages:
+- stage: transformer_api
+  displayName: Build & Push DEV Transformer Image
+  jobs:
+  - job:
+    variables:
+    - template: /pipelines/templates/variables-dev.yaml
+    steps:
+    - template: /pipelines/templates/api/build_and_push.yaml
+      parameters:
+        IMAGE_NAME: platform-ue1-ecr-tranformer-api
+        PROJECT_FILE: "$(System.DefaultWorkingDirectory)/src/Transflo.Platform.Transformer/Transflo.Platform.Transformer.WebApi/Transflo.Platform.Transformer.WebApi.csproj"
+        TEST_FILES: "$(System.DefaultWorkingDirectory)/src/Transflo.Platform.Transformer/Transflo.Platform.Transformer.TransformationService.Tests/**/*.Tests.csproj"
+        tag: ${{ variables.tags }}
+
+- stage: dev_deploy
+  displayName: Deploy to DEV
+  condition: succeeded()
+  dependsOn:
+  - transformer_api
+  jobs:
+  - job:
+    variables:
+    - template: /pipelines/templates/variables-dev.yaml
+    steps:
+    - template: /pipelines/templates/api/deploy.yaml
+      parameters:
+        ECS_CLUSTER_NAME: "Dev-Cluster"
+        ECS_SERVICE_NAME: "transformerapiStack-platformtransformerapiStackecsecsserviceServiceA1814572-R1KDjxoIA3rc"

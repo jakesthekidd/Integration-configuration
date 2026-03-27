@@ -1,0 +1,90 @@
+import { devConfig } from "../../config/dev";
+import { qaConfig } from "../../config/qa";
+import { prodConfig } from "../../config/prod";
+import * as sharedConfig from '../../config/shared';
+import { Stack, StackProps } from 'aws-cdk-lib';
+import { Construct } from 'constructs';
+import { getTransfloVpc } from '../../helpers';
+import { Cluster } from "aws-cdk-lib/aws-ecs";
+import * as ecs from 'aws-cdk-lib/aws-ecs';
+import { EcsServiceConstruct } from "infrastructure-templates";
+import { PlatformEcrStack } from '../ecr-stack';
+import { PolicyStatement } from "aws-cdk-lib/aws-iam";
+import { SubnetType } from "aws-cdk-lib/aws-ec2";
+
+const env = process.env.ENV ?? 'dev';
+const config = env === 'prod' ? prodConfig : env === 'qa' ? qaConfig : devConfig;
+
+interface PlatformEcsStackProps extends StackProps {
+    ecrStack: PlatformEcrStack;
+}
+
+export class transformerapiStack extends Stack {
+    public usertransformerApiService: EcsServiceConstruct;
+
+    constructor(scope: Construct, id: string, props: PlatformEcsStackProps) {
+        super(scope, id, props);
+
+        const { ecrStack } = props;
+
+        // Import VPC
+        const vpc = getTransfloVpc(this);
+        const availableAlbSubnets = vpc.selectSubnets({
+            subnetType: SubnetType.PRIVATE_WITH_EGRESS,
+        }).subnets;
+        const albSubnetIds = new Set(config.albSubnetIds ?? []);
+        const albSubnets = albSubnetIds.size > 0
+            ? availableAlbSubnets.filter((subnet) => albSubnetIds.has(subnet.subnetId))
+            : availableAlbSubnets.filter((subnet) => subnet.availabilityZone !== 'us-east-1c');
+
+        if (albSubnets.length < 2) {
+            throw new Error('ALB requires at least two subnets in different Availability Zones. Check albSubnetIds in config.');
+        }
+
+        // Import the Dev ECS cluster
+        const devCluster = Cluster.fromClusterAttributes(this, 'ImportedCluster', {
+            clusterName: `${config.ecsClusterName}`,
+            clusterArn: `${config.ecsClusterArn}`,
+            vpc: vpc,
+        });
+
+        // Define the Transformer API ECR repository
+        const transformerApiEcrRepository = ecrStack.transformerapiEcrRepository;
+
+        // Define the ECS Service using EcsServiceConstruct
+        this.usertransformerApiService = new EcsServiceConstruct(this, {
+            name: `platform-${config.transformerapiStackName}-ecs`,
+            description: 'transformer API Service',
+            vpc: vpc,
+            existingCluster: devCluster,
+            ecrRepository: transformerApiEcrRepository,
+            imageTag: 'latest',
+            memorySizeMB: 2048,
+            cpuUnits: 1024,
+            containerPort: 8080,
+            isPublic: false,
+            environmentVariables: {
+                'ENVIRONMENT': `${config.env}`,
+                'ASPNETCORE_ENVIRONMENT': 'Development',
+            },
+            loadBalancerConfig: {
+                healthCheckPath: '/health',
+                allowedCidrs: [ sharedConfig.vpnCidr, vpc.vpcCidrBlock],
+            },
+            albSubnetOverride: {
+                subnets: albSubnets,
+            },
+            dnsConfig: {
+                subDomain: `${config.transformerapiSubDomain}`,
+                domainName: `${config.rootDomain}`,
+                hostedZoneId: config.hostedZoneId,
+                hostedZoneName: config.rootDomain,
+            },
+        });
+
+        const taskDefinition = this.usertransformerApiService.taskDefinition;
+        if (!taskDefinition) {
+            throw new Error("Task Definition not found in ECS Service Construct!");
+        }
+    }
+}
