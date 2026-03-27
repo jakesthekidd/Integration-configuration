@@ -2,6 +2,7 @@ import { Component, OnInit, Input, OnChanges, SimpleChanges } from '@angular/cor
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../services/api.service';
+import { GeneralService } from '../services/general.service';
 import { FieldMapping, CreateFieldMappingRequest, TransformationTypes } from '../models/field-mapping.model';
 
 @Component({
@@ -380,7 +381,7 @@ export class FieldMappingsComponent implements OnInit, OnChanges {
 
   newMapping: CreateFieldMappingRequest = this.getEmptyMapping();
 
-  constructor(private apiService: ApiService) { }
+  constructor(private apiService: ApiService, private generalService: GeneralService) { }
 
   ngOnInit() {
     this.refreshMappingData();
@@ -474,22 +475,28 @@ export class FieldMappingsComponent implements OnInit, OnChanges {
   }
 
   deleteMapping(id: string) {
-    if (!confirm('Are you sure you want to delete this field mapping?')) {
-      return;
-    }
+    this.generalService.confirm({
+      title: 'Delete Field Mapping',
+      text: 'Are you sure you want to delete this field mapping?',
+      confirmText: 'Yes, Delete',
+      confirmColor: '#e74c3c',
+      icon: 'warning'
+    }).then((result: any) => {
+      if (!result.isConfirmed) return;
 
-    this.error = '';
-    this.success = '';
+      this.error = '';
+      this.success = '';
 
-    this.apiService.deleteFieldMapping(id).subscribe({
-      next: () => {
-        this.success = 'Field mapping deleted successfully';
-        this.loadMappings();
-      },
-      error: (err) => {
-        this.error = err.error?.message || 'Failed to delete field mapping';
-        console.error(err);
-      }
+      this.apiService.deleteFieldMapping(id).subscribe({
+        next: () => {
+          this.generalService.success('Field mapping deleted successfully');
+          this.loadMappings();
+        },
+        error: (err) => {
+          this.error = err.error?.message || 'Failed to delete field mapping';
+          console.error(err);
+        }
+      });
     });
   }
 

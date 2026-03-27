@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../services/api.service';
+import { GeneralService } from '../services/general.service';
 import { FieldMappingTemplate, CreateTemplateRequest, UpdateTemplateRequest } from '../models/template.model';
 import { FieldMappingsComponent } from './field-mappings.component';
 
@@ -27,7 +28,10 @@ type Screen = 'list' | 'detail' | 'version';
         </div>
 
         <div *ngIf="error" class="error">{{ error }}</div>
-        <div *ngIf="success" class="success">{{ success }}</div>
+        <div *ngIf="success" class="success">
+          {{ success }}
+          <button *ngIf="duplicatedTemplateId" class="btn-link" style="color: white; text-decoration: underline; margin-left: 10px;" (click)="viewDuplicated()">View it</button>
+        </div>
 
         <!-- Create Form -->
         <div *ngIf="showCreateForm" class="form-container">
@@ -104,6 +108,7 @@ type Screen = 'list' | 'detail' | 'version';
                 <td class="description-cell">{{ template.description || '—' }}</td>
                 <td>{{ formatDate(template.createdAt) }}</td>
                 <td class="actions-cell" (click)="$event.stopPropagation()">
+                  <button class="btn-small btn-info" (click)="openDetail(template)" title="View Template Details">View</button>
                   <button class="btn-small btn-danger" (click)="deleteTemplate(template)" title="Delete">Delete</button>
                 </td>
               </tr>
@@ -126,14 +131,25 @@ type Screen = 'list' | 'detail' | 'version';
           </div>
           <div class="header-actions">
             <button class="btn-small btn-info" (click)="startEdit(selectedTemplate)">Edit</button>
-            <button class="btn-small btn-duplicate" (click)="duplicateTemplate(selectedTemplate)">Duplicate</button>
+            <div class="dropdown">
+              <button class="btn-small btn-duplicate dropdown-toggle" (click)="toggleDuplicateDropdown($event)">
+                Duplicate ▾
+              </button>
+              <div class="dropdown-menu" [class.show]="showDuplicateDropdown" (click)="$event.stopPropagation()">
+                <button type="button" (click)="duplicateTemplate(selectedTemplate!, true)">Copy with all versions</button>
+                <button type="button" (click)="duplicateTemplate(selectedTemplate!, false)">Copy with last version</button>
+              </div>
+            </div>
             <button class="btn-small btn-archive" *ngIf="selectedTemplate.status !== 'Archived'" (click)="archiveTemplate(selectedTemplate)">Archive</button>
             <button class="btn-small btn-reactivate" *ngIf="selectedTemplate.status === 'Archived'" (click)="reactivateTemplate(selectedTemplate)">Reactivate</button>
           </div>
         </div>
 
         <div *ngIf="error" class="error">{{ error }}</div>
-        <div *ngIf="success" class="success">{{ success }}</div>
+        <div *ngIf="success" class="success">
+          {{ success }}
+          <button *ngIf="duplicatedTemplateId" class="btn-link" style="color: white; text-decoration: underline; margin-left: 10px;" (click)="viewDuplicated()">View it</button>
+        </div>
 
         <!-- Edit Form -->
         <div *ngIf="editingTemplate" class="form-container">
@@ -209,6 +225,7 @@ type Screen = 'list' | 'detail' | 'version';
             <thead>
               <tr>
                 <th>Version</th>
+                <th>Base Version</th>
                 <th>Status</th>
                 <th>Created</th>
                 <th>Actions</th>
@@ -217,6 +234,10 @@ type Screen = 'list' | 'detail' | 'version';
             <tbody>
               <tr *ngFor="let v of templateVersions" class="clickable-row" (click)="openVersion(v)">
                 <td><span class="badge badge-version">v{{ v.version }}</span></td>
+                <td>
+                  <span class="badge badge-version" *ngIf="v.baseVersion">v{{ v.baseVersion }}</span>
+                  <span *ngIf="!v.baseVersion">—</span>
+                </td>
                 <td>
                   <span class="badge" [ngClass]="getVersionStatusClass(v.status)">{{ v.status }}</span>
                 </td>
@@ -235,14 +256,14 @@ type Screen = 'list' | 'detail' | 'version';
                           *ngIf="v.status !== 'Draft' && !hasAnyDraft() && selectedTemplate?.status !== 'Archived'"
                           (click)="createNewVersion(selectedTemplate!, v.version)"
                           title="Create a new draft based on this version">
-                    Fork
+                    Copy to new version
                   </button>
                   
                   <button class="btn-small btn-info" (click)="openVersion(v)">View Mappings</button>
                 </td>
               </tr>
               <tr *ngIf="templateVersions.length === 0">
-                <td colspan="4" class="no-data">No versions found.</td>
+                <td colspan="5" class="no-data">No versions found.</td>
               </tr>
             </tbody>
           </table>
@@ -326,12 +347,46 @@ type Screen = 'list' | 'detail' | 'version';
     .breadcrumb {
       display: flex;
       align-items: center;
-      gap: 8px;
-      font-size: 15px;
+      gap: 15px;
+      margin-bottom: 25px;
+      padding: 14px 22px;
+      background: #f8fafc;
+      border-radius: 12px;
+      font-size: 17px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+      border-left: 8px solid #3498db;
     }
 
-    .breadcrumb-sep {
-      color: #bdc3c7;
+    .breadcrumb button.btn-link {
+      color: #3498db;
+      text-decoration: none;
+      font-weight: 800;
+      padding: 0;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .breadcrumb button.btn-link:hover {
+      color: #1d4e89;
+      transform: scale(1.02);
+    }
+
+    .breadcrumb .breadcrumb-sep {
+      color: #cbd5e1;
+      font-weight: 200;
+      font-size: 22px;
+    }
+
+    .breadcrumb span:last-child {
+      color: #1e293b;
+      font-weight: 800;
+      padding: 4px 12px;
+      border-radius: 6px;
     }
 
     .btn-link {
@@ -516,6 +571,61 @@ type Screen = 'list' | 'detail' | 'version';
 
     .btn-duplicate:hover {
       background: #7d3c98;
+    }
+
+    .dropdown {
+      position: relative;
+      display: inline-block;
+    }
+
+    .dropdown-toggle::after {
+      content: "";
+      display: inline-block;
+      margin-left: 0.255em;
+      vertical-align: 0.255em;
+    }
+
+    .dropdown-menu {
+      position: absolute;
+      top: 100%;
+      right: 0;
+      z-index: 1000;
+      display: none;
+      min-width: 220px;
+      padding: 5px 0;
+      margin: 2px 0 0;
+      font-size: 13px;
+      color: #212529;
+      text-align: left;
+      list-style: none;
+      background-color: #fff;
+      background-clip: padding-box;
+      border: 1px solid rgba(0,0,0,.15);
+      border-radius: 4px;
+      box-shadow: 0 0.5rem 1rem rgba(0,0,0,.175);
+    }
+
+    .dropdown-menu.show {
+      display: block;
+    }
+
+    .dropdown-menu button {
+      display: block;
+      width: 100%;
+      padding: 8px 16px;
+      clear: both;
+      font-weight: 400;
+      color: #212529;
+      text-align: inherit;
+      white-space: nowrap;
+      background-color: transparent;
+      border: 0;
+      cursor: pointer;
+    }
+
+    .dropdown-menu button:hover {
+      background-color: #f8f9fa;
+      color: #16181b;
     }
 
     .btn-publish {
@@ -714,12 +824,15 @@ export class TemplatesComponent implements OnInit {
   templateVersions: any[] = [];
   editingTemplate: FieldMappingTemplate | null = null;
   editRequest: UpdateTemplateRequest = this.getEmptyEditRequest();
+  showDuplicateDropdown: boolean = false;
+  duplicatedTemplateId: string | null = null;
 
   // --- Shared ---
+  isInitialLoading: boolean = false;
   error: string = '';
   success: string = '';
 
-  constructor(private apiService: ApiService) { }
+  constructor(private apiService: ApiService, private generalService: GeneralService) { }
 
   ngOnInit() {
     this.loadTemplates();
@@ -755,6 +868,28 @@ export class TemplatesComponent implements OnInit {
     this.selectedVersionObj = version;
     this.currentScreen = 'version';
     this.clearMessages();
+  }
+
+  viewDuplicated() {
+    if (!this.duplicatedTemplateId) return;
+    this.apiService.getTemplateById(this.duplicatedTemplateId).subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.openDetail(response.data);
+          this.duplicatedTemplateId = null;
+        }
+      }
+    });
+  }
+
+  toggleDuplicateDropdown(event: Event) {
+    event.stopPropagation();
+    this.showDuplicateDropdown = !this.showDuplicateDropdown;
+  }
+
+  @HostListener('document:click')
+  closeDropdowns() {
+    this.showDuplicateDropdown = false;
   }
 
   // ===== Data Loading =====
@@ -846,12 +981,15 @@ export class TemplatesComponent implements OnInit {
     });
   }
 
-  duplicateTemplate(template: FieldMappingTemplate) {
+  duplicateTemplate(template: FieldMappingTemplate, includeAllVersions: boolean = true) {
     this.clearMessages();
-    this.apiService.duplicateTemplate(template.id).subscribe({
+    this.showDuplicateDropdown = false;
+    this.apiService.duplicateTemplate(template.id, { includeAllVersions }).subscribe({
       next: (response) => {
         if (response.success) {
-          this.success = `Template "${response.data?.name}" created as a copy.`;
+          const mode = includeAllVersions ? 'with all versions' : 'with last version';
+          this.success = `Template "${response.data?.name}" created as a copy (${mode}).`;
+          this.duplicatedTemplateId = response.data?.id ?? null;
           this.loadTemplates();
         }
       },
@@ -865,20 +1003,26 @@ export class TemplatesComponent implements OnInit {
 
   createNewVersion(template: FieldMappingTemplate, baseVersion?: number) {
     const msg = baseVersion
-      ? `Create a new draft version for "${template.name}" based on v${baseVersion}?`
-      : `Create a new draft version for "${template.name}" based on the latest published version?`;
+      ? `Create a new version for "${template.name}" based on v${baseVersion}?`
+      : `Create a new version for "${template.name}" based on the latest published version?`;
 
-    if (!confirm(msg)) return;
-
-    this.clearMessages();
-    this.apiService.createTemplateVersion(template.id, baseVersion).subscribe({
-      next: (response) => {
-        if (response.success) {
-          this.success = `New draft version created.`;
-          this.loadTemplateVersions(template.id);
-        }
-      },
-      error: (err) => this.error = err.error?.message || 'Failed to create new version'
+    this.generalService.confirm({
+      title: 'Create New Version',
+      text: msg,
+      confirmText: 'Yes, Create',
+      icon: 'question'
+    }).then((result: any) => {
+      if (!result.isConfirmed) return;
+      this.clearMessages();
+      this.apiService.createTemplateVersion(template.id, baseVersion).subscribe({
+        next: (response) => {
+          if (response.success) {
+            this.generalService.success('New draft version created.');
+            this.loadTemplateVersions(template.id);
+          }
+        },
+        error: (err) => this.error = err.error?.message || 'Failed to create new version'
+      });
     });
   }
 
@@ -891,82 +1035,123 @@ export class TemplatesComponent implements OnInit {
   publishVersion(version: any) {
     if (!this.selectedTemplate) return;
     if (this.selectedTemplate.status === 'Archived') {
-      this.error = 'Cannot publish a version of an archived template.';
+      this.generalService.error('Cannot publish a version of an archived template.');
       return;
     }
-    if (!confirm(`Publish version ${version.version} of "${this.selectedTemplate.name}"?`)) return;
-    this.clearMessages();
-    this.apiService.publishTemplateVersion(this.selectedTemplate.id, version.version).subscribe({
-      next: (response) => {
-        if (response.success) {
-          this.success = `Version ${version.version} published successfully.`;
-          version.status = 'Published';
-          this.selectedVersionObj = { ...version, status: 'Published' };
-          this.loadTemplateVersions(this.selectedTemplate!.id);
-          this.loadTemplates();
-        }
-      },
-      error: (err) => this.error = err.error?.message || 'Failed to publish version'
+
+    this.generalService.confirm({
+      title: 'Publish Version',
+      text: `Publish version ${version.version} of "${this.selectedTemplate.name}"?`,
+      confirmText: 'Yes, Publish',
+      confirmColor: '#27ae60',
+      icon: 'question'
+    }).then((result: any) => {
+      if (!result.isConfirmed) return;
+      this.clearMessages();
+      this.apiService.publishTemplateVersion(this.selectedTemplate!.id, version.version).subscribe({
+        next: (response) => {
+          if (response.success) {
+            this.generalService.success('Version ' + version.version + ' published successfully.');
+            version.status = 'Published';
+            this.selectedVersionObj = { ...version, status: 'Published' };
+            this.loadTemplateVersions(this.selectedTemplate!.id);
+            this.loadTemplates();
+          }
+        },
+        error: (err) => this.error = err.error?.message || 'Failed to publish version'
+      });
     });
   }
 
   deleteVersion(version: any) {
     if (!this.selectedTemplate) return;
-    if (!confirm(`Are you sure you want to delete version ${version.version} draft? This will also delete all its field mappings.`)) return;
 
-    this.clearMessages();
-    this.apiService.deleteTemplateVersion(this.selectedTemplate.id, version.version).subscribe({
-      next: (response) => {
-        if (response.success) {
-          this.success = `Version ${version.version} deleted.`;
-          this.loadTemplateVersions(this.selectedTemplate!.id);
-        }
-      },
-      error: (err) => this.error = err.error?.message || 'Failed to delete version'
+    this.generalService.confirm({
+      title: 'Delete Version Draft',
+      text: `Are you sure you want to delete version ${version.version} draft? This will also delete all its field mappings.`,
+      confirmText: 'Yes, Delete',
+      confirmColor: '#e74c3c',
+      icon: 'warning'
+    }).then((result: any) => {
+      if (!result.isConfirmed) return;
+      this.clearMessages();
+      this.apiService.deleteTemplateVersion(this.selectedTemplate!.id, version.version).subscribe({
+        next: (response) => {
+          if (response.success) {
+            this.generalService.success('Version ' + version.version + ' deleted.');
+            this.loadTemplateVersions(this.selectedTemplate!.id);
+          }
+        },
+        error: (err) => this.error = err.error?.message || 'Failed to delete version'
+      });
     });
   }
 
   archiveTemplate(template: FieldMappingTemplate) {
-    if (!confirm(`Archive template "${template.name}"?`)) return;
-    this.clearMessages();
-    this.apiService.updateTemplate(template.id, { name: template.name, description: template.description, status: 'Archived' }).subscribe({
-      next: (response) => {
-        if (response.success) {
-          this.success = `Template "${template.name}" archived.`;
-          if (this.selectedTemplate?.id === template.id) {
-            this.selectedTemplate = { ...template, status: 'Archived' };
+    this.generalService.confirm({
+      title: 'Archive Template',
+      text: `Archive template "${template.name}"?`,
+      confirmText: 'Yes, Archive',
+      confirmColor: '#e74c3c',
+      icon: 'warning'
+    }).then((result: any) => {
+      if (!result.isConfirmed) return;
+      this.clearMessages();
+      this.apiService.updateTemplate(template.id, { name: template.name, description: template.description, status: 'Archived' }).subscribe({
+        next: (response) => {
+          if (response.success) {
+            this.generalService.success('Template "' + template.name + '" archived.');
+            if (this.selectedTemplate?.id === template.id) {
+              this.selectedTemplate = { ...template, status: 'Archived' };
+            }
+            this.loadTemplates();
           }
-          this.loadTemplates();
-        }
-      },
-      error: (err) => this.error = err.error?.message || 'Failed to archive template'
+        },
+        error: (err) => this.error = err.error?.message || 'Failed to archive template'
+      });
     });
   }
 
   reactivateTemplate(template: FieldMappingTemplate) {
-    if (!confirm(`Reactivate template "${template.name}"?`)) return;
-    this.clearMessages();
-    this.apiService.reactivateTemplate(template.id).subscribe({
-      next: () => {
-        this.success = `Template "${template.name}" reactivated.`;
-        if (this.selectedTemplate?.id === template.id) {
-          this.selectedTemplate = { ...template, status: 'Active' };
-        }
-        this.loadTemplates();
-      },
-      error: (err) => this.error = err.error?.message || 'Failed to reactivate'
+    this.generalService.confirm({
+      title: 'Reactivate Template',
+      text: `Reactivate template "${template.name}"?`,
+      confirmText: 'Yes, Reactivate',
+      confirmColor: '#27ae60',
+      icon: 'question'
+    }).then((result: any) => {
+      if (!result.isConfirmed) return;
+      this.clearMessages();
+      this.apiService.reactivateTemplate(template.id).subscribe({
+        next: () => {
+          this.generalService.success('Template "' + template.name + '" reactivated.');
+          if (this.selectedTemplate?.id === template.id) {
+            this.selectedTemplate = { ...template, status: 'Active' };
+          }
+          this.loadTemplates();
+        },
+        error: (err) => this.error = err.error?.message || 'Failed to reactivate'
+      });
     });
   }
 
   deleteTemplate(template: FieldMappingTemplate) {
-    if (!confirm(`Delete template "${template.name}"? This cannot be undone.`)) return;
-    this.clearMessages();
-    this.apiService.deleteTemplate(template.id, template.version).subscribe({
-      next: () => {
-        this.success = `Template "${template.name}" deleted.`;
-        this.loadTemplates();
-      },
-      error: (err) => this.error = err.error?.message || 'Failed to delete template'
+    this.generalService.confirm({
+      title: 'Delete Template',
+      text: `Delete template "${template.name}"? This cannot be undone.`,
+      confirmText: 'Yes, Delete',
+      confirmColor: '#e74c3c',
+      icon: 'warning'
+    }).then((result: any) => {
+      if (!result.isConfirmed) return;
+      this.clearMessages();
+      this.apiService.deleteTemplate(template.id, template.version).subscribe({
+        next: () => {
+          this.generalService.success('Template "' + template.name + '" deleted.');
+          this.loadTemplates();
+        },
+        error: (err) => this.error = err.error?.message || 'Failed to delete template'
+      });
     });
   }
 
@@ -1044,6 +1229,7 @@ export class TemplatesComponent implements OnInit {
   private clearMessages() {
     this.error = '';
     this.success = '';
+    this.duplicatedTemplateId = null;
   }
 
   private getEmptyCreateRequest(): CreateTemplateRequest {

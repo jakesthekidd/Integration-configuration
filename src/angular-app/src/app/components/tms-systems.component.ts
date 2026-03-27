@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../services/api.service';
+import { GeneralService } from '../services/general.service';
 import { TmsSystem, CreateTmsSystemRequest } from '../models/tms-system.model';
 
 @Component({
@@ -202,7 +203,7 @@ export class TmsSystemsComponent implements OnInit {
     version: '1.0'
   };
 
-  constructor(private apiService: ApiService) {}
+  constructor(private apiService: ApiService, private generalService: GeneralService) { }
 
   ngOnInit() {
     this.loadSystems();
@@ -249,9 +250,18 @@ export class TmsSystemsComponent implements OnInit {
   }
 
   deleteSystem(id: string) {
-    if (confirm('Are you sure you want to delete this TMS system?')) {
+    this.generalService.confirm({
+      title: 'Delete TMS System',
+      text: 'Are you sure you want to delete this TMS system?',
+      confirmText: 'Yes, Delete',
+      confirmColor: '#e74c3c',
+      icon: 'warning'
+    }).then((result: any) => {
+      if (!result.isConfirmed) return;
+
       this.apiService.deleteTmsSystem(id).subscribe({
         next: () => {
+          this.generalService.success('TMS system deleted successfully');
           this.loadSystems();
         },
         error: (err) => {
@@ -259,6 +269,6 @@ export class TmsSystemsComponent implements OnInit {
           console.error(err);
         }
       });
-    }
+    });
   }
 }
