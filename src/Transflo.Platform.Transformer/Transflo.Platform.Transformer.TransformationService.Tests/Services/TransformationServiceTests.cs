@@ -147,6 +147,30 @@ public class TransformationServiceTests
 
         Assert.False(result.Success);
         Assert.Contains(result.Errors, e => e.ErrorCode == "REQUIRED_FIELD_MISSING");
+        Assert.Empty(result.Warnings);
+    }
+
+    [Fact]
+    public async Task TransformAsync_NoWarning_WhenRequiredFieldMissing()
+    {
+        // Required fields that fail should produce an error, never a duplicate warning
+        var mapping = new FieldMapping
+        {
+            SourcePath = "id",
+            TargetPath = "externalId",
+            TransformationType = TransformationType.Direct,
+            IsRequired = true
+        };
+
+        var strategyMock = new Mock<ITransformationStrategy>();
+        strategyMock.Setup(s => s.ApplyAsync(It.IsAny<TransformationContext>())).ReturnsAsync((object?)null);
+        _strategyFactoryMock
+            .Setup(f => f.GetStrategy(TransformationType.Direct))
+            .Returns(strategyMock.Object);
+
+        var result = await _sut.TransformAsync("""{"status":"D"}""", DefaultTemplate, new List<FieldMapping> { mapping });
+
+        Assert.DoesNotContain(result.Warnings, w => w.Code == "FIELD_VALUE_MISSING");
     }
 
     [Fact]

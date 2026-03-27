@@ -82,12 +82,12 @@ public class TemplatesServiceTests
     // ── CreateAsync ──────────────────────────────────────────────────────────
 
     [Fact]
-    public async Task CreateAsync_SetsStatusDraftAndCreatesVersion1()
+    public async Task CreateAsync_SetsStatusActiveAndCreatesVersion1AsDraft()
     {
         _templateRepoMock
             .Setup(r => r.CreateAsync(It.IsAny<Template>()))
             .ReturnsAsync((Template t) => t);
-            
+
         _versionRepoMock
             .Setup(r => r.CreateAsync(It.IsAny<TemplateVersion>()))
             .ReturnsAsync((TemplateVersion v) => v);
@@ -100,8 +100,8 @@ public class TemplatesServiceTests
         var result = await _sut.CreateAsync(request);
 
         _versionRepoMock.Verify(r => r.CreateAsync(It.Is<TemplateVersion>(v => v.Version == 1 && v.Status == TemplateVersionStatus.Draft)), Times.Once);
-        
-        Assert.Equal("Draft", result.Status);
+
+        Assert.Equal("Active", result.Status);
         Assert.Equal("New Template", result.Name);
         Assert.NotEqual(Guid.Empty, result.Id);
     }
