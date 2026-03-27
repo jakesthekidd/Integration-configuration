@@ -25,7 +25,7 @@ public class FieldMappingsController : ControllerBase
     public async Task<IActionResult> GetAll([FromQuery] Guid? templateId = null, [FromQuery] Guid? templateVersionId = null)
     {
         Guid? targetVersionId = templateVersionId;
-        
+
         if (!targetVersionId.HasValue && templateId.HasValue)
         {
             var versions = await _versionRepo.GetAllVersionsAsync(templateId.Value);
@@ -100,7 +100,7 @@ public class FieldMappingsController : ControllerBase
         {
             var versions = await _versionRepo.GetAllVersionsAsync(request.TemplateId);
             var draft = versions.FirstOrDefault(v => v.Status == TemplateVersionStatus.Draft);
-            
+
             if (draft == null)
             {
                 return BadRequest(ApiResponse<FieldMappingResponse>.ErrorResponse(
