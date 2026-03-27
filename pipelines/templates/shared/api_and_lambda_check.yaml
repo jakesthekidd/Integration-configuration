@@ -22,8 +22,6 @@ steps:
     inputs:
       command: restore
       projects: ${{ parameters.PROJECT_FILE }}
-      feedsToUse: config
-      nugetConfigPath: $(System.DefaultWorkingDirectory)/src/backend/nuget.config
     timeoutInMinutes: 4
 
   - task: DotNetCoreCLI@2

@@ -23,7 +23,7 @@ stages:
       parameters:
         IMAGE_NAME: platform-ue1-ecr-tranformer-api
         PROJECT_FILE: "$(System.DefaultWorkingDirectory)/src/Transflo.Platform.Transformer/Transflo.Platform.Transformer.WebApi/Transflo.Platform.Transformer.WebApi.csproj"
-        TEST_FILES: "$(System.DefaultWorkingDirectory)/src/Transflo.Platform.Transformer/Transflo.Platform.Transformer.TransformationService.Tests/**/*.Tests.csproj"
+        TEST_FILES: "$(System.DefaultWorkingDirectory)/src/Transflo.Platform.Transformer/**/*.Tests.csproj"
         tag: ${{ variables.tags }}
 
 - stage: dev_deploy

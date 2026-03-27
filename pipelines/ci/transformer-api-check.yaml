@@ -27,3 +27,4 @@ stages:
     - template: /pipelines/templates/shared/api_and_lambda_check.yaml
       parameters:
         PROJECT_FILE: "$(System.DefaultWorkingDirectory)/src/Transflo.Platform.Transformer/Transflo.Platform.Transformer.WebApi/Transflo.Platform.Transformer.WebApi.csproj"
+        TEST_FILES: "$(System.DefaultWorkingDirectory)/src/Transflo.Platform.Transformer/**/*.Tests.csproj"
