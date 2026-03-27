@@ -13,8 +13,8 @@ parameters:
 
 steps:
   - script: |
-      sudo apt update && sudo apt-get install -y awscli
-    displayName: Install AWS CLI
+      aws --version
+    displayName: Verify AWS CLI
 
   - script: |
       aws ecr get-login-password --region $(AWS_REGION) | docker login --username AWS --password-stdin $(ECR_REPOSITORY_URI)
