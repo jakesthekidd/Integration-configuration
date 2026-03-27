@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Transflo.Platform.Transformer.Core.Data;
@@ -11,9 +12,11 @@ using Transflo.Platform.Transformer.Core.Data;
 namespace Transflo.Platform.Transformer.Core.Migrations
 {
     [DbContext(typeof(FieldMappingDbContext))]
-    partial class FieldMappingDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260327125017_AddWarningsToTransformationLog")]
+    partial class AddWarningsToTransformationLog
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -412,10 +415,6 @@ namespace Transflo.Platform.Transformer.Core.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
-                    b.Property<int?>("BaseVersion")
-                        .HasColumnType("integer")
-                        .HasColumnName("base_version");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
@@ -573,6 +572,36 @@ namespace Transflo.Platform.Transformer.Core.Migrations
                         .IsUnique();
 
                     b.ToTable("tms_systems");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000001"),
+                            CreatedAt = new DateTime(2026, 3, 27, 12, 50, 16, 642, DateTimeKind.Utc).AddTicks(6230),
+                            CreatedBy = "System",
+                            Description = "TruckMate Transportation Management System",
+                            DisplayName = "TruckMate TMS",
+                            IsActive = true,
+                            IsDeleted = false,
+                            Name = "TruckMate",
+                            Revision = 1,
+                            UpdatedAt = new DateTime(2026, 3, 27, 12, 50, 16, 642, DateTimeKind.Utc).AddTicks(6230),
+                            Version = "1.0"
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000002"),
+                            CreatedAt = new DateTime(2026, 3, 27, 12, 50, 16, 642, DateTimeKind.Utc).AddTicks(6230),
+                            CreatedBy = "System",
+                            Description = "McLeod Transportation Management System",
+                            DisplayName = "McLeod Software",
+                            IsActive = true,
+                            IsDeleted = false,
+                            Name = "McLeod",
+                            Revision = 1,
+                            UpdatedAt = new DateTime(2026, 3, 27, 12, 50, 16, 642, DateTimeKind.Utc).AddTicks(6230),
+                            Version = "1.0"
+                        });
                 });
 
             modelBuilder.Entity("Transflo.Platform.Transformer.Core.Models.TransformationLog", b =>

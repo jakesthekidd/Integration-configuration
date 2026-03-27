@@ -31,6 +31,9 @@ public class TransformationLog
     [Column("errors", TypeName = "jsonb")]
     public string? Errors { get; set; }
 
+    [Column("warnings", TypeName = "jsonb")]
+    public string? Warnings { get; set; }
+
     [Column("execution_time_ms")]
     public long ExecutionTimeMs { get; set; }
 
@@ -38,6 +41,14 @@ public class TransformationLog
     public int RecordCount { get; set; }
 
     public Guid? UserId { get; set; }
+
+    [Column("message_summary")]
+    [MaxLength(500)]
+    public string? MessageSummary { get; set; }
+
+    [Column("correlation_id")]
+    [MaxLength(100)]
+    public string? CorrelationId { get; set; }
 
     [Column("source")]
     [MaxLength(200)]

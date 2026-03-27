@@ -23,7 +23,7 @@ public class TransformController : ControllerBase
     {
         var result = await _coordinator.TransformAsync(request.SourceJson, request.TemplateId, request.Version);
         // Always return 200 with the full result so the client can display ALL errors/warnings at once
-        return Ok(ApiResponse<TransformationResult>.SuccessResponse(result));
+        return Ok(ApiResponse<TransformationResult>.SuccessResponse(result, result.MessageSummary));
     }
 
     [HttpPost("preview")]
@@ -31,7 +31,7 @@ public class TransformController : ControllerBase
     public async Task<IActionResult> Preview([FromBody] TransformRequest request)
     {
         var result = await _coordinator.PreviewTransformationAsync(request.SourceJson, request.TemplateId, request.Version);
-        return Ok(ApiResponse<TransformationResult>.SuccessResponse(result));
+        return Ok(ApiResponse<TransformationResult>.SuccessResponse(result, result.MessageSummary));
     }
 
     [HttpPost("batch")]

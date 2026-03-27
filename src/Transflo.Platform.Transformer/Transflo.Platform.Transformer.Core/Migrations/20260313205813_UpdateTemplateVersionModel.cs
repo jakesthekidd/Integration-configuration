@@ -46,22 +46,6 @@ namespace Transflo.Platform.Transformer.Core.Migrations
                 nullable: false,
                 defaultValue: "");
 
-
-
-            migrationBuilder.UpdateData(
-                table: "tms_systems",
-                keyColumn: "id",
-                keyValue: new Guid("00000000-0000-0000-0000-000000000001"),
-                columns: new[] { "created_at", "updated_at" },
-                values: new object[] { new DateTime(2026, 3, 13, 20, 58, 13, 548, DateTimeKind.Utc).AddTicks(8588), new DateTime(2026, 3, 13, 20, 58, 13, 548, DateTimeKind.Utc).AddTicks(8588) });
-
-            migrationBuilder.UpdateData(
-                table: "tms_systems",
-                keyColumn: "id",
-                keyValue: new Guid("00000000-0000-0000-0000-000000000002"),
-                columns: new[] { "created_at", "updated_at" },
-                values: new object[] { new DateTime(2026, 3, 13, 20, 58, 13, 548, DateTimeKind.Utc).AddTicks(8588), new DateTime(2026, 3, 13, 20, 58, 13, 548, DateTimeKind.Utc).AddTicks(8588) });
-
             migrationBuilder.CreateIndex(
                 name: "IX_template_versions_status",
                 table: "template_versions",
@@ -128,20 +112,6 @@ namespace Transflo.Platform.Transformer.Core.Migrations
                 {
                     table.PrimaryKey("PK_customers", x => x.id);
                 });
-
-            migrationBuilder.UpdateData(
-                table: "tms_systems",
-                keyColumn: "id",
-                keyValue: new Guid("00000000-0000-0000-0000-000000000001"),
-                columns: new[] { "created_at", "updated_at" },
-                values: new object[] { new DateTime(2026, 3, 11, 15, 16, 10, 223, DateTimeKind.Utc).AddTicks(3190), new DateTime(2026, 3, 11, 15, 16, 10, 223, DateTimeKind.Utc).AddTicks(3190) });
-
-            migrationBuilder.UpdateData(
-                table: "tms_systems",
-                keyColumn: "id",
-                keyValue: new Guid("00000000-0000-0000-0000-000000000002"),
-                columns: new[] { "created_at", "updated_at" },
-                values: new object[] { new DateTime(2026, 3, 11, 15, 16, 10, 223, DateTimeKind.Utc).AddTicks(3190), new DateTime(2026, 3, 11, 15, 16, 10, 223, DateTimeKind.Utc).AddTicks(3190) });
 
             migrationBuilder.CreateIndex(
                 name: "IX_field_mapping_templates_customer_id",

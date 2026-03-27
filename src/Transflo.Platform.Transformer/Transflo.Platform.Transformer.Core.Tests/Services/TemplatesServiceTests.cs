@@ -73,7 +73,7 @@ public class TemplatesServiceTests
     // ── CreateAsync ──────────────────────────────────────────────────────────
 
     [Fact]
-    public async Task CreateAsync_SetsStatusDraftAndCreatesVersion1()
+    public async Task CreateAsync_SetsStatusActiveAndCreatesVersion1AsDraft()
     {
         _templateRepoMock
             .Setup(r => r.CreateAsync(It.IsAny<Template>()))

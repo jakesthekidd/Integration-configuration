@@ -11,4 +11,5 @@ public sealed record TransformationResult
     public List<TransformationError> Errors { get; set; } = new();
     public List<TransformationWarning> Warnings { get; set; } = new();
     public long ExecutionTimeMs { get; set; }
+    public string? MessageSummary { get; set; }
 }

@@ -304,3 +304,4 @@ typings/
 # System files
 .DS_Store
 Thumbs.db
+/src/Transflo.Platform.Transformer/.claude/settings.local.json

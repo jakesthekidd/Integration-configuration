@@ -1,11 +1,13 @@
 using Microsoft.Extensions.Logging;
 using Moq;
 using System.Text.Json;
+using Transflo.Platform.Transformer.Core.DTOs;
 using Transflo.Platform.Transformer.Core.Models;
 using Transflo.Platform.Transformer.Core.Repositories.Interfaces;
 using Transflo.Platform.Transformer.Core.Services;
 using Transflo.Platform.Transformer.TransformationService.DTOs;
 using Transflo.Platform.Transformer.TransformationService.Services.Interfaces;
+using TransformationWarning = Transflo.Platform.Transformer.TransformationService.DTOs.TransformationWarning;
 using ServiceModels = Transflo.Platform.Transformer.TransformationService.Models;
 
 namespace Transflo.Platform.Transformer.Core.Tests.Services;
@@ -290,6 +292,195 @@ public class TransformationCoordinatorTests
         await _sut.TransformAsync(SampleMcLeodOrderJson, templateId);
 
         _logRepoMock.Verify(r => r.CreateAsync(It.IsAny<TransformationLog>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task TransformAsync_Log_SetsCorrectTemplateId()
+    {
+        var templateId = new Guid("e3a7f2c1-9b4d-4e8a-8f6c-2d1a5b0c9e37");
+        SetupResolve(templateId);
+        _serviceMock
+            .Setup(s => s.TransformAsync(
+                It.IsAny<string>(),
+                It.IsAny<ServiceModels.FieldMappingTemplate>(),
+                It.IsAny<List<ServiceModels.FieldMapping>>()))
+            .ReturnsAsync(new TransformationResult { Success = true, FieldsMapped = DefaultEfMappings.Count });
+
+        await _sut.TransformAsync(SampleMcLeodOrderJson, templateId);
+
+        _logRepoMock.Verify(r => r.CreateAsync(It.Is<TransformationLog>(l => l.TemplateId == templateId)), Times.Once);
+    }
+
+    [Fact]
+    public async Task TransformAsync_Log_SetsStatusSuccess_OnSuccessfulTransform()
+    {
+        var templateId = new Guid("e3a7f2c1-9b4d-4e8a-8f6c-2d1a5b0c9e37");
+        SetupResolve(templateId);
+        _serviceMock
+            .Setup(s => s.TransformAsync(
+                It.IsAny<string>(),
+                It.IsAny<ServiceModels.FieldMappingTemplate>(),
+                It.IsAny<List<ServiceModels.FieldMapping>>()))
+            .ReturnsAsync(new TransformationResult { Success = true, FieldsMapped = DefaultEfMappings.Count });
+
+        await _sut.TransformAsync(SampleMcLeodOrderJson, templateId);
+
+        _logRepoMock.Verify(r => r.CreateAsync(
+            It.Is<TransformationLog>(l => l.Status == TransformationStatus.Success)), Times.Once);
+    }
+
+    [Fact]
+    public async Task TransformAsync_Log_SetsStatusError_OnFailedTransform()
+    {
+        var templateId = new Guid("e3a7f2c1-9b4d-4e8a-8f6c-2d1a5b0c9e37");
+        SetupResolve(templateId);
+        _serviceMock
+            .Setup(s => s.TransformAsync(
+                It.IsAny<string>(),
+                It.IsAny<ServiceModels.FieldMappingTemplate>(),
+                It.IsAny<List<ServiceModels.FieldMapping>>()))
+            .ReturnsAsync(new TransformationResult
+            {
+                Success = false,
+                Errors = [new TransformationError { ErrorCode = "MAPPING_FAILED", Message = "Field mapping failed." }]
+            });
+
+        await _sut.TransformAsync(SampleMcLeodOrderJson, templateId);
+
+        _logRepoMock.Verify(r => r.CreateAsync(
+            It.Is<TransformationLog>(l => l.Status == TransformationStatus.Error)), Times.Once);
+    }
+
+    [Fact]
+    public async Task TransformAsync_Log_SetsMessageSummary()
+    {
+        var templateId = new Guid("e3a7f2c1-9b4d-4e8a-8f6c-2d1a5b0c9e37");
+        SetupResolve(templateId);
+        _serviceMock
+            .Setup(s => s.TransformAsync(
+                It.IsAny<string>(),
+                It.IsAny<ServiceModels.FieldMappingTemplate>(),
+                It.IsAny<List<ServiceModels.FieldMapping>>()))
+            .ReturnsAsync(new TransformationResult { Success = true, FieldsMapped = DefaultEfMappings.Count });
+
+        await _sut.TransformAsync(SampleMcLeodOrderJson, templateId);
+
+        _logRepoMock.Verify(r => r.CreateAsync(
+            It.Is<TransformationLog>(l => !string.IsNullOrEmpty(l.MessageSummary))), Times.Once);
+    }
+
+    [Fact]
+    public async Task TransformAsync_Log_UsesCorrelationId_FromOptions()
+    {
+        var templateId = new Guid("e3a7f2c1-9b4d-4e8a-8f6c-2d1a5b0c9e37");
+        var correlationId = "test-correlation-abc123";
+        SetupResolve(templateId);
+        _serviceMock
+            .Setup(s => s.TransformAsync(
+                It.IsAny<string>(),
+                It.IsAny<ServiceModels.FieldMappingTemplate>(),
+                It.IsAny<List<ServiceModels.FieldMapping>>()))
+            .ReturnsAsync(new TransformationResult { Success = true, FieldsMapped = DefaultEfMappings.Count });
+
+        await _sut.TransformAsync(SampleMcLeodOrderJson, templateId, options: new TransformOptions { CorrelationId = correlationId });
+
+        _logRepoMock.Verify(r => r.CreateAsync(
+            It.Is<TransformationLog>(l => l.CorrelationId == correlationId)), Times.Once);
+    }
+
+    [Fact]
+    public async Task TransformAsync_Log_GeneratesCorrelationId_WhenNotProvided()
+    {
+        var templateId = new Guid("e3a7f2c1-9b4d-4e8a-8f6c-2d1a5b0c9e37");
+        SetupResolve(templateId);
+        _serviceMock
+            .Setup(s => s.TransformAsync(
+                It.IsAny<string>(),
+                It.IsAny<ServiceModels.FieldMappingTemplate>(),
+                It.IsAny<List<ServiceModels.FieldMapping>>()))
+            .ReturnsAsync(new TransformationResult { Success = true, FieldsMapped = DefaultEfMappings.Count });
+
+        await _sut.TransformAsync(SampleMcLeodOrderJson, templateId);
+
+        _logRepoMock.Verify(r => r.CreateAsync(
+            It.Is<TransformationLog>(l => !string.IsNullOrEmpty(l.CorrelationId))), Times.Once);
+    }
+
+    [Fact]
+    public async Task TransformAsync_Result_HasMessageSummary()
+    {
+        var templateId = new Guid("e3a7f2c1-9b4d-4e8a-8f6c-2d1a5b0c9e37");
+        SetupResolve(templateId);
+        _serviceMock
+            .Setup(s => s.TransformAsync(
+                It.IsAny<string>(),
+                It.IsAny<ServiceModels.FieldMappingTemplate>(),
+                It.IsAny<List<ServiceModels.FieldMapping>>()))
+            .ReturnsAsync(new TransformationResult { Success = true, FieldsMapped = DefaultEfMappings.Count });
+
+        var result = await _sut.TransformAsync(SampleMcLeodOrderJson, templateId);
+
+        Assert.NotNull(result.MessageSummary);
+        Assert.NotEmpty(result.MessageSummary);
+    }
+
+    [Fact]
+    public async Task TransformAsync_Log_PersistsWarnings_WhenPresent()
+    {
+        var templateId = new Guid("e3a7f2c1-9b4d-4e8a-8f6c-2d1a5b0c9e37");
+        SetupResolve(templateId);
+        _serviceMock
+            .Setup(s => s.TransformAsync(
+                It.IsAny<string>(),
+                It.IsAny<ServiceModels.FieldMappingTemplate>(),
+                It.IsAny<List<ServiceModels.FieldMapping>>()))
+            .ReturnsAsync(new TransformationResult
+            {
+                Success = true,
+                FieldsMapped = DefaultEfMappings.Count,
+                Warnings = [new TransformationWarning { Code = "FIELD_VALUE_MISSING", Message = "Optional field skipped." }]
+            });
+
+        await _sut.TransformAsync(SampleMcLeodOrderJson, templateId);
+
+        _logRepoMock.Verify(r => r.CreateAsync(
+            It.Is<TransformationLog>(l => l.Warnings != null)), Times.Once);
+    }
+
+    [Fact]
+    public async Task TransformAsync_Log_DoesNotPersistWarnings_WhenNone()
+    {
+        var templateId = new Guid("e3a7f2c1-9b4d-4e8a-8f6c-2d1a5b0c9e37");
+        SetupResolve(templateId);
+        _serviceMock
+            .Setup(s => s.TransformAsync(
+                It.IsAny<string>(),
+                It.IsAny<ServiceModels.FieldMappingTemplate>(),
+                It.IsAny<List<ServiceModels.FieldMapping>>()))
+            .ReturnsAsync(new TransformationResult { Success = true, FieldsMapped = DefaultEfMappings.Count });
+
+        await _sut.TransformAsync(SampleMcLeodOrderJson, templateId);
+
+        _logRepoMock.Verify(r => r.CreateAsync(
+            It.Is<TransformationLog>(l => l.Warnings == null)), Times.Once);
+    }
+
+    [Fact]
+    public async Task TransformAsync_Log_SetsExecutionTimeMs()
+    {
+        var templateId = new Guid("e3a7f2c1-9b4d-4e8a-8f6c-2d1a5b0c9e37");
+        SetupResolve(templateId);
+        _serviceMock
+            .Setup(s => s.TransformAsync(
+                It.IsAny<string>(),
+                It.IsAny<ServiceModels.FieldMappingTemplate>(),
+                It.IsAny<List<ServiceModels.FieldMapping>>()))
+            .ReturnsAsync(new TransformationResult { Success = true, FieldsMapped = DefaultEfMappings.Count, ExecutionTimeMs = 42 });
+
+        await _sut.TransformAsync(SampleMcLeodOrderJson, templateId);
+
+        _logRepoMock.Verify(r => r.CreateAsync(
+            It.Is<TransformationLog>(l => l.ExecutionTimeMs == 42)), Times.Once);
     }
 
     [Fact]

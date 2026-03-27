@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Transflo.Platform.Transformer.Core.Data;
@@ -11,9 +12,11 @@ using Transflo.Platform.Transformer.Core.Data;
 namespace Transflo.Platform.Transformer.Core.Migrations
 {
     [DbContext(typeof(FieldMappingDbContext))]
-    partial class FieldMappingDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260326203204_AddLogEventFields")]
+    partial class AddLogEventFields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -49,10 +52,6 @@ namespace Transflo.Platform.Transformer.Core.Migrations
                     b.Property<int>("ExecutionOrder")
                         .HasColumnType("integer")
                         .HasColumnName("execution_order");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_deleted");
 
                     b.Property<bool>("IsRequired")
                         .HasColumnType("boolean")
@@ -225,10 +224,6 @@ namespace Transflo.Platform.Transformer.Core.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("deleted_at");
 
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_deleted");
-
                     b.Property<string>("Metadata")
                         .HasColumnType("jsonb")
                         .HasColumnName("metadata");
@@ -283,10 +278,6 @@ namespace Transflo.Platform.Transformer.Core.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("text")
                         .HasColumnName("description");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_deleted");
 
                     b.Property<string>("Metadata")
                         .HasColumnType("jsonb")
@@ -352,10 +343,6 @@ namespace Transflo.Platform.Transformer.Core.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("deleted_at");
 
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_deleted");
-
                     b.Property<string>("Metadata")
                         .HasColumnType("jsonb")
                         .HasColumnName("metadata");
@@ -412,10 +399,6 @@ namespace Transflo.Platform.Transformer.Core.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
-                    b.Property<int?>("BaseVersion")
-                        .HasColumnType("integer")
-                        .HasColumnName("base_version");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
@@ -428,10 +411,6 @@ namespace Transflo.Platform.Transformer.Core.Migrations
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("deleted_at");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_deleted");
 
                     b.Property<string>("Metadata")
                         .HasColumnType("jsonb")
@@ -527,10 +506,6 @@ namespace Transflo.Platform.Transformer.Core.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("is_active");
 
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_deleted");
-
                     b.Property<string>("Metadata")
                         .HasColumnType("jsonb")
                         .HasColumnName("metadata");
@@ -573,6 +548,34 @@ namespace Transflo.Platform.Transformer.Core.Migrations
                         .IsUnique();
 
                     b.ToTable("tms_systems");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000001"),
+                            CreatedAt = new DateTime(2026, 3, 26, 20, 32, 4, 529, DateTimeKind.Utc).AddTicks(3347),
+                            CreatedBy = "System",
+                            Description = "TruckMate Transportation Management System",
+                            DisplayName = "TruckMate TMS",
+                            IsActive = true,
+                            Name = "TruckMate",
+                            Revision = 1,
+                            UpdatedAt = new DateTime(2026, 3, 26, 20, 32, 4, 529, DateTimeKind.Utc).AddTicks(3347),
+                            Version = "1.0"
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000002"),
+                            CreatedAt = new DateTime(2026, 3, 26, 20, 32, 4, 529, DateTimeKind.Utc).AddTicks(3347),
+                            CreatedBy = "System",
+                            Description = "McLeod Transportation Management System",
+                            DisplayName = "McLeod Software",
+                            IsActive = true,
+                            Name = "McLeod",
+                            Revision = 1,
+                            UpdatedAt = new DateTime(2026, 3, 26, 20, 32, 4, 529, DateTimeKind.Utc).AddTicks(3347),
+                            Version = "1.0"
+                        });
                 });
 
             modelBuilder.Entity("Transflo.Platform.Transformer.Core.Models.TransformationLog", b =>
@@ -637,10 +640,6 @@ namespace Transflo.Platform.Transformer.Core.Migrations
 
                     b.Property<Guid?>("UserId")
                         .HasColumnType("uuid");
-
-                    b.Property<string>("Warnings")
-                        .HasColumnType("jsonb")
-                        .HasColumnName("warnings");
 
                     b.HasKey("Id");
 

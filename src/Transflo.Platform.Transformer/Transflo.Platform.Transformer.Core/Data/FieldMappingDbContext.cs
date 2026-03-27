@@ -121,6 +121,7 @@ public class FieldMappingDbContext : DbContext
             entity.HasIndex(e => e.Status);
             entity.HasIndex(e => e.Timestamp);
             entity.HasIndex(e => e.ExpiresAt);
+            entity.HasIndex(e => e.CorrelationId);
 
             // Configure enum to string conversion
             entity.Property(e => e.Status)
