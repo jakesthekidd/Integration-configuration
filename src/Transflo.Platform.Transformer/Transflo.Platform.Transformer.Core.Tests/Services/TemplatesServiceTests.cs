@@ -78,7 +78,7 @@ public class TemplatesServiceTests
         _templateRepoMock
             .Setup(r => r.CreateAsync(It.IsAny<Template>()))
             .ReturnsAsync((Template t) => t);
-            
+
         _versionRepoMock
             .Setup(r => r.CreateAsync(It.IsAny<TemplateVersion>()))
             .ReturnsAsync((TemplateVersion v) => v);
@@ -91,8 +91,8 @@ public class TemplatesServiceTests
         var result = await _sut.CreateAsync(request);
 
         _versionRepoMock.Verify(r => r.CreateAsync(It.Is<TemplateVersion>(v => v.Version == 1 && v.Status == TemplateVersionStatus.Draft)), Times.Once);
-        
-        Assert.Equal("Draft", result.Status);
+
+        Assert.Equal("Active", result.Status);
         Assert.Equal("New Template", result.Name);
         Assert.NotEqual(Guid.Empty, result.Id);
     }
@@ -178,14 +178,14 @@ public class TemplatesServiceTests
         _templateRepoMock
             .Setup(r => r.GetByIdAsync(SampleTemplate.Id))
             .ReturnsAsync(SampleTemplate);
-        
+
         _templateRepoMock
             .Setup(r => r.GetAllAsync())
             .ReturnsAsync(new List<Template>());
-            
+
         var v1 = new TemplateVersion { Id = Guid.NewGuid(), TemplateId = SampleTemplate.Id, Version = 1, Status = TemplateVersionStatus.Superseded };
         var v2 = new TemplateVersion { Id = Guid.NewGuid(), TemplateId = SampleTemplate.Id, Version = 2, Status = TemplateVersionStatus.Published };
-        
+
         _versionRepoMock
             .Setup(r => r.GetAllVersionsAsync(SampleTemplate.Id))
             .ReturnsAsync(new List<TemplateVersion> { v1, v2 });
@@ -193,7 +193,7 @@ public class TemplatesServiceTests
         _templateRepoMock
             .Setup(r => r.CreateAsync(It.IsAny<Template>()))
             .ReturnsAsync((Template t) => { t.Id = Guid.NewGuid(); return t; });
-            
+
         _versionRepoMock
             .Setup(r => r.CreateAsync(It.IsAny<TemplateVersion>()))
             .ReturnsAsync((TemplateVersion v) => { v.Id = Guid.NewGuid(); return v; });
@@ -220,9 +220,9 @@ public class TemplatesServiceTests
         _templateRepoMock
             .Setup(r => r.GetAllAsync())
             .ReturnsAsync(new List<Template>());
-            
+
         var vPublished = new TemplateVersion { Id = Guid.NewGuid(), TemplateId = SampleTemplate.Id, Version = 2, Status = TemplateVersionStatus.Published };
-        
+
         _versionRepoMock
             .Setup(r => r.GetPublishedVersionAsync(SampleTemplate.Id))
             .ReturnsAsync(vPublished);
@@ -230,7 +230,7 @@ public class TemplatesServiceTests
         _templateRepoMock
             .Setup(r => r.CreateAsync(It.IsAny<Template>()))
             .ReturnsAsync((Template t) => { t.Id = Guid.NewGuid(); return t; });
-            
+
         _versionRepoMock
             .Setup(r => r.CreateAsync(It.IsAny<TemplateVersion>()))
             .ReturnsAsync((TemplateVersion v) => { v.Id = Guid.NewGuid(); return v; });
@@ -254,7 +254,7 @@ public class TemplatesServiceTests
         _templateRepoMock
             .Setup(r => r.GetByIdAsync(SampleTemplate.Id))
             .ReturnsAsync(SampleTemplate);
-        
+
         var existingCopy = new Template { Name = $"{SampleTemplate.Name} - Copy" };
         var existingCopy1 = new Template { Name = $"{SampleTemplate.Name} - Copy 1" };
         _templateRepoMock

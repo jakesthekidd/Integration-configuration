@@ -101,13 +101,13 @@ public class TemplateVersionsController : ControllerBase
             // Try to see if it's missing or just not a draft
             var versions = await _service.GetVersionsAsync(templateId);
             var match = versions.FirstOrDefault(v => v.Version == version);
-            
+
             if (match is null)
                 return NotFound(ApiResponse<object>.ErrorResponse($"Version {version} not found."));
-            
+
             if (versions.Count() <= 1)
                 return BadRequest(ApiResponse<object>.ErrorResponse("The last remaining version cannot be deleted."));
-                
+
             return BadRequest(ApiResponse<object>.ErrorResponse("Only Draft versions can be deleted."));
         }
 

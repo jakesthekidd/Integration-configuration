@@ -112,7 +112,7 @@ public class TemplatesService : ITemplatesService
         var allTemplates = await _templateRepo.GetAllAsync();
         var baseName = $"{source.Name} - Copy";
         var finalName = baseName;
-        
+
         if (allTemplates.Any(t => string.Equals(t.Name, baseName, StringComparison.OrdinalIgnoreCase)))
         {
             int counter = 1;
