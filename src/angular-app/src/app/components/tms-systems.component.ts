@@ -208,7 +208,7 @@ export class TmsSystemsComponent implements OnInit {
   constructor(
     private apiService: ApiService,
     private generalService: GeneralService,
-  ) { }
+  ) {}
 
   ngOnInit() {
     this.loadSystems();

@@ -561,7 +561,7 @@ export class TransformationLogsComponent implements OnInit {
     return map;
   }
 
-  constructor(private api: ApiService) { }
+  constructor(private api: ApiService) {}
 
   ngOnInit() {
     this.load();

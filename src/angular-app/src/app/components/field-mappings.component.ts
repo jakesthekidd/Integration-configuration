@@ -62,7 +62,12 @@ import { FieldMapping, CreateFieldMappingRequest, TransformationTypes } from '..
 
           <div class="form-group">
             <label for="transformationType">Transformation Type: <span class="required">*</span></label>
-            <select id="transformationType" [(ngModel)]="newMapping.transformationType" name="transformationType" required>
+            <select
+              id="transformationType"
+              [(ngModel)]="newMapping.transformationType"
+              name="transformationType"
+              required
+            >
               <option *ngFor="let type of transformationTypes" [value]="type">{{ type }}</option>
             </select>
           </div>
@@ -81,7 +86,14 @@ import { FieldMapping, CreateFieldMappingRequest, TransformationTypes } from '..
 
           <div class="form-group">
             <label for="executionOrder">Execution Order: <span class="required">*</span></label>
-            <input id="executionOrder" type="number" [(ngModel)]="newMapping.executionOrder" name="executionOrder" required min="0" />
+            <input
+              id="executionOrder"
+              type="number"
+              [(ngModel)]="newMapping.executionOrder"
+              name="executionOrder"
+              required
+              min="0"
+            />
           </div>
 
           <div class="form-group checkbox">
@@ -425,7 +437,7 @@ export class FieldMappingsComponent implements OnInit, OnChanges {
   constructor(
     private apiService: ApiService,
     private generalService: GeneralService,
-  ) { }
+  ) {}
 
   ngOnInit() {
     this.refreshMappingData();

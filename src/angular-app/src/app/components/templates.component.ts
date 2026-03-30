@@ -57,7 +57,8 @@ type Screen = 'list' | 'detail' | 'version';
               </div>
               <div class="form-group">
                 <label for="newTemplateDescription">Description</label>
-                <textarea id="newTemplateDescription"
+                <textarea
+                  id="newTemplateDescription"
                   [(ngModel)]="newTemplate.description"
                   name="description"
                   rows="2"
@@ -68,7 +69,8 @@ type Screen = 'list' | 'detail' | 'version';
             <div class="form-row">
               <div class="form-group">
                 <label for="newSourceSchema">Source Schema (JSON)</label>
-                <textarea id="newSourceSchema"
+                <textarea
+                  id="newSourceSchema"
                   [(ngModel)]="newTemplate.sourceSchema"
                   name="sourceSchema"
                   rows="5"
@@ -96,7 +98,8 @@ type Screen = 'list' | 'detail' | 'version';
               </div>
               <div class="form-group">
                 <label for="newTargetSchema">Target Schema (JSON)</label>
-                <textarea id="newTargetSchema"
+                <textarea
+                  id="newTargetSchema"
                   [(ngModel)]="newTemplate.targetSchema"
                   name="targetSchema"
                   rows="5"
@@ -191,7 +194,14 @@ type Screen = 'list' | 'detail' | 'version';
               <button class="btn-small btn-duplicate dropdown-toggle" (click)="toggleDuplicateDropdown($event)">
                 Duplicate ▾
               </button>
-              <div class="dropdown-menu" [class.show]="showDuplicateDropdown" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()" tabindex="-1" role="menu">
+              <div
+                class="dropdown-menu"
+                [class.show]="showDuplicateDropdown"
+                (click)="$event.stopPropagation()"
+                (keydown)="$event.stopPropagation()"
+                tabindex="-1"
+                role="menu"
+              >
                 <button type="button" (click)="duplicateTemplate(selectedTemplate!, true)">
                   Copy with all versions
                 </button>
@@ -248,13 +258,19 @@ type Screen = 'list' | 'detail' | 'version';
               </div>
               <div class="form-group">
                 <label for="editDescription">Description</label>
-                <textarea id="editDescription" [(ngModel)]="editRequest.description" name="editDescription" rows="2"></textarea>
+                <textarea
+                  id="editDescription"
+                  [(ngModel)]="editRequest.description"
+                  name="editDescription"
+                  rows="2"
+                ></textarea>
               </div>
             </div>
             <div class="form-row">
               <div class="form-group">
                 <label for="editSourceSchema">Source Schema (JSON)</label>
-                <textarea id="editSourceSchema"
+                <textarea
+                  id="editSourceSchema"
                   [(ngModel)]="editRequest.sourceSchema"
                   name="editSourceSchema"
                   rows="5"
@@ -283,7 +299,8 @@ type Screen = 'list' | 'detail' | 'version';
               </div>
               <div class="form-group">
                 <label for="editTargetSchema">Target Schema (JSON)</label>
-                <textarea id="editTargetSchema"
+                <textarea
+                  id="editTargetSchema"
                   [(ngModel)]="editRequest.targetSchema"
                   name="editTargetSchema"
                   rows="5"
@@ -326,7 +343,9 @@ type Screen = 'list' | 'detail' | 'version';
             </div>
             <div class="detail-item">
               <span class="detail-label">Status</span>
-              <span class="badge" [ngClass]="getStatusClass(selectedTemplate.status)">{{ selectedTemplate.status }}</span>
+              <span class="badge" [ngClass]="getStatusClass(selectedTemplate.status)">{{
+                selectedTemplate.status
+              }}</span>
             </div>
             <div class="detail-item">
               <span class="detail-label">Description</span>
@@ -986,7 +1005,7 @@ export class TemplatesComponent implements OnInit {
   constructor(
     private apiService: ApiService,
     private generalService: GeneralService,
-  ) { }
+  ) {}
 
   ngOnInit() {
     this.loadTemplates();

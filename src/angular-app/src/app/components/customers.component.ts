@@ -100,7 +100,8 @@ import { GeneralService } from '../services/general.service';
               <div class="col" *ngFor="let key of tmsCredentialKeys[formData.tmsName]; let i = index">
                 <div class="form-group">
                   <label [for]="'credentials-' + key">{{ key }}</label>
-                  <input [id]="'credentials-' + key"
+                  <input
+                    [id]="'credentials-' + key"
                     type="text"
                     [(ngModel)]="formData.credentials[key]"
                     [name]="'credentials.' + key"
@@ -522,7 +523,7 @@ export class CustomersComponent implements OnInit {
   constructor(
     private apiService: ApiService,
     private generalService: GeneralService,
-  ) { }
+  ) {}
 
   ngOnInit() {
     this.loadCustomers();

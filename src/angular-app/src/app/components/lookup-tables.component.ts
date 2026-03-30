@@ -153,8 +153,22 @@ import { TmsSystem } from '../models/tms-system.model';
         </table>
       </div>
 
-      <div *ngIf="selectedLookup" class="modal-overlay" (click)="closeModal()" (keydown.escape)="closeModal()" tabindex="0" role="dialog" aria-modal="true">
-        <div class="modal-content" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()" tabindex="-1" role="document">
+      <div
+        *ngIf="selectedLookup"
+        class="modal-overlay"
+        (click)="closeModal()"
+        (keydown.escape)="closeModal()"
+        tabindex="0"
+        role="dialog"
+        aria-modal="true"
+      >
+        <div
+          class="modal-content"
+          (click)="$event.stopPropagation()"
+          (keydown)="$event.stopPropagation()"
+          tabindex="-1"
+          role="document"
+        >
           <div class="modal-header">
             <h3>{{ selectedLookup.name }}</h3>
             <button class="close-btn" (click)="closeModal()">&times;</button>
@@ -522,7 +536,7 @@ export class LookupTablesComponent implements OnInit {
   constructor(
     private apiService: ApiService,
     private generalService: GeneralService,
-  ) { }
+  ) {}
 
   ngOnInit() {
     this.loadTmsSystems();

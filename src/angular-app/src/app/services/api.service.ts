@@ -21,10 +21,7 @@ import {
   LookupTableListResponse,
 } from '../models/lookup-table.model';
 import { Customer, CustomerRequest, CustomerListResponse } from '../models/customer.model';
-import {
-  TransformationLogDetail,
-  TransformationLogListResponse,
-} from '../models/transformation-log.model';
+import { TransformationLogDetail, TransformationLogListResponse } from '../models/transformation-log.model';
 import { environment } from '../../environments/environment';
 import { TransformRequest } from '../models/transformation-test.model';
 
@@ -34,7 +31,7 @@ import { TransformRequest } from '../models/transformation-test.model';
 export class ApiService {
   private apiUrl = environment.apiUrl;
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {}
 
   // Customers
   getCustomers(activeOnly?: boolean): Observable<ApiResponse<CustomerListResponse>> {

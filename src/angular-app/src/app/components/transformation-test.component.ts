@@ -721,7 +721,7 @@ export class TransformationTestComponent implements OnInit {
   constructor(
     private apiService: ApiService,
     private sanitizer: DomSanitizer,
-  ) { }
+  ) {}
 
   get errorCount(): number {
     return this.mappingIssues.filter((i) => i.type === 'error').length;
