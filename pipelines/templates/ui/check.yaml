@@ -1,7 +1,7 @@
 parameters:
   - name: WebApplicationsPath
     type: string
-    default: "$(System.DefaultWorkingDirectory)/src/frontend/web"
+    default: "$(System.DefaultWorkingDirectory)/src/angular-app"
   - name: PROJECT_ABBREVIATION
     type: string
     default: false
@@ -82,5 +82,5 @@ steps:
       command: custom
       workingDir: ${{ parameters.WebApplicationsPath }}
       verbose: false
-      customCommand: "run build"
+      customCommand: "run build -- --configuration=${{ parameters.ENVIRONMENT }}"
     timeoutInMinutes: 5

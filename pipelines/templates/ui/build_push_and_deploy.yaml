@@ -7,7 +7,7 @@ parameters:
     type: string
   - name: WebApplicationsPath
     type: string
-    default: "$(System.DefaultWorkingDirectory)/src/frontend/web"
+    default: "$(System.DefaultWorkingDirectory)/src/angular-app"
   - name: PROJECT_ABBREVIATION
     type: string
     default: false
@@ -16,7 +16,7 @@ parameters:
     default: false
   - name: BUILD_DIR
     type: string
-    default: "$(System.DefaultWorkingDirectory)/src/frontend/web/dist/carrier-workflow/"
+    default: "$(System.DefaultWorkingDirectory)/src/angular-app/dist/field-mapping-app/"
 
 steps:
 
@@ -45,24 +45,9 @@ steps:
       command: custom
       workingDir: ${{ parameters.WebApplicationsPath }}
       verbose: false
-      customCommand: "run build"
+      customCommand: "run build -- --configuration=${{ parameters.ENVIRONMENT }}"
     timeoutInMinutes: 5
   
-  # Configure the Angular app-config
-  - script: |
-      # Construct the source file path based on the environment
-      SOURCE_FILE="$APP_CONFIG_DIR/app-config.$ENVIRONMENT.json"
-
-      # Define the destination file path
-      DESTINATION_FILE="$APP_CONFIG_DIR/app-config.json"
-      
-      # Replace the generic config with the environment-specific app-config.json
-      cp "$SOURCE_FILE" "$DESTINATION_FILE"
-    displayName: "Configure Angular App for ${{ parameters.ENVIRONMENT }} Deploy Environment"
-    env:
-      ENVIRONMENT: ${{ parameters.ENVIRONMENT }}
-      APP_CONFIG_DIR: "${{ parameters.BUILD_DIR }}browser/assets/app-config"
-
   # Remove old files from S3 Bucket
   - script: |
       aws s3 rm s3://$S3_BUCKET_NAME --recursive --region $AWS_REGION

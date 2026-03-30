@@ -1,4 +1,4 @@
-name: Workflow UI PR Check
+name: Transformer UI PR Check
 
 trigger: none
 pr:
@@ -8,11 +8,10 @@ pr:
       - '*'
   paths:
     include:
-      - src/frontend/**
+      - src/angular-app/**
     exclude:
-      - src/backend/**
-      - src/infrastructure/**
-      - src/api-gateway/**
+      - src/Transflo.Platform.Transformer/**
+      - infrastructure/**
 
 stages:
   - stage: Check

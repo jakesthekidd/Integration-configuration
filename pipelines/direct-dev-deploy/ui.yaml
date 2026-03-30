@@ -1,4 +1,4 @@
-name: Carrier UI Direct Dev CD
+name: Transformer UI Direct Dev CD
 
 variables:
   tags: |
@@ -22,7 +22,7 @@ stages:
           - template: /pipelines/templates/ui/build_push_and_deploy.yaml
             parameters:
               ENVIRONMENT: "dev"
-              S3_BUCKET_NAME: "wfai-app-dev"
-              CLOUDFRONT_DISTRIBUTION_ID: "E1Q2YIPEZHLHGY"
-              PROJECT_ABBREVIATION: "carrier"
-              PROJECT_NAME: "carrier-workflow"
+              S3_BUCKET_NAME: "transformer-platform-app-dev"
+              CLOUDFRONT_DISTRIBUTION_ID: "E2S3051WWOF0PG"
+              PROJECT_ABBREVIATION: "platform"
+              PROJECT_NAME: "platform-transformer"
