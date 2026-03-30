@@ -22,47 +22,66 @@ import { FieldMapping, CreateFieldMappingRequest, TransformationTypes } from '..
         <h3>{{ editingMapping ? 'Edit Field Mapping' : 'Create Field Mapping' }}</h3>
         <form (ngSubmit)="editingMapping ? updateMapping() : createMapping()" #mappingForm="ngForm">
           <div class="form-group">
-            <label>Template:</label>
-            <input type="text" [value]="templateName" readonly class="readonly-input" />
+            <label for="mappingTemplate">Template:</label>
+            <input id="mappingTemplate" type="text" [value]="templateName" readonly class="readonly-input" />
           </div>
 
           <div class="form-group">
-            <label>Source Path: <span class="required">*</span></label>
-            <input type="text" [(ngModel)]="newMapping.sourcePath" name="sourcePath" required
-                   list="sourcePathList"
-                   placeholder="e.g., customer.name" autocomplete="off" />
+            <label for="sourcePath">Source Path: <span class="required">*</span></label>
+            <input
+              id="sourcePath"
+              type="text"
+              [(ngModel)]="newMapping.sourcePath"
+              name="sourcePath"
+              required
+              list="sourcePathList"
+              placeholder="e.g., customer.name"
+              autocomplete="off"
+            />
             <datalist id="sourcePathList">
               <option *ngFor="let p of sourcePaths" [value]="p"></option>
             </datalist>
           </div>
 
           <div class="form-group">
-            <label>Target Path: <span class="required">*</span></label>
-            <input type="text" [(ngModel)]="newMapping.targetPath" name="targetPath" required
-                   list="targetPathList"
-                   placeholder="e.g., CustomerName" autocomplete="off" />
+            <label for="targetPath">Target Path: <span class="required">*</span></label>
+            <input
+              id="targetPath"
+              type="text"
+              [(ngModel)]="newMapping.targetPath"
+              name="targetPath"
+              required
+              list="targetPathList"
+              placeholder="e.g., CustomerName"
+              autocomplete="off"
+            />
             <datalist id="targetPathList">
               <option *ngFor="let p of targetPaths" [value]="p"></option>
             </datalist>
           </div>
 
           <div class="form-group">
-            <label>Transformation Type: <span class="required">*</span></label>
-            <select [(ngModel)]="newMapping.transformationType" name="transformationType" required>
-              <option *ngFor="let type of transformationTypes" [value]="type">{{type}}</option>
+            <label for="transformationType">Transformation Type: <span class="required">*</span></label>
+            <select id="transformationType" [(ngModel)]="newMapping.transformationType" name="transformationType" required>
+              <option *ngFor="let type of transformationTypes" [value]="type">{{ type }}</option>
             </select>
           </div>
 
           <div class="form-group">
-            <label>Transformation Config:</label>
-            <textarea [(ngModel)]="newMapping.transformationConfig" name="transformationConfig" rows="3"
-                      placeholder='{"separator": ", ", "fields": ["field1", "field2"]}'></textarea>
+            <label for="transformationConfig">Transformation Config:</label>
+            <textarea
+              id="transformationConfig"
+              [(ngModel)]="newMapping.transformationConfig"
+              name="transformationConfig"
+              rows="3"
+              placeholder='{"separator": ", ", "fields": ["field1", "field2"]}'
+            ></textarea>
             <small>JSON configuration for the transformation</small>
           </div>
 
           <div class="form-group">
-            <label>Execution Order: <span class="required">*</span></label>
-            <input type="number" [(ngModel)]="newMapping.executionOrder" name="executionOrder" required min="0" />
+            <label for="executionOrder">Execution Order: <span class="required">*</span></label>
+            <input id="executionOrder" type="number" [(ngModel)]="newMapping.executionOrder" name="executionOrder" required min="0" />
           </div>
 
           <div class="form-group checkbox">
@@ -73,15 +92,25 @@ import { FieldMapping, CreateFieldMappingRequest, TransformationTypes } from '..
           </div>
 
           <div class="form-group">
-            <label>Default Value:</label>
-            <input type="text" [(ngModel)]="newMapping.defaultValue" name="defaultValue"
-                   placeholder="Value to use if source is empty" />
+            <label for="defaultValue">Default Value:</label>
+            <input
+              id="defaultValue"
+              type="text"
+              [(ngModel)]="newMapping.defaultValue"
+              name="defaultValue"
+              placeholder="Value to use if source is empty"
+            />
           </div>
 
           <div class="form-group">
-            <label>Validation Rules:</label>
-            <textarea [(ngModel)]="newMapping.validationRules" name="validationRules" rows="2"
-                      placeholder='{"pattern": "^[A-Z0-9]+$", "maxLength": 50}'></textarea>
+            <label for="validationRules">Validation Rules:</label>
+            <textarea
+              id="validationRules"
+              [(ngModel)]="newMapping.validationRules"
+              name="validationRules"
+              rows="2"
+              placeholder='{"pattern": "^[A-Z0-9]+$", "maxLength": 50}'
+            ></textarea>
             <small>JSON validation rules for the field</small>
           </div>
 
@@ -114,9 +143,15 @@ import { FieldMapping, CreateFieldMappingRequest, TransformationTypes } from '..
           </thead>
           <tbody>
             <tr *ngFor="let mapping of mappings">
-              <td><code>{{ mapping.sourcePath }}</code></td>
-              <td><code>{{ mapping.targetPath }}</code></td>
-              <td><span class="badge">{{ mapping.transformationType }}</span></td>
+              <td>
+                <code>{{ mapping.sourcePath }}</code>
+              </td>
+              <td>
+                <code>{{ mapping.targetPath }}</code>
+              </td>
+              <td>
+                <span class="badge">{{ mapping.transformationType }}</span>
+              </td>
               <td>{{ mapping.executionOrder }}</td>
               <td>{{ mapping.isRequired ? 'Yes' : 'No' }}</td>
               <td>{{ mapping.defaultValue || '-' }}</td>
@@ -133,234 +168,240 @@ import { FieldMapping, CreateFieldMappingRequest, TransformationTypes } from '..
       </div>
     </div>
   `,
-  styles: [`
-    .container.mappings-subcontainer {
-      max-width: 100%;
-      padding: 0;
-      margin: 0;
-    }
-    
-    .readonly-input {
-      background-color: #e9ecef !important;
-      cursor: not-allowed;
-    }
+  styles: [
+    `
+      .container.mappings-subcontainer {
+        max-width: 100%;
+        padding: 0;
+        margin: 0;
+      }
 
-    .filters {
-      display: flex;
-      gap: 15px;
-      align-items: center;
-      margin-bottom: 20px;
-      padding: 15px;
-      background: #f8f9fa;
-      border-radius: 4px;
-    }
+      .readonly-input {
+        background-color: #e9ecef !important;
+        cursor: not-allowed;
+      }
 
-    .filters label {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
+      .filters {
+        display: flex;
+        gap: 15px;
+        align-items: center;
+        margin-bottom: 20px;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 4px;
+      }
 
-    .filters select {
-      padding: 8px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-    }
+      .filters label {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
 
-    .form-container {
-      background: #f8f9fa;
-      padding: 20px;
-      border-radius: 4px;
-      margin-bottom: 20px;
-    }
+      .filters select {
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+      }
 
-    .form-container h3 {
-      margin-top: 0;
-      color: #2c3e50;
-    }
+      .form-container {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 4px;
+        margin-bottom: 20px;
+      }
 
-    .form-group {
-      margin-bottom: 15px;
-    }
+      .form-container h3 {
+        margin-top: 0;
+        color: #2c3e50;
+      }
 
-    .form-group label {
-      display: block;
-      font-weight: 500;
-      margin-bottom: 5px;
-      color: #555;
-    }
+      .form-group {
+        margin-bottom: 15px;
+      }
 
-    .form-group input[type="text"],
-    .form-group input[type="number"],
-    .form-group select,
-    .form-group textarea {
-      width: 100%;
-      padding: 8px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      font-family: inherit;
-    }
+      .form-group label {
+        display: block;
+        font-weight: 500;
+        margin-bottom: 5px;
+        color: #555;
+      }
 
-    .form-group textarea {
-      font-family: 'Courier New', monospace;
-      font-size: 12px;
-    }
+      .form-group input[type='text'],
+      .form-group input[type='number'],
+      .form-group select,
+      .form-group textarea {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-family: inherit;
+      }
 
-    .form-group small {
-      display: block;
-      color: #666;
-      font-size: 12px;
-      margin-top: 4px;
-    }
+      .form-group textarea {
+        font-family: 'Courier New', monospace;
+        font-size: 12px;
+      }
 
-    .form-group.checkbox {
-      display: flex;
-      align-items: center;
-    }
+      .form-group small {
+        display: block;
+        color: #666;
+        font-size: 12px;
+        margin-top: 4px;
+      }
 
-    .form-group.checkbox label {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 0;
-    }
+      .form-group.checkbox {
+        display: flex;
+        align-items: center;
+      }
 
-    .form-group.checkbox input[type="checkbox"] {
-      width: auto;
-    }
+      .form-group.checkbox label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 0;
+      }
 
-    .required {
-      color: #e74c3c;
-    }
+      .form-group.checkbox input[type='checkbox'] {
+        width: auto;
+      }
 
-    .form-actions {
-      display: flex;
-      gap: 10px;
-      margin-top: 20px;
-    }
+      .required {
+        color: #e74c3c;
+      }
 
-    .btn-primary, .btn-secondary, .btn-small, .btn-danger {
-      padding: 8px 16px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 14px;
-    }
+      .form-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+      }
 
-    .btn-primary {
-      background: #3498db;
-      color: white;
-    }
+      .btn-primary,
+      .btn-secondary,
+      .btn-small,
+      .btn-danger {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+      }
 
-    .btn-primary:hover:not(:disabled) {
-      background: #2980b9;
-    }
+      .btn-primary {
+        background: #3498db;
+        color: white;
+      }
 
-    .btn-primary:disabled {
-      background: #95a5a6;
-      cursor: not-allowed;
-    }
+      .btn-primary:hover:not(:disabled) {
+        background: #2980b9;
+      }
 
-    .btn-secondary {
-      background: #95a5a6;
-      color: white;
-    }
+      .btn-primary:disabled {
+        background: #95a5a6;
+        cursor: not-allowed;
+      }
 
-    .btn-secondary:hover {
-      background: #7f8c8d;
-    }
+      .btn-secondary {
+        background: #95a5a6;
+        color: white;
+      }
 
-    .btn-danger {
-      background: #e74c3c;
-      color: white;
-    }
+      .btn-secondary:hover {
+        background: #7f8c8d;
+      }
 
-    .btn-danger:hover {
-      background: #c0392b;
-    }
+      .btn-danger {
+        background: #e74c3c;
+        color: white;
+      }
 
-    .btn-small {
-      padding: 4px 12px;
-      font-size: 12px;
-      margin-right: 5px;
-    }
+      .btn-danger:hover {
+        background: #c0392b;
+      }
 
-    .btn-info {
-      background: #3498db;
-      color: white;
-    }
+      .btn-small {
+        padding: 4px 12px;
+        font-size: 12px;
+        margin-right: 5px;
+      }
 
-    .btn-info:hover {
-      background: #2980b9;
-    }
+      .btn-info {
+        background: #3498db;
+        color: white;
+      }
 
-    .error {
-      background: #fee;
-      color: #c33;
-      padding: 10px;
-      border-radius: 4px;
-      margin-bottom: 15px;
-    }
+      .btn-info:hover {
+        background: #2980b9;
+      }
 
-    .success {
-      background: #efe;
-      color: #3c3;
-      padding: 10px;
-      border-radius: 4px;
-      margin-bottom: 15px;
-    }
+      .error {
+        background: #fee;
+        color: #c33;
+        padding: 10px;
+        border-radius: 4px;
+        margin-bottom: 15px;
+      }
 
-    .table-container {
-      overflow-x: auto;
-    }
+      .success {
+        background: #efe;
+        color: #3c3;
+        padding: 10px;
+        border-radius: 4px;
+        margin-bottom: 15px;
+      }
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background: white;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
+      .table-container {
+        overflow-x: auto;
+      }
 
-    th, td {
-      padding: 12px;
-      text-align: left;
-      border-bottom: 1px solid #ddd;
-    }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        background: white;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
 
-    th {
-      background: #34495e;
-      color: white;
-      font-weight: 500;
-    }
+      th,
+      td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+      }
 
-    tbody tr:hover {
-      background: #f5f5f5;
-    }
+      th {
+        background: #34495e;
+        color: white;
+        font-weight: 500;
+      }
 
-    code {
-      background: #f4f4f4;
-      padding: 2px 6px;
-      border-radius: 3px;
-      font-family: 'Courier New', monospace;
-      font-size: 12px;
-    }
+      tbody tr:hover {
+        background: #f5f5f5;
+      }
 
-    .badge {
-      display: inline-block;
-      padding: 4px 8px;
-      background: #3498db;
-      color: white;
-      border-radius: 3px;
-      font-size: 11px;
-      font-weight: 500;
-    }
+      code {
+        background: #f4f4f4;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-family: 'Courier New', monospace;
+        font-size: 12px;
+      }
 
-    .no-data {
-      text-align: center;
-      color: #999;
-      font-style: italic;
-    }
-  `]
+      .badge {
+        display: inline-block;
+        padding: 4px 8px;
+        background: #3498db;
+        color: white;
+        border-radius: 3px;
+        font-size: 11px;
+        font-weight: 500;
+      }
+
+      .no-data {
+        text-align: center;
+        color: #999;
+        font-style: italic;
+      }
+    `,
+  ],
 })
 export class FieldMappingsComponent implements OnInit, OnChanges {
   @Input() templateId!: string;
@@ -381,7 +422,10 @@ export class FieldMappingsComponent implements OnInit, OnChanges {
 
   newMapping: CreateFieldMappingRequest = this.getEmptyMapping();
 
-  constructor(private apiService: ApiService, private generalService: GeneralService) { }
+  constructor(
+    private apiService: ApiService,
+    private generalService: GeneralService,
+  ) { }
 
   ngOnInit() {
     this.refreshMappingData();
@@ -402,7 +446,7 @@ export class FieldMappingsComponent implements OnInit, OnChanges {
   }
 
   loadMappings() {
-          this.refreshPathSuggestions();
+    this.refreshPathSuggestions();
     this.apiService.getFieldMappings(this.templateId, this.templateVersionId).subscribe({
       next: (response) => {
         if (response.success && response.data) {
@@ -412,13 +456,13 @@ export class FieldMappingsComponent implements OnInit, OnChanges {
       error: (err) => {
         this.error = 'Failed to load field mappings';
         console.error(err);
-      }
+      },
     });
   }
 
   private refreshPathSuggestions(): void {
-    this.sourcePaths = [...new Set(this.mappings.map(m => m.sourcePath).filter(Boolean))].sort();
-    this.targetPaths = [...new Set(this.mappings.map(m => m.targetPath).filter(Boolean))].sort();
+    this.sourcePaths = [...new Set(this.mappings.map((m) => m.sourcePath).filter(Boolean))].sort();
+    this.targetPaths = [...new Set(this.mappings.map((m) => m.targetPath).filter(Boolean))].sort();
   }
 
   private loadSourcePathsFromSampleJson(): void {
@@ -428,27 +472,27 @@ export class FieldMappingsComponent implements OnInit, OnChanges {
       next: (response) => {
         if (response.success && response.data?.fields) {
           const parsedPaths: string[] = Object.keys(response.data.fields);
-            this.sourcePaths = [...new Set([...this.sourcePaths, ...parsedPaths])].sort();
+          this.sourcePaths = [...new Set([...this.sourcePaths, ...parsedPaths])].sort();
         }
       },
-      error: (err) => console.warn('Could not parse sample JSON for path suggestions', err)
+      error: (err) => console.warn('Could not parse sample JSON for path suggestions', err),
     });
-    }
+  }
 
-    private loadSourcePathsFromSourceSchema(): void {
-        if (!this.sourceSchema) return;
+  private loadSourcePathsFromSourceSchema(): void {
+    if (!this.sourceSchema) return;
 
-        this.apiService.parseJson(this.sourceSchema).subscribe({
-            next: (response) => {
-                if (response.success && response.data?.fields) {
-                    const parsedPaths: string[] = Object.keys(response.data.fields);
-                    this.sourcePaths = [...new Set([...this.sourcePaths, ...parsedPaths])].sort();
-                    console.log(this.sourcePaths);
-                }
-            },
-            error: (err) => console.warn('Could not parse sample JSON for path suggestions', err)
-        });
-    }
+    this.apiService.parseJson(this.sourceSchema).subscribe({
+      next: (response) => {
+        if (response.success && response.data?.fields) {
+          const parsedPaths: string[] = Object.keys(response.data.fields);
+          this.sourcePaths = [...new Set([...this.sourcePaths, ...parsedPaths])].sort();
+          console.log(this.sourcePaths);
+        }
+      },
+      error: (err) => console.warn('Could not parse sample JSON for path suggestions', err),
+    });
+  }
 
   createMapping() {
     this.error = '';
@@ -470,34 +514,36 @@ export class FieldMappingsComponent implements OnInit, OnChanges {
       error: (err) => {
         this.error = err.error?.message || 'Failed to create field mapping';
         console.error(err);
-      }
+      },
     });
   }
 
   deleteMapping(id: string) {
-    this.generalService.confirm({
-      title: 'Delete Field Mapping',
-      text: 'Are you sure you want to delete this field mapping?',
-      confirmText: 'Yes, Delete',
-      confirmColor: '#e74c3c',
-      icon: 'warning'
-    }).then((result: any) => {
-      if (!result.isConfirmed) return;
+    this.generalService
+      .confirm({
+        title: 'Delete Field Mapping',
+        text: 'Are you sure you want to delete this field mapping?',
+        confirmText: 'Yes, Delete',
+        confirmColor: '#e74c3c',
+        icon: 'warning',
+      })
+      .then((result) => {
+        if (!result.isConfirmed) return;
 
-      this.error = '';
-      this.success = '';
+        this.error = '';
+        this.success = '';
 
-      this.apiService.deleteFieldMapping(id).subscribe({
-        next: () => {
-          this.generalService.success('Field mapping deleted successfully');
-          this.loadMappings();
-        },
-        error: (err) => {
-          this.error = err.error?.message || 'Failed to delete field mapping';
-          console.error(err);
-        }
+        this.apiService.deleteFieldMapping(id).subscribe({
+          next: () => {
+            this.generalService.success('Field mapping deleted successfully');
+            this.loadMappings();
+          },
+          error: (err) => {
+            this.error = err.error?.message || 'Failed to delete field mapping';
+            console.error(err);
+          },
+        });
       });
-    });
   }
 
   startEdit(mapping: FieldMapping) {
@@ -518,7 +564,7 @@ export class FieldMappingsComponent implements OnInit, OnChanges {
       executionOrder: mapping.executionOrder,
       isRequired: mapping.isRequired,
       defaultValue: mapping.defaultValue || '',
-      validationRules: mapping.validationRules || ''
+      validationRules: mapping.validationRules || '',
     };
 
     // Scroll to form
@@ -541,7 +587,7 @@ export class FieldMappingsComponent implements OnInit, OnChanges {
       executionOrder: this.newMapping.executionOrder,
       isRequired: this.newMapping.isRequired,
       defaultValue: this.newMapping.defaultValue,
-      validationRules: this.newMapping.validationRules
+      validationRules: this.newMapping.validationRules,
     };
 
     this.apiService.updateFieldMapping(this.editingMapping.id, updateRequest).subscribe({
@@ -555,7 +601,7 @@ export class FieldMappingsComponent implements OnInit, OnChanges {
       error: (err) => {
         this.error = err.error?.message || 'Failed to update field mapping';
         console.error(err);
-      }
+      },
     });
   }
 
@@ -580,7 +626,7 @@ export class FieldMappingsComponent implements OnInit, OnChanges {
       executionOrder: 0,
       isRequired: false,
       defaultValue: '',
-      validationRules: ''
+      validationRules: '',
     };
   }
 }
