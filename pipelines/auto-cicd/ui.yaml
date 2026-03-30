@@ -12,11 +12,10 @@ trigger:
       - main
   paths:
     include:
-      - src/frontend/**
+      - src/angular-app/**
     exclude:
-      - src/backend/**
-      - src/infrastructure/**
-      - src/api-gateway/**
+      - src/Transflo.Platform.Transformer/**
+      - infrastructure/**
   batch: true
 pr: none
 
