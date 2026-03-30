@@ -2,6 +2,9 @@ parameters:
   - name: WebApplicationsPath
     type: string
     default: "$(System.DefaultWorkingDirectory)/src/angular-app"
+  - name: ENVIRONMENT
+    type: string
+    default: "dev"
   - name: PROJECT_ABBREVIATION
     type: string
     default: false
