@@ -183,6 +183,22 @@ public class FieldMappingValidationService : IFieldMappingValidationService
                     });
                 }
                 break;
+
+            case TransformationType.Conditional:
+                var hasConditions = config is not null &&
+                    (config.ContainsKey("Conditions") || config.ContainsKey("ConditionGroups"));
+                if (!hasConditions)
+                {
+                    issues.Add(new ValidationIssue
+                    {
+                        Severity = ValidationSeverity.Error,
+                        Code = ValidationCodes.MissingConfigFields,
+                        Message = "Conditional transformation requires either 'Conditions' or 'ConditionGroups' in TransformationConfig.",
+                        MappingIndex = index,
+                        TargetPath = fieldMapping.TargetPath
+                    });
+                }
+                break;
         }
     }
 

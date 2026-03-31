@@ -82,6 +82,7 @@ builder.Services.AddScoped<ITransformationStrategy, ConcatTransformationStrategy
 builder.Services.AddScoped<ITransformationStrategy, DateFormatTransformationStrategy>();
 builder.Services.AddScoped<ITransformationStrategy, ArrayMapTransformationStrategy>();
 builder.Services.AddScoped<ITransformationStrategy, ArrayFlattenTransformationStrategy>();
+builder.Services.AddScoped<ITransformationStrategy, ConditionalTransformationStrategy>();
 builder.Services.AddScoped<ITransformationStrategyFactory, TransformationStrategyFactory>();
 
 builder.Services.AddScoped<ITransformationService, TransformationService>();
