@@ -14,4 +14,6 @@ public static class ValidationCodes
     public const string UnknownRuleType = "UNKNOWN_RULE_TYPE";
     public const string MissingRuleProperty = "MISSING_RULE_PROPERTY";
     public const string InvalidRulePropertyValue = "INVALID_RULE_PROPERTY_VALUE";
+    public const string FieldRequired = "FIELD_REQUIRED";
+    public const string ValueViolatesRule = "VALUE_VIOLATES_RULE";
 }

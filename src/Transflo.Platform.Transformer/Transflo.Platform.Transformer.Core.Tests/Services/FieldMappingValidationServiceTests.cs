@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Moq;
 using Transflo.Platform.Transformer.Core.DTOs;
 using Transflo.Platform.Transformer.Core.Models;
@@ -558,6 +559,492 @@ public class FieldMappingValidationServiceTests
 
         Assert.True(result.IsValid);
         Assert.Empty(result.Issues);
+    }
+
+    // ── Value validation: IsRequired field missing from source ────────────────
+
+    [Fact]
+    public async Task ValidateAsync_WithData_ReturnsFieldRequired_WhenRequiredFieldMissing()
+    {
+        SetupVersion();
+        SetupMappings([new FieldMapping
+        {
+            SourcePath = "missing.field",
+            TargetPath = "tgt",
+            TransformationType = TransformationType.Direct,
+            IsRequired = true
+        }]);
+
+        var doc = JsonDocument.Parse("{\"other\":\"value\"}").RootElement;
+        var result = await _sut.ValidateAsync(TemplateId, 1, doc);
+
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Issues, i => i.Code == ValidationCodes.FieldRequired);
+    }
+
+    [Fact]
+    public async Task ValidateAsync_WithData_NoError_WhenOptionalFieldMissing()
+    {
+        SetupVersion();
+        SetupMappings([new FieldMapping
+        {
+            SourcePath = "missing.field",
+            TargetPath = "tgt",
+            TransformationType = TransformationType.Direct,
+            IsRequired = false
+        }]);
+
+        var doc = JsonDocument.Parse("{\"other\":\"value\"}").RootElement;
+        var result = await _sut.ValidateAsync(TemplateId, 1, doc);
+
+        Assert.True(result.IsValid);
+        Assert.DoesNotContain(result.Issues, i => i.Code == ValidationCodes.FieldRequired);
+    }
+
+    // ── Value validation: Required rule ──────────────────────────────────────
+
+    [Fact]
+    public async Task ValidateAsync_WithData_ReturnsError_WhenRequiredRuleAndValueIsEmpty()
+    {
+        SetupVersion();
+        SetupMappings([new FieldMapping
+        {
+            SourcePath = "name",
+            TargetPath = "tgt",
+            TransformationType = TransformationType.Direct,
+            ValidationRules = "[{\"Type\":\"Required\",\"ErrorMessage\":\"Name is required\"}]"
+        }]);
+
+        var doc = JsonDocument.Parse("{\"name\":\"\"}").RootElement;
+        var result = await _sut.ValidateAsync(TemplateId, 1, doc);
+
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Issues, i => i.Code == ValidationCodes.ValueViolatesRule && i.Message == "Name is required");
+    }
+
+    [Fact]
+    public async Task ValidateAsync_WithData_Valid_WhenRequiredRuleAndValuePresent()
+    {
+        SetupVersion();
+        SetupMappings([new FieldMapping
+        {
+            SourcePath = "name",
+            TargetPath = "tgt",
+            TransformationType = TransformationType.Direct,
+            ValidationRules = "[{\"Type\":\"Required\"}]"
+        }]);
+
+        var doc = JsonDocument.Parse("{\"name\":\"John\"}").RootElement;
+        var result = await _sut.ValidateAsync(TemplateId, 1, doc);
+
+        Assert.True(result.IsValid);
+    }
+
+    // ── Value validation: Length rule ─────────────────────────────────────────
+
+    [Fact]
+    public async Task ValidateAsync_WithData_ReturnsError_WhenValueExceedsMaxLength()
+    {
+        SetupVersion();
+        SetupMappings([new FieldMapping
+        {
+            SourcePath = "code",
+            TargetPath = "tgt",
+            TransformationType = TransformationType.Direct,
+            ValidationRules = "[{\"Type\":\"Length\",\"MaxLength\":3}]"
+        }]);
+
+        var doc = JsonDocument.Parse("{\"code\":\"TOOLONG\"}").RootElement;
+        var result = await _sut.ValidateAsync(TemplateId, 1, doc);
+
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Issues, i => i.Code == ValidationCodes.ValueViolatesRule);
+    }
+
+    [Fact]
+    public async Task ValidateAsync_WithData_ReturnsError_WhenValueBelowMinLength()
+    {
+        SetupVersion();
+        SetupMappings([new FieldMapping
+        {
+            SourcePath = "code",
+            TargetPath = "tgt",
+            TransformationType = TransformationType.Direct,
+            ValidationRules = "[{\"Type\":\"Length\",\"MinLength\":5}]"
+        }]);
+
+        var doc = JsonDocument.Parse("{\"code\":\"AB\"}").RootElement;
+        var result = await _sut.ValidateAsync(TemplateId, 1, doc);
+
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Issues, i => i.Code == ValidationCodes.ValueViolatesRule);
+    }
+
+    [Fact]
+    public async Task ValidateAsync_WithData_Valid_WhenValueWithinLength()
+    {
+        SetupVersion();
+        SetupMappings([new FieldMapping
+        {
+            SourcePath = "code",
+            TargetPath = "tgt",
+            TransformationType = TransformationType.Direct,
+            ValidationRules = "[{\"Type\":\"Length\",\"MinLength\":2,\"MaxLength\":10}]"
+        }]);
+
+        var doc = JsonDocument.Parse("{\"code\":\"ABC\"}").RootElement;
+        var result = await _sut.ValidateAsync(TemplateId, 1, doc);
+
+        Assert.True(result.IsValid);
+    }
+
+    // ── Value validation: Range rule ──────────────────────────────────────────
+
+    [Fact]
+    public async Task ValidateAsync_WithData_ReturnsError_WhenValueBelowMinValue()
+    {
+        SetupVersion();
+        SetupMappings([new FieldMapping
+        {
+            SourcePath = "qty",
+            TargetPath = "tgt",
+            TransformationType = TransformationType.Direct,
+            ValidationRules = "[{\"Type\":\"Range\",\"MinValue\":1}]"
+        }]);
+
+        var doc = JsonDocument.Parse("{\"qty\":0}").RootElement;
+        var result = await _sut.ValidateAsync(TemplateId, 1, doc);
+
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Issues, i => i.Code == ValidationCodes.ValueViolatesRule);
+    }
+
+    [Fact]
+    public async Task ValidateAsync_WithData_ReturnsError_WhenValueAboveMaxValue()
+    {
+        SetupVersion();
+        SetupMappings([new FieldMapping
+        {
+            SourcePath = "qty",
+            TargetPath = "tgt",
+            TransformationType = TransformationType.Direct,
+            ValidationRules = "[{\"Type\":\"Range\",\"MaxValue\":100}]"
+        }]);
+
+        var doc = JsonDocument.Parse("{\"qty\":200}").RootElement;
+        var result = await _sut.ValidateAsync(TemplateId, 1, doc);
+
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Issues, i => i.Code == ValidationCodes.ValueViolatesRule);
+    }
+
+    [Fact]
+    public async Task ValidateAsync_WithData_ReturnsError_WhenRangeValueIsNotNumeric()
+    {
+        SetupVersion();
+        SetupMappings([new FieldMapping
+        {
+            SourcePath = "qty",
+            TargetPath = "tgt",
+            TransformationType = TransformationType.Direct,
+            ValidationRules = "[{\"Type\":\"Range\",\"MinValue\":1,\"MaxValue\":100}]"
+        }]);
+
+        var doc = JsonDocument.Parse("{\"qty\":\"not-a-number\"}").RootElement;
+        var result = await _sut.ValidateAsync(TemplateId, 1, doc);
+
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Issues, i => i.Code == ValidationCodes.ValueViolatesRule);
+    }
+
+    // ── Value validation: Enum rule ───────────────────────────────────────────
+
+    [Fact]
+    public async Task ValidateAsync_WithData_ReturnsError_WhenValueNotInAllowedValues()
+    {
+        SetupVersion();
+        SetupMappings([new FieldMapping
+        {
+            SourcePath = "mode",
+            TargetPath = "tgt",
+            TransformationType = TransformationType.Direct,
+            ValidationRules = "[{\"Type\":\"Enum\",\"AllowedValues\":[\"TL\",\"LTL\"]}]"
+        }]);
+
+        var doc = JsonDocument.Parse("{\"mode\":\"AIR\"}").RootElement;
+        var result = await _sut.ValidateAsync(TemplateId, 1, doc);
+
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Issues, i => i.Code == ValidationCodes.ValueViolatesRule);
+    }
+
+    [Fact]
+    public async Task ValidateAsync_WithData_Valid_WhenValueInAllowedValues_CaseInsensitive()
+    {
+        SetupVersion();
+        SetupMappings([new FieldMapping
+        {
+            SourcePath = "mode",
+            TargetPath = "tgt",
+            TransformationType = TransformationType.Direct,
+            ValidationRules = "[{\"Type\":\"Enum\",\"AllowedValues\":[\"TL\",\"LTL\"]}]"
+        }]);
+
+        var doc = JsonDocument.Parse("{\"mode\":\"tl\"}").RootElement;
+        var result = await _sut.ValidateAsync(TemplateId, 1, doc);
+
+        Assert.True(result.IsValid);
+    }
+
+    // ── Value validation: Date rule ───────────────────────────────────────────
+
+    [Fact]
+    public async Task ValidateAsync_WithData_ReturnsError_WhenValueIsNotAValidDate()
+    {
+        SetupVersion();
+        SetupMappings([new FieldMapping
+        {
+            SourcePath = "shipDate",
+            TargetPath = "tgt",
+            TransformationType = TransformationType.Direct,
+            ValidationRules = "[{\"Type\":\"Date\"}]"
+        }]);
+
+        var doc = JsonDocument.Parse("{\"shipDate\":\"not-a-date\"}").RootElement;
+        var result = await _sut.ValidateAsync(TemplateId, 1, doc);
+
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Issues, i => i.Code == ValidationCodes.ValueViolatesRule);
+    }
+
+    [Fact]
+    public async Task ValidateAsync_WithData_ReturnsError_WhenValueDoesNotMatchDateFormat()
+    {
+        SetupVersion();
+        SetupMappings([new FieldMapping
+        {
+            SourcePath = "shipDate",
+            TargetPath = "tgt",
+            TransformationType = TransformationType.Direct,
+            ValidationRules = "[{\"Type\":\"Date\",\"Format\":\"yyyy-MM-dd\"}]"
+        }]);
+
+        var doc = JsonDocument.Parse("{\"shipDate\":\"12/31/2025\"}").RootElement;
+        var result = await _sut.ValidateAsync(TemplateId, 1, doc);
+
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Issues, i => i.Code == ValidationCodes.ValueViolatesRule);
+    }
+
+    [Fact]
+    public async Task ValidateAsync_WithData_Valid_WhenValueMatchesDateFormat()
+    {
+        SetupVersion();
+        SetupMappings([new FieldMapping
+        {
+            SourcePath = "shipDate",
+            TargetPath = "tgt",
+            TransformationType = TransformationType.Direct,
+            ValidationRules = "[{\"Type\":\"Date\",\"Format\":\"yyyy-MM-dd\"}]"
+        }]);
+
+        var doc = JsonDocument.Parse("{\"shipDate\":\"2025-12-31\"}").RootElement;
+        var result = await _sut.ValidateAsync(TemplateId, 1, doc);
+
+        Assert.True(result.IsValid);
+    }
+
+    // ── Value validation: Regex rule ──────────────────────────────────────────
+
+    [Fact]
+    public async Task ValidateAsync_WithData_ReturnsError_WhenValueDoesNotMatchRegex()
+    {
+        SetupVersion();
+        SetupMappings([new FieldMapping
+        {
+            SourcePath = "zip",
+            TargetPath = "tgt",
+            TransformationType = TransformationType.Direct,
+            ValidationRules = "[{\"Type\":\"Regex\",\"Pattern\":\"^\\\\d{5}$\"}]"
+        }]);
+
+        var doc = JsonDocument.Parse("{\"zip\":\"ABC12\"}").RootElement;
+        var result = await _sut.ValidateAsync(TemplateId, 1, doc);
+
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Issues, i => i.Code == ValidationCodes.ValueViolatesRule);
+    }
+
+    [Fact]
+    public async Task ValidateAsync_WithData_Valid_WhenValueMatchesRegex()
+    {
+        SetupVersion();
+        SetupMappings([new FieldMapping
+        {
+            SourcePath = "zip",
+            TargetPath = "tgt",
+            TransformationType = TransformationType.Direct,
+            ValidationRules = "[{\"Type\":\"Regex\",\"Pattern\":\"^\\\\d{5}$\"}]"
+        }]);
+
+        var doc = JsonDocument.Parse("{\"zip\":\"12345\"}").RootElement;
+        var result = await _sut.ValidateAsync(TemplateId, 1, doc);
+
+        Assert.True(result.IsValid);
+    }
+
+    // ── Value validation: nested path ─────────────────────────────────────────
+
+    [Fact]
+    public async Task ValidateAsync_WithData_ResolvesNestedPath()
+    {
+        SetupVersion();
+        SetupMappings([new FieldMapping
+        {
+            SourcePath = "customer.address.zip",
+            TargetPath = "tgt",
+            TransformationType = TransformationType.Direct,
+            ValidationRules = "[{\"Type\":\"Required\"}]"
+        }]);
+
+        var doc = JsonDocument.Parse("{\"customer\":{\"address\":{\"zip\":\"\"}}}").RootElement;
+        var result = await _sut.ValidateAsync(TemplateId, 1, doc);
+
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Issues, i => i.Code == ValidationCodes.ValueViolatesRule);
+    }
+
+    [Fact]
+    public async Task ValidateAsync_WithData_ResolvesArrayIndexedPath()
+    {
+        SetupVersion();
+        SetupMappings([new FieldMapping
+        {
+            SourcePath = "orders[0].id",
+            TargetPath = "tgt",
+            TransformationType = TransformationType.Direct,
+            ValidationRules = "[{\"Type\":\"Required\"}]"
+        }]);
+
+        var doc = JsonDocument.Parse("{\"orders\":[{\"id\":\"ORD-001\"}]}").RootElement;
+        var result = await _sut.ValidateAsync(TemplateId, 1, doc);
+
+        Assert.True(result.IsValid);
+    }
+
+    // ── Value validation: Constant type is skipped ────────────────────────────
+
+    [Fact]
+    public async Task ValidateAsync_WithData_SkipsConstantTypeMappings()
+    {
+        SetupVersion();
+        SetupMappings([new FieldMapping
+        {
+            SourcePath = "",
+            TargetPath = "tgt",
+            TransformationType = TransformationType.Constant,
+            TransformationConfig = "{\"Value\":\"fixed\"}",
+            IsRequired = true // should be ignored for Constant
+        }]);
+
+        var doc = JsonDocument.Parse("{}").RootElement;
+        var result = await _sut.ValidateAsync(TemplateId, 1, doc);
+
+        Assert.True(result.IsValid);
+        Assert.DoesNotContain(result.Issues, i => i.Code == ValidationCodes.FieldRequired);
+    }
+
+    // ── Value validation: sourceDocument passed as JSON string ────────────────
+
+    [Fact]
+    public async Task ValidateAsync_WithData_UnwrapsSourceDocumentWhenPassedAsJsonString()
+    {
+        SetupVersion();
+        SetupMappings([new FieldMapping
+        {
+            SourcePath = "id",
+            TargetPath = "externalId",
+            TransformationType = TransformationType.Direct,
+            IsRequired = true
+        }]);
+
+        // Simulate client sending sourceDocument as an escaped JSON string
+        var innerJson = "{\"id\":\"3089050\"}";
+        var wrappedJson = $"\"{System.Text.Json.JsonEncodedText.Encode(innerJson)}\"";
+        var doc = JsonDocument.Parse(wrappedJson).RootElement;
+
+        var result = await _sut.ValidateAsync(TemplateId, 1, doc);
+
+        Assert.True(result.IsValid);
+        Assert.DoesNotContain(result.Issues, i => i.Code == ValidationCodes.FieldRequired);
+    }
+
+    [Fact]
+    public async Task ValidateAsync_WithData_AppliesRuleValidation_WhenSourceDocumentIsJsonString()
+    {
+        SetupVersion();
+        SetupMappings([new FieldMapping
+        {
+            SourcePath = "mode",
+            TargetPath = "shipmentMode",
+            TransformationType = TransformationType.Direct,
+            ValidationRules = "[{\"Type\":\"Enum\",\"AllowedValues\":[\"TL\",\"LTL\"],\"ErrorMessage\":\"Invalid mode\"}]"
+        }]);
+
+        // Inner document has an invalid enum value — wrapped as string
+        var innerJson = "{\"mode\":\"AIR\"}";
+        var wrappedJson = $"\"{System.Text.Json.JsonEncodedText.Encode(innerJson)}\"";
+        var doc = JsonDocument.Parse(wrappedJson).RootElement;
+
+        var result = await _sut.ValidateAsync(TemplateId, 1, doc);
+
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Issues, i => i.Code == ValidationCodes.ValueViolatesRule && i.Message == "Invalid mode");
+    }
+
+    [Fact]
+    public async Task ValidateAsync_WithData_FindsNestedField_WhenSourceDocumentIsJsonString()
+    {
+        SetupVersion();
+        SetupMappings([new FieldMapping
+        {
+            SourcePath = "stops[0].stop_type",
+            TargetPath = "stops[0].type",
+            TransformationType = TransformationType.Direct,
+            IsRequired = true,
+            ValidationRules = "[{\"Type\":\"Enum\",\"AllowedValues\":[\"PU\",\"SO\"],\"ErrorMessage\":\"Invalid stop type\"}]"
+        }]);
+
+        var innerJson = "{\"stops\":[{\"stop_type\":\"PU\"}]}";
+        var wrappedJson = $"\"{System.Text.Json.JsonEncodedText.Encode(innerJson)}\"";
+        var doc = JsonDocument.Parse(wrappedJson).RootElement;
+
+        var result = await _sut.ValidateAsync(TemplateId, 1, doc);
+
+        Assert.True(result.IsValid);
+        Assert.Empty(result.Issues);
+    }
+
+    // ── Value validation: without source document is still schema-only ────────
+
+    [Fact]
+    public async Task ValidateAsync_WithoutData_DoesNotProduceValueIssues()
+    {
+        SetupVersion();
+        SetupMappings([new FieldMapping
+        {
+            SourcePath = "missing.field",
+            TargetPath = "tgt",
+            TransformationType = TransformationType.Direct,
+            IsRequired = true,
+            ValidationRules = "[{\"Type\":\"Required\"}]"
+        }]);
+
+        // No source document — structural validation only
+        var result = await _sut.ValidateAsync(TemplateId, 1);
+
+        Assert.True(result.IsValid);
+        Assert.DoesNotContain(result.Issues, i => i.Code == ValidationCodes.FieldRequired || i.Code == ValidationCodes.ValueViolatesRule);
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────────

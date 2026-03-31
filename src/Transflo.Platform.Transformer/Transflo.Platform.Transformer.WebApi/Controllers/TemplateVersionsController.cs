@@ -73,13 +73,20 @@ public class TemplateVersionsController : ControllerBase
 
     /// <summary>
     /// Validates all field mappings for the specified version without publishing.
+    /// When <c>sourceDocument</c> is included in the request body, field values are
+    /// also evaluated against each mapping's ValidationRules.
     /// </summary>
-    [HttpGet("{version:int}/validate")]
+    [HttpPost("{version:int}/validate")]
     [ProducesResponseType(typeof(ApiResponse<MappingValidationResult>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Validate(Guid templateId, int version)
+    public async Task<IActionResult> Validate(
+        Guid templateId,
+        int version,
+        [FromBody] ValidateRequest? request = null)
     {
-        var result = await _validationService.ValidateAsync(templateId, version);
+        var result = request?.SourceDocument.HasValue == true
+            ? await _validationService.ValidateAsync(templateId, version, request.SourceDocument.Value)
+            : await _validationService.ValidateAsync(templateId, version);
 
         if (result.Issues.Count == 1 && result.Issues[0].Code == ValidationCodes.VersionNotFound)
         {

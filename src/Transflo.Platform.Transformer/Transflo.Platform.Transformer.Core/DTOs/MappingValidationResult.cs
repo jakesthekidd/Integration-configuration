@@ -1,4 +1,20 @@
+using System.Text.Json;
+
 namespace Transflo.Platform.Transformer.Core.DTOs;
+
+/// <summary>
+/// Request body for the validate endpoint.
+/// When <see cref="SourceDocument"/> is provided, field values are also validated
+/// against the ValidationRules of each mapping in addition to structural validation.
+/// </summary>
+public sealed record ValidateRequest
+{
+    /// <summary>
+    /// The source JSON document to validate against the field mapping rules.
+    /// Omit to perform structural (schema) validation only.
+    /// </summary>
+    public JsonElement? SourceDocument { get; init; }
+}
 
 public enum ValidationSeverity { Error, Warning }
 

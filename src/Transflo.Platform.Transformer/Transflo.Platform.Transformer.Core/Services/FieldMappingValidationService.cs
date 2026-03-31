@@ -21,7 +21,13 @@ public class FieldMappingValidationService : IFieldMappingValidationService
         _mappingRepo = mappingRepo;
     }
 
-    public async Task<MappingValidationResult> ValidateAsync(Guid templateId, int version)
+    public Task<MappingValidationResult> ValidateAsync(Guid templateId, int version)
+        => ValidateCoreAsync(templateId, version, sourceDocument: null);
+
+    public Task<MappingValidationResult> ValidateAsync(Guid templateId, int version, JsonElement sourceDocument)
+        => ValidateCoreAsync(templateId, version, sourceDocument);
+
+    private async Task<MappingValidationResult> ValidateCoreAsync(Guid templateId, int version, JsonElement? sourceDocument)
     {
         var templateVersion = await _versionRepo.GetByVersionAsync(templateId, version);
         if (templateVersion is null)
@@ -41,7 +47,7 @@ public class FieldMappingValidationService : IFieldMappingValidationService
         var mappings = await _mappingRepo.GetByTemplateVersionIdOrderedAsync(templateVersion.Id);
         var issues = new List<ValidationIssue>();
 
-        // Per-mapping rules
+        // Per-mapping structural rules
         for (int i = 0; i < mappings.Count; i++)
         {
             var fieldMapping = mappings[i];
@@ -55,6 +61,19 @@ public class FieldMappingValidationService : IFieldMappingValidationService
 
         // Cross-mapping rules
         ValidateDuplicateTargetPaths(mappings, issues);
+
+        // Per-mapping value rules (only when a source document is supplied)
+        if (sourceDocument.HasValue)
+        {
+            // Support callers that serialize the document as a JSON string rather than
+            // an inline object (e.g. "sourceDocument": "{\"id\":\"123\",...}").
+            var effectiveDoc = UnwrapJsonString(sourceDocument.Value);
+
+            for (int i = 0; i < mappings.Count; i++)
+            {
+                ValidateFieldValue(mappings[i], i + 1, effectiveDoc, issues);
+            }
+        }
 
         return new MappingValidationResult
         {
@@ -489,7 +508,376 @@ public class FieldMappingValidationService : IFieldMappingValidationService
         }
     }
 
+    // ── Value validators (run when a source document is provided) ────────────
+
+    private static void ValidateFieldValue(FieldMapping fieldMapping, int index, JsonElement sourceDocument, List<ValidationIssue> issues)
+    {
+        // Constant mappings derive their value from config, not from the source document
+        if (fieldMapping.TransformationType == TransformationType.Constant)
+        {
+            return;
+        }
+
+        var pathFound = TryGetValueAtPath(sourceDocument, fieldMapping.SourcePath, out var value);
+
+        if (!pathFound || value.ValueKind == JsonValueKind.Null || value.ValueKind == JsonValueKind.Undefined)
+        {
+            if (fieldMapping.IsRequired)
+            {
+                issues.Add(new ValidationIssue
+                {
+                    Severity = ValidationSeverity.Error,
+                    Code = ValidationCodes.FieldRequired,
+                    Message = $"Field '{fieldMapping.SourcePath}' is required but was not found in the source document.",
+                    MappingIndex = index,
+                    TargetPath = fieldMapping.TargetPath
+                });
+            }
+
+            return; // Nothing to run rule checks against
+        }
+
+        if (string.IsNullOrWhiteSpace(fieldMapping.ValidationRules))
+        {
+            return;
+        }
+
+        JsonElement rulesRoot;
+        try
+        {
+            rulesRoot = JsonSerializer.Deserialize<JsonElement>(fieldMapping.ValidationRules);
+        }
+        catch
+        {
+            return; // Invalid JSON already reported during structural validation
+        }
+
+        if (rulesRoot.ValueKind != JsonValueKind.Array)
+        {
+            return; // Legacy object style only carries a regex; not evaluated against a value here
+        }
+
+        int ruleIndex = 0;
+        foreach (var rule in rulesRoot.EnumerateArray())
+        {
+            ruleIndex++;
+
+            if (rule.ValueKind != JsonValueKind.Object)
+            {
+                continue;
+            }
+
+            if (!TryGetPropertyIgnoreCase(rule, "Type", out var typeEl) || typeEl.ValueKind != JsonValueKind.String)
+            {
+                continue;
+            }
+
+            var customMessage = TryGetPropertyIgnoreCase(rule, "ErrorMessage", out var msgEl) && msgEl.ValueKind == JsonValueKind.String
+                ? msgEl.GetString()
+                : null;
+
+            switch (typeEl.GetString()!.ToLowerInvariant())
+            {
+                case ValidationRuleTypes.Required:
+                    ApplyRequiredValueRule(value, fieldMapping, index, customMessage, issues);
+                    break;
+                case ValidationRuleTypes.Length:
+                    ApplyLengthValueRule(rule, value, fieldMapping, index, customMessage, issues);
+                    break;
+                case ValidationRuleTypes.Range:
+                    ApplyRangeValueRule(rule, value, fieldMapping, index, customMessage, issues);
+                    break;
+                case ValidationRuleTypes.Enum:
+                    ApplyEnumValueRule(rule, value, fieldMapping, index, customMessage, issues);
+                    break;
+                case ValidationRuleTypes.Date:
+                    ApplyDateValueRule(rule, value, fieldMapping, index, customMessage, issues);
+                    break;
+                case ValidationRuleTypes.Regex:
+                case ValidationRuleTypes.Pattern:
+                    ApplyRegexValueRule(rule, value, fieldMapping, index, customMessage, issues);
+                    break;
+            }
+        }
+    }
+
+    private static void ApplyRequiredValueRule(JsonElement value, FieldMapping fieldMapping, int index, string? customMessage, List<ValidationIssue> issues)
+    {
+        bool isEmpty = value.ValueKind == JsonValueKind.Null
+            || (value.ValueKind == JsonValueKind.String && string.IsNullOrEmpty(value.GetString()));
+
+        if (isEmpty)
+        {
+            issues.Add(new ValidationIssue
+            {
+                Severity = ValidationSeverity.Error,
+                Code = ValidationCodes.ValueViolatesRule,
+                Message = customMessage ?? $"Field '{fieldMapping.SourcePath}' is required and must not be empty.",
+                MappingIndex = index,
+                TargetPath = fieldMapping.TargetPath
+            });
+        }
+    }
+
+    private static void ApplyLengthValueRule(JsonElement rule, JsonElement value, FieldMapping fieldMapping, int index, string? customMessage, List<ValidationIssue> issues)
+    {
+        var strValue = value.ValueKind == JsonValueKind.String ? value.GetString() : value.GetRawText();
+        if (strValue is null)
+        {
+            return;
+        }
+
+        int len = strValue.Length;
+        int minLength = 0, maxLength = 0;
+        bool hasMin = TryGetPropertyIgnoreCase(rule, "MinLength", out var minEl) && minEl.TryGetInt32(out minLength);
+        bool hasMax = TryGetPropertyIgnoreCase(rule, "MaxLength", out var maxEl) && maxEl.TryGetInt32(out maxLength);
+
+        if (hasMin && len < minLength)
+        {
+            issues.Add(new ValidationIssue
+            {
+                Severity = ValidationSeverity.Error,
+                Code = ValidationCodes.ValueViolatesRule,
+                Message = customMessage ?? $"Field '{fieldMapping.SourcePath}' length {len} is below the minimum {minLength}.",
+                MappingIndex = index,
+                TargetPath = fieldMapping.TargetPath
+            });
+        }
+
+        if (hasMax && len > maxLength)
+        {
+            issues.Add(new ValidationIssue
+            {
+                Severity = ValidationSeverity.Error,
+                Code = ValidationCodes.ValueViolatesRule,
+                Message = customMessage ?? $"Field '{fieldMapping.SourcePath}' length {len} exceeds the maximum {maxLength}.",
+                MappingIndex = index,
+                TargetPath = fieldMapping.TargetPath
+            });
+        }
+    }
+
+    private static void ApplyRangeValueRule(JsonElement rule, JsonElement value, FieldMapping fieldMapping, int index, string? customMessage, List<ValidationIssue> issues)
+    {
+        if (value.ValueKind != JsonValueKind.Number || !value.TryGetDouble(out double numValue))
+        {
+            issues.Add(new ValidationIssue
+            {
+                Severity = ValidationSeverity.Error,
+                Code = ValidationCodes.ValueViolatesRule,
+                Message = customMessage ?? $"Field '{fieldMapping.SourcePath}' must be a numeric value for Range validation.",
+                MappingIndex = index,
+                TargetPath = fieldMapping.TargetPath
+            });
+            return;
+        }
+
+        double minValue = 0, maxValue = 0;
+        bool hasMin = TryGetPropertyIgnoreCase(rule, "MinValue", out var minEl) && minEl.TryGetDouble(out minValue);
+        bool hasMax = TryGetPropertyIgnoreCase(rule, "MaxValue", out var maxEl) && maxEl.TryGetDouble(out maxValue);
+
+        if (hasMin && numValue < minValue)
+        {
+            issues.Add(new ValidationIssue
+            {
+                Severity = ValidationSeverity.Error,
+                Code = ValidationCodes.ValueViolatesRule,
+                Message = customMessage ?? $"Field '{fieldMapping.SourcePath}' value {numValue} is below the minimum {minValue}.",
+                MappingIndex = index,
+                TargetPath = fieldMapping.TargetPath
+            });
+        }
+
+        if (hasMax && numValue > maxValue)
+        {
+            issues.Add(new ValidationIssue
+            {
+                Severity = ValidationSeverity.Error,
+                Code = ValidationCodes.ValueViolatesRule,
+                Message = customMessage ?? $"Field '{fieldMapping.SourcePath}' value {numValue} exceeds the maximum {maxValue}.",
+                MappingIndex = index,
+                TargetPath = fieldMapping.TargetPath
+            });
+        }
+    }
+
+    private static void ApplyEnumValueRule(JsonElement rule, JsonElement value, FieldMapping fieldMapping, int index, string? customMessage, List<ValidationIssue> issues)
+    {
+        if (!TryGetPropertyIgnoreCase(rule, "AllowedValues", out var allowedEl) || allowedEl.ValueKind != JsonValueKind.Array)
+        {
+            return;
+        }
+
+        var strValue = value.ValueKind == JsonValueKind.String ? value.GetString() : value.GetRawText();
+        var allowed = allowedEl.EnumerateArray()
+            .Where(e => e.ValueKind == JsonValueKind.String)
+            .Select(e => e.GetString())
+            .ToList();
+
+        if (!allowed.Any(a => string.Equals(a, strValue, StringComparison.OrdinalIgnoreCase)))
+        {
+            issues.Add(new ValidationIssue
+            {
+                Severity = ValidationSeverity.Error,
+                Code = ValidationCodes.ValueViolatesRule,
+                Message = customMessage ?? $"Field '{fieldMapping.SourcePath}' value '{strValue}' is not in the allowed values: [{string.Join(", ", allowed)}].",
+                MappingIndex = index,
+                TargetPath = fieldMapping.TargetPath
+            });
+        }
+    }
+
+    private static void ApplyDateValueRule(JsonElement rule, JsonElement value, FieldMapping fieldMapping, int index, string? customMessage, List<ValidationIssue> issues)
+    {
+        var strValue = value.ValueKind == JsonValueKind.String ? value.GetString() : null;
+        if (string.IsNullOrEmpty(strValue))
+        {
+            return;
+        }
+
+        var format = TryGetPropertyIgnoreCase(rule, "Format", out var formatEl) && formatEl.ValueKind == JsonValueKind.String
+            ? formatEl.GetString()
+            : null;
+
+        bool parsed = string.IsNullOrEmpty(format)
+            ? DateTime.TryParse(strValue, out _)
+            : DateTime.TryParseExact(strValue, format, null, System.Globalization.DateTimeStyles.None, out _);
+
+        if (!parsed)
+        {
+            issues.Add(new ValidationIssue
+            {
+                Severity = ValidationSeverity.Error,
+                Code = ValidationCodes.ValueViolatesRule,
+                Message = customMessage ?? (string.IsNullOrEmpty(format)
+                    ? $"Field '{fieldMapping.SourcePath}' value '{strValue}' is not a valid date."
+                    : $"Field '{fieldMapping.SourcePath}' value '{strValue}' does not match date format '{format}'."),
+                MappingIndex = index,
+                TargetPath = fieldMapping.TargetPath
+            });
+        }
+    }
+
+    private static void ApplyRegexValueRule(JsonElement rule, JsonElement value, FieldMapping fieldMapping, int index, string? customMessage, List<ValidationIssue> issues)
+    {
+        var strValue = value.ValueKind == JsonValueKind.String ? value.GetString() : value.GetRawText();
+        if (string.IsNullOrEmpty(strValue))
+        {
+            return;
+        }
+
+        if (!TryGetPropertyIgnoreCase(rule, "Pattern", out var patternEl) &&
+            !TryGetPropertyIgnoreCase(rule, "Regex", out patternEl))
+        {
+            return;
+        }
+
+        var pattern = patternEl.GetString();
+        if (string.IsNullOrEmpty(pattern))
+        {
+            return;
+        }
+
+        try
+        {
+            if (!Regex.IsMatch(strValue, pattern, RegexOptions.None, TimeSpan.FromSeconds(1)))
+            {
+                issues.Add(new ValidationIssue
+                {
+                    Severity = ValidationSeverity.Error,
+                    Code = ValidationCodes.ValueViolatesRule,
+                    Message = customMessage ?? $"Field '{fieldMapping.SourcePath}' value '{strValue}' does not match pattern '{pattern}'.",
+                    MappingIndex = index,
+                    TargetPath = fieldMapping.TargetPath
+                });
+            }
+        }
+        catch
+        {
+            // Invalid regex pattern was already flagged during structural validation
+        }
+    }
+
+    // ── Path navigation ───────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Navigates a <see cref="JsonElement"/> using a dot-notation path with optional
+    /// array index support, e.g. "customer.address.zip" or "orders[0].id".
+    /// Property matching is case-insensitive at each segment.
+    /// </summary>
+    private static bool TryGetValueAtPath(JsonElement root, string path, out JsonElement value)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            value = default;
+            return false;
+        }
+
+        value = root;
+        foreach (var segment in path.Split('.'))
+        {
+            var bracketIdx = segment.IndexOf('[');
+            var propertyName = bracketIdx >= 0 ? segment[..bracketIdx] : segment;
+
+            if (!string.IsNullOrEmpty(propertyName))
+            {
+                if (value.ValueKind != JsonValueKind.Object || !TryGetPropertyIgnoreCase(value, propertyName, out value))
+                {
+                    value = default;
+                    return false;
+                }
+            }
+
+            if (bracketIdx >= 0)
+            {
+                var closeBracket = segment.IndexOf(']', bracketIdx);
+                if (closeBracket > bracketIdx + 1
+                    && int.TryParse(segment[(bracketIdx + 1)..closeBracket], out var arrayIndex))
+                {
+                    if (value.ValueKind != JsonValueKind.Array || arrayIndex >= value.GetArrayLength())
+                    {
+                        value = default;
+                        return false;
+                    }
+
+                    value = value[arrayIndex];
+                }
+            }
+        }
+
+        return true;
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// If <paramref name="element"/> is a JSON string whose content is valid JSON,
+    /// returns the parsed inner document. Otherwise returns the element unchanged.
+    /// This handles callers that serialize the source document as a string rather than
+    /// an inline object: <c>"sourceDocument": "{\"id\":\"123\"}"</c>
+    /// </summary>
+    private static JsonElement UnwrapJsonString(JsonElement element)
+    {
+        if (element.ValueKind != JsonValueKind.String)
+        {
+            return element;
+        }
+
+        var raw = element.GetString();
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            return element;
+        }
+
+        try
+        {
+            return JsonSerializer.Deserialize<JsonElement>(raw);
+        }
+        catch
+        {
+            return element; // Not valid JSON — return as-is
+        }
+    }
 
     private static bool TryGetPropertyIgnoreCase(JsonElement element, string propertyName, out JsonElement value)
     {
