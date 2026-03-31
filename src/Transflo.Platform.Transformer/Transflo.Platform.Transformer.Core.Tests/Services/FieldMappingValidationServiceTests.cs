@@ -183,6 +183,86 @@ public class FieldMappingValidationServiceTests
         Assert.Contains(result.Issues, i => i.Code == ValidationCodes.MissingConfigFields);
     }
 
+    // ── Conditional config validation ────────────────────────────────────────
+
+    [Fact]
+    public async Task ValidateAsync_ReturnsError_WhenConditionalConfigIsNull()
+    {
+        SetupVersion();
+        SetupMappings([new FieldMapping
+        {
+            SourcePath = "src",
+            TargetPath = "tgt",
+            TransformationType = TransformationType.Conditional,
+            TransformationConfig = null
+        }]);
+
+        var result = await _sut.ValidateAsync(TemplateId, 1);
+
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Issues, i =>
+            i.Code == ValidationCodes.MissingConfigFields &&
+            i.Message.Contains("Conditions") &&
+            i.TargetPath == "tgt");
+    }
+
+    [Fact]
+    public async Task ValidateAsync_ReturnsError_WhenConditionalConfigHasNeitherConditionsNorConditionGroups()
+    {
+        SetupVersion();
+        SetupMappings([new FieldMapping
+        {
+            SourcePath = "src",
+            TargetPath = "tgt",
+            TransformationType = TransformationType.Conditional,
+            TransformationConfig = "{\"TrueValue\":\"yes\",\"FalseValue\":\"no\"}"
+        }]);
+
+        var result = await _sut.ValidateAsync(TemplateId, 1);
+
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Issues, i =>
+            i.Code == ValidationCodes.MissingConfigFields &&
+            i.Message.Contains("Conditions") &&
+            i.TargetPath == "tgt");
+    }
+
+    [Fact]
+    public async Task ValidateAsync_NoError_WhenConditionalConfigHasConditions()
+    {
+        SetupVersion();
+        SetupMappings([new FieldMapping
+        {
+            SourcePath = "src",
+            TargetPath = "tgt",
+            TransformationType = TransformationType.Conditional,
+            TransformationConfig = "{\"Conditions\":[{\"Field\":\"status\",\"Operator\":\"equals\",\"Value\":\"ACTIVE\"}],\"TrueValue\":\"yes\"}"
+        }]);
+
+        var result = await _sut.ValidateAsync(TemplateId, 1);
+
+        Assert.True(result.IsValid);
+        Assert.DoesNotContain(result.Issues, i => i.Code == ValidationCodes.MissingConfigFields);
+    }
+
+    [Fact]
+    public async Task ValidateAsync_NoError_WhenConditionalConfigHasConditionGroups()
+    {
+        SetupVersion();
+        SetupMappings([new FieldMapping
+        {
+            SourcePath = "src",
+            TargetPath = "tgt",
+            TransformationType = TransformationType.Conditional,
+            TransformationConfig = "{\"ConditionGroups\":[{\"Logic\":\"AND\",\"Conditions\":[{\"Field\":\"status\",\"Operator\":\"equals\",\"Value\":\"ACTIVE\"}]}],\"GroupLogic\":\"AND\",\"TrueValue\":\"yes\"}"
+        }]);
+
+        var result = await _sut.ValidateAsync(TemplateId, 1);
+
+        Assert.True(result.IsValid);
+        Assert.DoesNotContain(result.Issues, i => i.Code == ValidationCodes.MissingConfigFields);
+    }
+
     // ── Validation rules regex validation ────────────────────────────────────
 
     [Fact]
