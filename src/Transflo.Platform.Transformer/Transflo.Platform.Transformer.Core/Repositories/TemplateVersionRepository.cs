@@ -66,8 +66,10 @@ public class TemplateVersionRepository : ITemplateVersionRepository
                 $"Template version {version} not found for template {templateId}.");
 
         if (target.Status != TemplateVersionStatus.Draft)
+        {
             throw new InvalidOperationException(
                 $"Only Draft versions can be published. Current status: {target.Status}.");
+        }
 
         // Mark current Published version as Superseded (if any)
         var currentPublished = await GetPublishedVersionAsync(templateId);
@@ -97,7 +99,9 @@ public class TemplateVersionRepository : ITemplateVersionRepository
     {
         var target = await GetByVersionAsync(templateId, version);
         if (target is null)
+        {
             return false;
+        }
 
         _context.TemplateVersions.Remove(target);
         await _context.SaveChangesAsync();

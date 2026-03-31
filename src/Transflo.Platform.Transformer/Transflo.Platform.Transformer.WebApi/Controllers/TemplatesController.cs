@@ -36,7 +36,9 @@ public class TemplatesController : ControllerBase
     {
         var response = await _service.GetByIdAsync(templateId);
         if (response is null)
+        {
             return NotFound(ApiResponse<TemplateResponse>.ErrorResponse($"Template not found: {templateId}"));
+        }
 
         return Ok(ApiResponse<TemplateResponse>.SuccessResponse(response));
     }
@@ -57,7 +59,9 @@ public class TemplatesController : ControllerBase
     {
         var response = await _service.UpdateAsync(templateId, request);
         if (response is null)
+        {
             return NotFound(ApiResponse<TemplateResponse>.ErrorResponse($"Template not found: {templateId}"));
+        }
 
         return Ok(ApiResponse<TemplateResponse>.SuccessResponse(response));
     }
@@ -69,7 +73,9 @@ public class TemplatesController : ControllerBase
     {
         var found = await _service.DeleteAsync(templateId);
         if (!found)
+        {
             return NotFound(ApiResponse<object>.ErrorResponse($"Template not found: {templateId}"));
+        }
 
         return NoContent();
     }
@@ -81,7 +87,9 @@ public class TemplatesController : ControllerBase
     {
         var found = await _service.ReactivateAsync(templateId);
         if (!found)
+        {
             return NotFound(ApiResponse<object>.ErrorResponse($"Template not found or not deleted: {templateId}"));
+        }
 
         return NoContent();
     }
@@ -93,7 +101,9 @@ public class TemplatesController : ControllerBase
     {
         var response = await _service.DuplicateAsync(templateId, request);
         if (response is null)
+        {
             return NotFound(ApiResponse<TemplateResponse>.ErrorResponse($"Template not found: {templateId}"));
+        }
 
         return Created($"/api/v1/templates/{response.Id}",
             ApiResponse<TemplateResponse>.SuccessResponse(response));

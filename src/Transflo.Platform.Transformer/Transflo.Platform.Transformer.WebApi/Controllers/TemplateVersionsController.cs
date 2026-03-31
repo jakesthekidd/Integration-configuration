@@ -14,10 +14,12 @@ namespace Transflo.Platform.Transformer.WebApi.Controllers;
 public class TemplateVersionsController : ControllerBase
 {
     private readonly ITemplatesService _service;
+    private readonly IFieldMappingValidationService _validationService;
 
-    public TemplateVersionsController(ITemplatesService service)
+    public TemplateVersionsController(ITemplatesService service, IFieldMappingValidationService validationService)
     {
         _service = service;
+        _validationService = validationService;
     }
 
     /// <summary>Lists all versions for the template, ordered newest-first.</summary>
@@ -38,8 +40,10 @@ public class TemplateVersionsController : ControllerBase
         var versions = await _service.GetVersionsAsync(templateId);
         var match = versions.FirstOrDefault(v => v.Version == version);
         if (match is null)
+        {
             return NotFound(ApiResponse<object>.ErrorResponse(
                 $"Version {version} not found for template {templateId}."));
+        }
 
         return Ok(ApiResponse<TemplateVersionResponse>.SuccessResponse(match));
     }
@@ -57,8 +61,10 @@ public class TemplateVersionsController : ControllerBase
     {
         var response = await _service.CreateVersionAsync(templateId, request);
         if (response is null)
+        {
             return NotFound(ApiResponse<object>.ErrorResponse(
                 $"No Published version found for template {templateId}. Publish a version first before creating a new draft."));
+        }
 
         return Created(
             $"/api/v1/templates/{templateId}/versions/{response.Version}",
@@ -66,22 +72,58 @@ public class TemplateVersionsController : ControllerBase
     }
 
     /// <summary>
+    /// Validates all field mappings for the specified version without publishing.
+    /// </summary>
+    [HttpGet("{version:int}/validate")]
+    [ProducesResponseType(typeof(ApiResponse<MappingValidationResult>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Validate(Guid templateId, int version)
+    {
+        var result = await _validationService.ValidateAsync(templateId, version);
+
+        if (result.Issues.Count == 1 && result.Issues[0].Code == ValidationCodes.VersionNotFound)
+        {
+            return NotFound(ApiResponse<object>.ErrorResponse(result.Issues[0].Message));
+        }
+
+        return Ok(ApiResponse<MappingValidationResult>.SuccessResponse(result));
+    }
+
+    /// <summary>
     /// Publishes the specified Draft version. The previously Published version
     /// (if any) is automatically marked as Superseded. Returns 404 if the version
-    /// does not exist or is not in Draft status.
+    /// does not exist or is not in Draft status. Returns 422 if field-mapping
+    /// validation fails, with structured validation issues in the response body.
     /// </summary>
     [HttpPost("{version:int}/publish")]
     [ProducesResponseType(typeof(ApiResponse<TemplateVersionResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<MappingValidationResult>), StatusCodes.Status422UnprocessableEntity)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Publish(
         Guid templateId,
         int version,
         [FromBody] PublishVersionRequest? request = null)
     {
+        var validation = await _validationService.ValidateAsync(templateId, version);
+
+        if (validation.Issues.Count == 1 && validation.Issues[0].Code == ValidationCodes.VersionNotFound)
+        {
+            return NotFound(ApiResponse<object>.ErrorResponse(validation.Issues[0].Message));
+        }
+
+        if (!validation.IsValid)
+        {
+            var errorCount = validation.Issues.Count(i => i.Severity == ValidationSeverity.Error);
+            return UnprocessableEntity(ApiResponse<MappingValidationResult>.SuccessResponse(validation,
+                $"Version {version} has {errorCount} validation error(s) and cannot be published."));
+        }
+
         var response = await _service.PublishVersionAsync(templateId, version, request?.PublishedBy);
         if (response is null)
+        {
             return NotFound(ApiResponse<object>.ErrorResponse(
                 $"Version {version} for template {templateId} was not found or is not in Draft status."));
+        }
 
         return Ok(ApiResponse<TemplateVersionResponse>.SuccessResponse(response));
     }
@@ -98,19 +140,22 @@ public class TemplateVersionsController : ControllerBase
         var success = await _service.DeleteVersionAsync(templateId, version);
         if (!success)
         {
-            // Try to see if it's missing or just not a draft
             var versions = await _service.GetVersionsAsync(templateId);
             var match = versions.FirstOrDefault(v => v.Version == version);
 
             if (match is null)
+            {
                 return NotFound(ApiResponse<object>.ErrorResponse($"Version {version} not found."));
+            }
 
             if (versions.Count() <= 1)
+            {
                 return BadRequest(ApiResponse<object>.ErrorResponse("The last remaining version cannot be deleted."));
+            }
 
             return BadRequest(ApiResponse<object>.ErrorResponse("Only Draft versions can be deleted."));
         }
 
-        return Ok(ApiResponse<object>.SuccessResponse(null, "Version deleted successfully."));
+        return Ok(ApiResponse<object>.SuccessResponse(new object(), "Version deleted successfully."));
     }
 }

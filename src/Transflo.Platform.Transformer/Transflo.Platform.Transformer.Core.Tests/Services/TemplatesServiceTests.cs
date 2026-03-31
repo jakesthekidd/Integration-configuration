@@ -3,6 +3,7 @@ using Transflo.Platform.Transformer.Core.DTOs;
 using Transflo.Platform.Transformer.Core.Models;
 using Transflo.Platform.Transformer.Core.Repositories.Interfaces;
 using Transflo.Platform.Transformer.Core.Services;
+using Transflo.Platform.Transformer.Core.Services.Interfaces;
 
 namespace Transflo.Platform.Transformer.Core.Tests.Services;
 
@@ -11,6 +12,7 @@ public class TemplatesServiceTests
     private readonly Mock<ITemplateRepository> _templateRepoMock = new();
     private readonly Mock<IFieldMappingRepository> _mappingRepoMock = new();
     private readonly Mock<ITemplateVersionRepository> _versionRepoMock = new();
+    private readonly Mock<IFieldMappingValidationService> _validationServiceMock = new();
     private readonly TemplatesService _sut;
 
     private static readonly Template SampleTemplate = new()
@@ -25,7 +27,11 @@ public class TemplatesServiceTests
 
     public TemplatesServiceTests()
     {
-        _sut = new TemplatesService(_templateRepoMock.Object, _mappingRepoMock.Object, _versionRepoMock.Object);
+        _sut = new TemplatesService(
+            _templateRepoMock.Object,
+            _mappingRepoMock.Object,
+            _versionRepoMock.Object,
+            _validationServiceMock.Object);
     }
 
     // ── GetAllAsync ──────────────────────────────────────────────────────────
@@ -304,5 +310,81 @@ public class TemplatesServiceTests
         Assert.Equal(2, result.Version);
         Assert.Equal(1, result.BaseVersion);
         _mappingRepoMock.Verify(r => r.CreateBulkAsync(It.Is<List<FieldMapping>>(l => l.Count == 1)), Times.Once);
+    }
+
+    // ── PublishVersionAsync ──────────────────────────────────────────────────
+
+    [Fact]
+    public async Task PublishVersionAsync_ReturnsNull_WhenVersionNotFound()
+    {
+        _versionRepoMock
+            .Setup(r => r.GetByVersionAsync(SampleTemplate.Id, 1))
+            .ReturnsAsync((TemplateVersion?)null);
+
+        var result = await _sut.PublishVersionAsync(SampleTemplate.Id, 1);
+
+        Assert.Null(result);
+        _validationServiceMock.Verify(v => v.ValidateAsync(It.IsAny<Guid>(), It.IsAny<int>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task PublishVersionAsync_ReturnsNull_WhenVersionIsNotDraft()
+    {
+        var published = new TemplateVersion { Id = Guid.NewGuid(), TemplateId = SampleTemplate.Id, Version = 1, Status = TemplateVersionStatus.Published };
+        _versionRepoMock
+            .Setup(r => r.GetByVersionAsync(SampleTemplate.Id, 1))
+            .ReturnsAsync(published);
+
+        var result = await _sut.PublishVersionAsync(SampleTemplate.Id, 1);
+
+        Assert.Null(result);
+        _validationServiceMock.Verify(v => v.ValidateAsync(It.IsAny<Guid>(), It.IsAny<int>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task PublishVersionAsync_ReturnsNull_WhenValidationFails()
+    {
+        var draft = new TemplateVersion { Id = Guid.NewGuid(), TemplateId = SampleTemplate.Id, Version = 1, Status = TemplateVersionStatus.Draft };
+        _versionRepoMock
+            .Setup(r => r.GetByVersionAsync(SampleTemplate.Id, 1))
+            .ReturnsAsync(draft);
+
+        _validationServiceMock
+            .Setup(v => v.ValidateAsync(SampleTemplate.Id, 1))
+            .ReturnsAsync(new MappingValidationResult
+            {
+                IsValid = false,
+                Issues = [new ValidationIssue { Severity = ValidationSeverity.Error, Code = "MISSING_TARGET_PATH", Message = "TargetPath is required." }]
+            });
+
+        var result = await _sut.PublishVersionAsync(SampleTemplate.Id, 1);
+
+        Assert.Null(result);
+        _versionRepoMock.Verify(r => r.PublishVersionAsync(It.IsAny<Guid>(), It.IsAny<int>(), It.IsAny<string>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task PublishVersionAsync_ReturnsPublishedVersion_WhenValidationPasses()
+    {
+        var draft = new TemplateVersion { Id = Guid.NewGuid(), TemplateId = SampleTemplate.Id, Version = 1, Status = TemplateVersionStatus.Draft };
+        var publishedVersion = new TemplateVersion { Id = draft.Id, TemplateId = SampleTemplate.Id, Version = 1, Status = TemplateVersionStatus.Published, PublishedBy = "user1" };
+
+        _versionRepoMock
+            .Setup(r => r.GetByVersionAsync(SampleTemplate.Id, 1))
+            .ReturnsAsync(draft);
+
+        _validationServiceMock
+            .Setup(v => v.ValidateAsync(SampleTemplate.Id, 1))
+            .ReturnsAsync(new MappingValidationResult { IsValid = true, Issues = [] });
+
+        _versionRepoMock
+            .Setup(r => r.PublishVersionAsync(SampleTemplate.Id, 1, "user1"))
+            .ReturnsAsync(publishedVersion);
+
+        var result = await _sut.PublishVersionAsync(SampleTemplate.Id, 1, "user1");
+
+        Assert.NotNull(result);
+        Assert.Equal("Published", result.Status);
+        _versionRepoMock.Verify(r => r.PublishVersionAsync(SampleTemplate.Id, 1, "user1"), Times.Once);
     }
 }

@@ -11,15 +11,18 @@ public class TemplatesService : ITemplatesService
     private readonly ITemplateRepository _templateRepo;
     private readonly IFieldMappingRepository _mappingRepo;
     private readonly ITemplateVersionRepository _versionRepo;
+    private readonly IFieldMappingValidationService _validationService;
 
     public TemplatesService(
         ITemplateRepository templateRepo,
         IFieldMappingRepository mappingRepo,
-        ITemplateVersionRepository versionRepo)
+        ITemplateVersionRepository versionRepo,
+        IFieldMappingValidationService validationService)
     {
         _templateRepo = templateRepo;
         _mappingRepo = mappingRepo;
         _versionRepo = versionRepo;
+        _validationService = validationService;
     }
 
     public async Task<TemplateResponse[]> GetAllAsync()
@@ -64,7 +67,9 @@ public class TemplatesService : ITemplatesService
     {
         var existing = await _templateRepo.GetByIdAsync(templateId);
         if (existing is null)
+        {
             return null;
+        }
 
         existing.Name = request.Name ?? existing.Name;
         existing.Description = request.Description ?? existing.Description;
@@ -80,7 +85,9 @@ public class TemplatesService : ITemplatesService
     {
         var existing = await _templateRepo.GetByIdAsync(templateId);
         if (existing is null)
+        {
             return false;
+        }
 
         await _templateRepo.DeleteAsync(templateId);
         return true;
@@ -90,10 +97,14 @@ public class TemplatesService : ITemplatesService
     {
         var existing = await _templateRepo.GetByIdAsync(templateId);
         if (existing is null || existing.IsDeleted) // Specifically don't reactivate soft-deleted
+        {
             return false;
+        }
 
         if (existing.Status != TemplateStatus.Archived)
+        {
             return false;
+        }
 
         existing.Status = TemplateStatus.Active;
         existing.UpdatedAt = DateTime.UtcNow;
@@ -107,7 +118,9 @@ public class TemplatesService : ITemplatesService
         var includeAllVersions = request?.IncludeAllVersions ?? true;
         var source = await _templateRepo.GetByIdAsync(templateId);
         if (source is null)
+        {
             return null;
+        }
 
         var allTemplates = await _templateRepo.GetAllAsync();
         var baseName = $"{source.Name} - Copy";
@@ -240,14 +253,18 @@ public class TemplatesService : ITemplatesService
         {
             source = await _versionRepo.GetByVersionAsync(templateId, baseVersionNum);
             if (source is null)
+            {
                 return null; // Caller will return 404
+            }
         }
         else
         {
             // Default: fork from the current Published version
             source = await _versionRepo.GetPublishedVersionAsync(templateId);
             if (source is null)
+            {
                 return null;
+            }
         }
 
         // Determine next version number (always max+1 regardless of base)
@@ -297,7 +314,15 @@ public class TemplatesService : ITemplatesService
     {
         var target = await _versionRepo.GetByVersionAsync(templateId, version);
         if (target is null || target.Status != TemplateVersionStatus.Draft)
+        {
             return null;
+        }
+
+        var validation = await _validationService.ValidateAsync(templateId, version);
+        if (!validation.IsValid)
+        {
+            return null;
+        }
 
         var published = await _versionRepo.PublishVersionAsync(templateId, version, publishedBy);
         return ToVersionResponse(published);
@@ -307,16 +332,22 @@ public class TemplatesService : ITemplatesService
     {
         var target = await _versionRepo.GetByVersionAsync(templateId, version);
         if (target is null)
+        {
             return false;
+        }
 
         // Restriction: Only Draft versions can be deleted to maintain history
         if (target.Status != TemplateVersionStatus.Draft)
+        {
             return false;
+        }
 
         // New Restriction: Do not allow deleting the last version
         var allVersions = await _versionRepo.GetAllVersionsAsync(templateId);
         if (allVersions.Count <= 1)
+        {
             return false;
+        }
 
         return await _versionRepo.DeleteAsync(templateId, version);
     }
