@@ -86,6 +86,7 @@ builder.Services.AddScoped<ITransformationStrategyFactory, TransformationStrateg
 
 builder.Services.AddScoped<ITransformationService, TransformationService>();
 builder.Services.AddScoped<ITransformationCoordinator, TransformationCoordinator>();
+builder.Services.AddScoped<IFieldMappingValidationService, FieldMappingValidationService>();
 builder.Services.AddScoped<ITemplatesService, TemplatesService>();
 
 var app = builder.Build();
