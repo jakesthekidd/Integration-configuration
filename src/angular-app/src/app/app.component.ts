@@ -10,41 +10,25 @@ import { CustomersComponent } from './components/customers.component';
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, CustomersComponent, TmsSystemsComponent, TemplatesComponent, LookupTablesComponent, TransformationTestComponent, TransformationLogsComponent],
+  imports: [
+    CommonModule,
+    CustomersComponent,
+    TmsSystemsComponent,
+    TemplatesComponent,
+    LookupTablesComponent,
+    TransformationTestComponent,
+    TransformationLogsComponent,
+  ],
   template: `
     <header>
       <h1>Field Mapping System</h1>
       <nav>
-        <button
-          [class.active]="currentTab === 'customers'"
-          (click)="currentTab = 'customers'">
-          Customers
-        </button>
-        <button
-          [class.active]="currentTab === 'tms'"
-          (click)="currentTab = 'tms'">
-          TMS Systems
-        </button>
-        <button
-          [class.active]="currentTab === 'templates'"
-          (click)="currentTab = 'templates'">
-          Templates
-        </button>
-        <button
-          [class.active]="currentTab === 'lookups'"
-          (click)="currentTab = 'lookups'">
-          Lookup Tables
-        </button>
-        <button
-          [class.active]="currentTab === 'test'"
-          (click)="currentTab = 'test'">
-          Test Transform
-        </button>
-        <button
-          [class.active]="currentTab === 'logs'"
-          (click)="currentTab = 'logs'">
-          Logs
-        </button>
+        <button [class.active]="currentTab === 'customers'" (click)="currentTab = 'customers'">Customers</button>
+        <button [class.active]="currentTab === 'tms'" (click)="currentTab = 'tms'">TMS Systems</button>
+        <button [class.active]="currentTab === 'templates'" (click)="currentTab = 'templates'">Templates</button>
+        <button [class.active]="currentTab === 'lookups'" (click)="currentTab = 'lookups'">Lookup Tables</button>
+        <button [class.active]="currentTab === 'test'" (click)="currentTab = 'test'">Test Transform</button>
+        <button [class.active]="currentTab === 'logs'" (click)="currentTab = 'logs'">Logs</button>
       </nav>
     </header>
     <main>
@@ -56,48 +40,50 @@ import { CustomersComponent } from './components/customers.component';
       <app-transformation-logs *ngIf="currentTab === 'logs'"></app-transformation-logs>
     </main>
   `,
-  styles: [`
-    header {
-      background: #2c3e50;
-      color: white;
-      padding: 20px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
+  styles: [
+    `
+      header {
+        background: #2c3e50;
+        color: white;
+        padding: 20px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
 
-    header h1 {
-      margin: 0 0 15px 0;
-      font-size: 24px;
-    }
+      header h1 {
+        margin: 0 0 15px 0;
+        font-size: 24px;
+      }
 
-    nav {
-      display: flex;
-      gap: 10px;
-    }
+      nav {
+        display: flex;
+        gap: 10px;
+      }
 
-    nav button {
-      color: white;
-      background: rgba(255,255,255,0.1);
-      border: none;
-      padding: 10px 20px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 500;
-      transition: all 0.2s;
-    }
+      nav button {
+        color: white;
+        background: rgba(255, 255, 255, 0.1);
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.2s;
+      }
 
-    nav button:hover {
-      background: rgba(255,255,255,0.2);
-    }
+      nav button:hover {
+        background: rgba(255, 255, 255, 0.2);
+      }
 
-    nav button.active {
-      background: #3498db;
-    }
+      nav button.active {
+        background: #3498db;
+      }
 
-    main {
-      padding: 20px;
-    }
-  `]
+      main {
+        padding: 20px;
+      }
+    `,
+  ],
 })
 export class AppComponent {
   title = 'Field Mapping System';

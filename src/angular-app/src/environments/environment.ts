@@ -1,4 +1,4 @@
 export const environment = {
-    production: true,
-    apiUrl: '/api/v1' // Assuming same origin for production
+  production: true,
+  apiUrl: '/api/v1', // Assuming same origin for production
 };
