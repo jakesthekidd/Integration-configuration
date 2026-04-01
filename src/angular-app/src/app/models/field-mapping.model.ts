@@ -53,5 +53,5 @@ export const TransformationTypes = [
   'Math',
   'Substring',
   'Constant',
-  'Template'
+  'Template',
 ];

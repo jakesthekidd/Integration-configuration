@@ -20,7 +20,7 @@ import { TmsSystem } from '../models/tms-system.model';
           <select [(ngModel)]="selectedTmsId" (change)="onTmsChange()">
             <option value="">All TMS Systems</option>
             <option *ngFor="let tms of tmsSystems" [value]="tms.id">
-              {{tms.displayName}}
+              {{ tms.displayName }}
             </option>
           </select>
         </label>
@@ -33,45 +33,72 @@ import { TmsSystem } from '../models/tms-system.model';
         <h3>Create Lookup Table</h3>
         <form (ngSubmit)="createLookupTable()" #lookupForm="ngForm">
           <div class="form-group">
-            <label>TMS System: <span class="required">*</span></label>
-            <select [(ngModel)]="newLookup.tmsSystemId" name="tmsSystemId" required>
+            <label for="tmsSystemId">TMS System: <span class="required">*</span></label>
+            <select id="tmsSystemId" [(ngModel)]="newLookup.tmsSystemId" name="tmsSystemId" required>
               <option value="">Select TMS System</option>
               <option *ngFor="let tms of tmsSystems" [value]="tms.id">
-                {{tms.displayName}}
+                {{ tms.displayName }}
               </option>
             </select>
           </div>
 
           <div class="form-group">
-            <label>Field Name: <span class="required">*</span></label>
-            <input type="text" [(ngModel)]="newLookup.fieldName" name="fieldName" required
-                   placeholder="e.g., PaymentTerms" />
+            <label for="fieldName">Field Name: <span class="required">*</span></label>
+            <input
+              id="fieldName"
+              type="text"
+              [(ngModel)]="newLookup.fieldName"
+              name="fieldName"
+              required
+              placeholder="e.g., PaymentTerms"
+            />
             <small>The field name this lookup table applies to</small>
           </div>
 
           <div class="form-group">
-            <label>Lookup Table Name: <span class="required">*</span></label>
-            <input type="text" [(ngModel)]="newLookup.name" name="name" required
-                   placeholder="e.g., Payment Terms Mapping" />
+            <label for="lookupName">Lookup Table Name: <span class="required">*</span></label>
+            <input
+              id="lookupName"
+              type="text"
+              [(ngModel)]="newLookup.name"
+              name="name"
+              required
+              placeholder="e.g., Payment Terms Mapping"
+            />
           </div>
 
           <div class="form-group">
-            <label>Description:</label>
-            <textarea [(ngModel)]="newLookup.description" name="description" rows="2"
-                      placeholder="Description of what this lookup table does"></textarea>
+            <label for="lookupDescription">Description:</label>
+            <textarea
+              id="lookupDescription"
+              [(ngModel)]="newLookup.description"
+              name="description"
+              rows="2"
+              placeholder="Description of what this lookup table does"
+            ></textarea>
           </div>
 
           <div class="form-group">
-            <label>Mappings:</label>
-            <textarea [(ngModel)]="newLookup.mappings" name="mappings" rows="6"
-                      placeholder='{"NET30": "Net 30 Days", "NET60": "Net 60 Days", "COD": "Cash on Delivery"}'></textarea>
+            <label for="lookupMappings">Mappings:</label>
+            <textarea
+              id="lookupMappings"
+              [(ngModel)]="newLookup.mappings"
+              name="mappings"
+              rows="6"
+              placeholder='{"NET30": "Net 30 Days", "NET60": "Net 60 Days", "COD": "Cash on Delivery"}'
+            ></textarea>
             <small>JSON object with key-value mappings</small>
           </div>
 
           <div class="form-group">
-            <label>Default Value:</label>
-            <input type="text" [(ngModel)]="newLookup.defaultValue" name="defaultValue"
-                   placeholder="Value to use if no mapping found" />
+            <label for="defaultValue">Default Value:</label>
+            <input
+              id="defaultValue"
+              type="text"
+              [(ngModel)]="newLookup.defaultValue"
+              name="defaultValue"
+              placeholder="Value to use if no mapping found"
+            />
           </div>
 
           <div class="form-group checkbox">
@@ -107,7 +134,9 @@ import { TmsSystem } from '../models/tms-system.model';
           <tbody>
             <tr *ngFor="let lookup of lookupTables">
               <td>{{ getTmsName(lookup.tmsSystemId) }}</td>
-              <td><code>{{ lookup.fieldName }}</code></td>
+              <td>
+                <code>{{ lookup.fieldName }}</code>
+              </td>
               <td>{{ lookup.name }}</td>
               <td>{{ lookup.description || '-' }}</td>
               <td>{{ lookup.defaultValue || '-' }}</td>
@@ -124,15 +153,31 @@ import { TmsSystem } from '../models/tms-system.model';
         </table>
       </div>
 
-      <div *ngIf="selectedLookup" class="modal-overlay" (click)="closeModal()">
-        <div class="modal-content" (click)="$event.stopPropagation()">
+      <div
+        *ngIf="selectedLookup"
+        class="modal-overlay"
+        (click)="closeModal()"
+        (keydown.escape)="closeModal()"
+        tabindex="0"
+        role="dialog"
+        aria-modal="true"
+      >
+        <div
+          class="modal-content"
+          (click)="$event.stopPropagation()"
+          (keydown)="$event.stopPropagation()"
+          tabindex="-1"
+          role="document"
+        >
           <div class="modal-header">
             <h3>{{ selectedLookup.name }}</h3>
             <button class="close-btn" (click)="closeModal()">&times;</button>
           </div>
           <div class="modal-body">
             <p><strong>TMS System:</strong> {{ getTmsName(selectedLookup.tmsSystemId) }}</p>
-            <p><strong>Field Name:</strong> <code>{{ selectedLookup.fieldName }}</code></p>
+            <p>
+              <strong>Field Name:</strong> <code>{{ selectedLookup.fieldName }}</code>
+            </p>
             <p *ngIf="selectedLookup.description"><strong>Description:</strong> {{ selectedLookup.description }}</p>
             <p><strong>Default Value:</strong> {{ selectedLookup.defaultValue || 'None' }}</p>
             <p><strong>Case Sensitive:</strong> {{ selectedLookup.isCaseSensitive ? 'Yes' : 'No' }}</p>
@@ -148,7 +193,9 @@ import { TmsSystem } from '../models/tms-system.model';
                 </thead>
                 <tbody>
                   <tr *ngFor="let mapping of parsedMappings">
-                    <td><code>{{ mapping.key }}</code></td>
+                    <td>
+                      <code>{{ mapping.key }}</code>
+                    </td>
                     <td>{{ mapping.value }}</td>
                   </tr>
                 </tbody>
@@ -160,312 +207,319 @@ import { TmsSystem } from '../models/tms-system.model';
       </div>
     </div>
   `,
-  styles: [`
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-    }
+  styles: [
+    `
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
 
-    h2 {
-      color: #2c3e50;
-      margin-bottom: 20px;
-    }
+      h2 {
+        color: #2c3e50;
+        margin-bottom: 20px;
+      }
 
-    .filters {
-      display: flex;
-      gap: 15px;
-      align-items: center;
-      margin-bottom: 20px;
-      padding: 15px;
-      background: #f8f9fa;
-      border-radius: 4px;
-    }
+      .filters {
+        display: flex;
+        gap: 15px;
+        align-items: center;
+        margin-bottom: 20px;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 4px;
+      }
 
-    .filters label {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
+      .filters label {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
 
-    .filters select {
-      padding: 8px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-    }
+      .filters select {
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+      }
 
-    .form-container {
-      background: #f8f9fa;
-      padding: 20px;
-      border-radius: 4px;
-      margin-bottom: 20px;
-    }
+      .form-container {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 4px;
+        margin-bottom: 20px;
+      }
 
-    .form-container h3 {
-      margin-top: 0;
-      color: #2c3e50;
-    }
+      .form-container h3 {
+        margin-top: 0;
+        color: #2c3e50;
+      }
 
-    .form-group {
-      margin-bottom: 15px;
-    }
+      .form-group {
+        margin-bottom: 15px;
+      }
 
-    .form-group label {
-      display: block;
-      font-weight: 500;
-      margin-bottom: 5px;
-      color: #555;
-    }
+      .form-group label {
+        display: block;
+        font-weight: 500;
+        margin-bottom: 5px;
+        color: #555;
+      }
 
-    .form-group input[type="text"],
-    .form-group select,
-    .form-group textarea {
-      width: 100%;
-      padding: 8px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      font-family: inherit;
-    }
+      .form-group input[type='text'],
+      .form-group select,
+      .form-group textarea {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-family: inherit;
+      }
 
-    .form-group textarea {
-      font-family: 'Courier New', monospace;
-      font-size: 12px;
-    }
+      .form-group textarea {
+        font-family: 'Courier New', monospace;
+        font-size: 12px;
+      }
 
-    .form-group small {
-      display: block;
-      color: #666;
-      font-size: 12px;
-      margin-top: 4px;
-    }
+      .form-group small {
+        display: block;
+        color: #666;
+        font-size: 12px;
+        margin-top: 4px;
+      }
 
-    .form-group.checkbox {
-      display: flex;
-      align-items: center;
-    }
+      .form-group.checkbox {
+        display: flex;
+        align-items: center;
+      }
 
-    .form-group.checkbox label {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 0;
-    }
+      .form-group.checkbox label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 0;
+      }
 
-    .form-group.checkbox input[type="checkbox"] {
-      width: auto;
-    }
+      .form-group.checkbox input[type='checkbox'] {
+        width: auto;
+      }
 
-    .required {
-      color: #e74c3c;
-    }
+      .required {
+        color: #e74c3c;
+      }
 
-    .form-actions {
-      display: flex;
-      gap: 10px;
-      margin-top: 20px;
-    }
+      .form-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+      }
 
-    .btn-primary, .btn-secondary, .btn-small, .btn-danger, .btn-info {
-      padding: 8px 16px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 14px;
-    }
+      .btn-primary,
+      .btn-secondary,
+      .btn-small,
+      .btn-danger,
+      .btn-info {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+      }
 
-    .btn-primary {
-      background: #3498db;
-      color: white;
-    }
+      .btn-primary {
+        background: #3498db;
+        color: white;
+      }
 
-    .btn-primary:hover:not(:disabled) {
-      background: #2980b9;
-    }
+      .btn-primary:hover:not(:disabled) {
+        background: #2980b9;
+      }
 
-    .btn-primary:disabled {
-      background: #95a5a6;
-      cursor: not-allowed;
-    }
+      .btn-primary:disabled {
+        background: #95a5a6;
+        cursor: not-allowed;
+      }
 
-    .btn-secondary {
-      background: #95a5a6;
-      color: white;
-    }
+      .btn-secondary {
+        background: #95a5a6;
+        color: white;
+      }
 
-    .btn-secondary:hover {
-      background: #7f8c8d;
-    }
+      .btn-secondary:hover {
+        background: #7f8c8d;
+      }
 
-    .btn-danger {
-      background: #e74c3c;
-      color: white;
-    }
+      .btn-danger {
+        background: #e74c3c;
+        color: white;
+      }
 
-    .btn-danger:hover {
-      background: #c0392b;
-    }
+      .btn-danger:hover {
+        background: #c0392b;
+      }
 
-    .btn-info {
-      background: #16a085;
-      color: white;
-    }
+      .btn-info {
+        background: #16a085;
+        color: white;
+      }
 
-    .btn-info:hover {
-      background: #138d75;
-    }
+      .btn-info:hover {
+        background: #138d75;
+      }
 
-    .btn-small {
-      padding: 4px 12px;
-      font-size: 12px;
-      margin-right: 5px;
-    }
+      .btn-small {
+        padding: 4px 12px;
+        font-size: 12px;
+        margin-right: 5px;
+      }
 
-    .error {
-      background: #fee;
-      color: #c33;
-      padding: 10px;
-      border-radius: 4px;
-      margin-bottom: 15px;
-    }
+      .error {
+        background: #fee;
+        color: #c33;
+        padding: 10px;
+        border-radius: 4px;
+        margin-bottom: 15px;
+      }
 
-    .success {
-      background: #efe;
-      color: #3c3;
-      padding: 10px;
-      border-radius: 4px;
-      margin-bottom: 15px;
-    }
+      .success {
+        background: #efe;
+        color: #3c3;
+        padding: 10px;
+        border-radius: 4px;
+        margin-bottom: 15px;
+      }
 
-    .table-container {
-      overflow-x: auto;
-    }
+      .table-container {
+        overflow-x: auto;
+      }
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background: white;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        background: white;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
 
-    th, td {
-      padding: 12px;
-      text-align: left;
-      border-bottom: 1px solid #ddd;
-    }
+      th,
+      td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+      }
 
-    th {
-      background: #34495e;
-      color: white;
-      font-weight: 500;
-    }
+      th {
+        background: #34495e;
+        color: white;
+        font-weight: 500;
+      }
 
-    tbody tr:hover {
-      background: #f5f5f5;
-    }
+      tbody tr:hover {
+        background: #f5f5f5;
+      }
 
-    code {
-      background: #f4f4f4;
-      padding: 2px 6px;
-      border-radius: 3px;
-      font-family: 'Courier New', monospace;
-      font-size: 12px;
-    }
+      code {
+        background: #f4f4f4;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-family: 'Courier New', monospace;
+        font-size: 12px;
+      }
 
-    .no-data {
-      text-align: center;
-      color: #999;
-      font-style: italic;
-    }
+      .no-data {
+        text-align: center;
+        color: #999;
+        font-style: italic;
+      }
 
-    .modal-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.5);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-    }
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+      }
 
-    .modal-content {
-      background: white;
-      border-radius: 8px;
-      max-width: 600px;
-      width: 90%;
-      max-height: 80vh;
-      overflow-y: auto;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    }
+      .modal-content {
+        background: white;
+        border-radius: 8px;
+        max-width: 600px;
+        width: 90%;
+        max-height: 80vh;
+        overflow-y: auto;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
 
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 20px;
-      border-bottom: 1px solid #ddd;
-    }
+      .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px;
+        border-bottom: 1px solid #ddd;
+      }
 
-    .modal-header h3 {
-      margin: 0;
-      color: #2c3e50;
-    }
+      .modal-header h3 {
+        margin: 0;
+        color: #2c3e50;
+      }
 
-    .close-btn {
-      background: none;
-      border: none;
-      font-size: 24px;
-      cursor: pointer;
-      color: #999;
-      padding: 0;
-      width: 30px;
-      height: 30px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
+      .close-btn {
+        background: none;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+        color: #999;
+        padding: 0;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
 
-    .close-btn:hover {
-      color: #333;
-    }
+      .close-btn:hover {
+        color: #333;
+      }
 
-    .modal-body {
-      padding: 20px;
-    }
+      .modal-body {
+        padding: 20px;
+      }
 
-    .modal-body p {
-      margin: 10px 0;
-    }
+      .modal-body p {
+        margin: 10px 0;
+      }
 
-    .modal-body h4 {
-      margin-top: 20px;
-      margin-bottom: 10px;
-      color: #2c3e50;
-    }
+      .modal-body h4 {
+        margin-top: 20px;
+        margin-bottom: 10px;
+        color: #2c3e50;
+      }
 
-    .mappings-view {
-      background: #f8f9fa;
-      padding: 15px;
-      border-radius: 4px;
-    }
+      .mappings-view {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 4px;
+      }
 
-    .mappings-table {
-      width: 100%;
-      background: white;
-    }
+      .mappings-table {
+        width: 100%;
+        background: white;
+      }
 
-    .mappings-table th {
-      background: #34495e;
-    }
+      .mappings-table th {
+        background: #34495e;
+      }
 
-    .no-mappings {
-      text-align: center;
-      color: #999;
-      font-style: italic;
-      padding: 20px;
-    }
-  `]
+      .no-mappings {
+        text-align: center;
+        color: #999;
+        font-style: italic;
+        padding: 20px;
+      }
+    `,
+  ],
 })
 export class LookupTablesComponent implements OnInit {
   lookupTables: LookupTable[] = [];
@@ -475,11 +529,14 @@ export class LookupTablesComponent implements OnInit {
   error: string = '';
   success: string = '';
   selectedLookup: LookupTable | null = null;
-  parsedMappings: Array<{ key: string, value: string }> = [];
+  parsedMappings: Array<{ key: string; value: string }> = [];
 
   newLookup: CreateLookupTableRequest = this.getEmptyLookup();
 
-  constructor(private apiService: ApiService, private generalService: GeneralService) { }
+  constructor(
+    private apiService: ApiService,
+    private generalService: GeneralService,
+  ) {}
 
   ngOnInit() {
     this.loadTmsSystems();
@@ -496,7 +553,7 @@ export class LookupTablesComponent implements OnInit {
       error: (err) => {
         this.error = 'Failed to load TMS systems';
         console.error(err);
-      }
+      },
     });
   }
 
@@ -510,7 +567,7 @@ export class LookupTablesComponent implements OnInit {
       error: (err) => {
         this.error = 'Failed to load lookup tables';
         console.error(err);
-      }
+      },
     });
   }
 
@@ -519,14 +576,19 @@ export class LookupTablesComponent implements OnInit {
   }
 
   isValidJSON(str: string): boolean {
-    if (typeof str !== "string") return false; // Must be a string
+    if (typeof str !== 'string') return false; // Must be a string
 
     try {
       const parsed = JSON.parse(str);
 
       // Ensure the parsed result is an object, array, or primitive allowed in JSON
-      return typeof parsed === "object" || typeof parsed === "number" ||
-        typeof parsed === "boolean" || parsed === null || typeof parsed === "string";
+      return (
+        typeof parsed === 'object' ||
+        typeof parsed === 'number' ||
+        typeof parsed === 'boolean' ||
+        parsed === null ||
+        typeof parsed === 'string'
+      );
     } catch (e) {
       return false; // Parsing failed
     }
@@ -535,7 +597,7 @@ export class LookupTablesComponent implements OnInit {
   createLookupTable() {
     this.error = '';
     this.success = '';
-    var mappingStr = "" + this.newLookup.mappings?.toString();
+    const mappingStr = '' + this.newLookup.mappings?.toString();
     if (!this.isValidJSON(mappingStr)) {
       this.error = 'Wrong mapping JSON Entries, Failed to create lookup table';
       return;
@@ -553,35 +615,36 @@ export class LookupTablesComponent implements OnInit {
       error: (err) => {
         this.error = err.error?.message || 'Failed to create lookup table';
         console.error(err);
-      }
+      },
     });
   }
 
-
   deleteLookupTable(id: string) {
-    this.generalService.confirm({
-      title: 'Delete Lookup Table',
-      text: 'Are you sure you want to delete this lookup table?',
-      confirmText: 'Yes, Delete',
-      confirmColor: '#e74c3c',
-      icon: 'warning'
-    }).then((result: any) => {
-      if (!result.isConfirmed) return;
+    this.generalService
+      .confirm({
+        title: 'Delete Lookup Table',
+        text: 'Are you sure you want to delete this lookup table?',
+        confirmText: 'Yes, Delete',
+        confirmColor: '#e74c3c',
+        icon: 'warning',
+      })
+      .then((result) => {
+        if (!result.isConfirmed) return;
 
-      this.error = '';
-      this.success = '';
+        this.error = '';
+        this.success = '';
 
-      this.apiService.deleteLookupTable(id).subscribe({
-        next: () => {
-          this.generalService.success('Lookup table deleted successfully');
-          this.loadLookupTables();
-        },
-        error: (err) => {
-          this.error = err.error?.message || 'Failed to delete lookup table';
-          console.error(err);
-        }
+        this.apiService.deleteLookupTable(id).subscribe({
+          next: () => {
+            this.generalService.success('Lookup table deleted successfully');
+            this.loadLookupTables();
+          },
+          error: (err) => {
+            this.error = err.error?.message || 'Failed to delete lookup table';
+            console.error(err);
+          },
+        });
       });
-    });
   }
 
   viewMappings(lookup: LookupTable) {
@@ -593,7 +656,7 @@ export class LookupTablesComponent implements OnInit {
         const mappingsObj = JSON.parse(lookup.mappings);
         this.parsedMappings = Object.entries(mappingsObj).map(([key, value]) => ({
           key,
-          value: String(value)
+          value: String(value),
         }));
       } catch (e) {
         console.error('Failed to parse mappings', e);
@@ -607,7 +670,7 @@ export class LookupTablesComponent implements OnInit {
   }
 
   getTmsName(tmsId: string): string {
-    const tms = this.tmsSystems.find(t => t.id === tmsId);
+    const tms = this.tmsSystems.find((t) => t.id === tmsId);
     return tms ? tms.displayName : tmsId;
   }
 
@@ -623,7 +686,7 @@ export class LookupTablesComponent implements OnInit {
       description: '',
       mappings: '',
       defaultValue: '',
-      isCaseSensitive: true
+      isCaseSensitive: true,
     };
   }
 }

@@ -125,7 +125,9 @@ namespace Transflo.Platform.Transformer.Core.Services.CustomerService
                 var body = await response.Content.ReadAsStringAsync();
 
                 if (!response.IsSuccessStatusCode)
+                {
                     return ApiResponse<Customer>.ErrorResponse(body);
+                }
 
                 var customer = JsonSerializer.Deserialize<CustomerResponse>(body,
                     new JsonSerializerOptions { PropertyNameCaseInsensitive = true });

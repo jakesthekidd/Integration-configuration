@@ -2,10 +2,9 @@ import { Injectable } from '@angular/core';
 import Swal, { SweetAlertIcon } from 'sweetalert2';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class GeneralService {
-
   confirm(options: {
     title: string;
     text?: string;
@@ -19,14 +18,14 @@ export class GeneralService {
       text: options.text ?? '',
       icon: options.icon ?? 'question',
       showCancelButton: true,
-  
+
       confirmButtonText: options.confirmText ?? 'Yes',
       cancelButtonText: options.cancelText ?? 'Cancel',
-  
+
       confirmButtonColor: options.confirmColor ?? '#3085d6',
       cancelButtonColor: '#6c757d',
-  
-      reverseButtons: false
+
+      reverseButtons: false,
     });
   }
 
@@ -36,7 +35,7 @@ export class GeneralService {
       icon: 'question',
       showCancelButton: true,
       confirmButtonText: 'Yes',
-      cancelButtonText: 'Cancel'
+      cancelButtonText: 'Cancel',
     });
   }
 
@@ -46,7 +45,7 @@ export class GeneralService {
       title: 'Success',
       text: message,
       timer: 2000,
-      showConfirmButton: false
+      showConfirmButton: false,
     });
   }
 
@@ -54,7 +53,7 @@ export class GeneralService {
     return Swal.fire({
       icon: 'error',
       title: 'Error',
-      text: message
+      text: message,
     });
   }
 }

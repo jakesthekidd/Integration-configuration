@@ -2,27 +2,41 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { TmsSystem, CreateTmsSystemRequest, ApiResponse, TmsSystemListResponse } from '../models/tms-system.model';
-import { FieldMappingTemplate, CreateTemplateRequest, UpdateTemplateRequest, TemplateListResponse } from '../models/template.model';
-import { FieldMapping, CreateFieldMappingRequest, UpdateFieldMappingRequest, FieldMappingListResponse } from '../models/field-mapping.model';
-import { LookupTable, CreateLookupTableRequest, UpdateLookupTableRequest, LookupTableListResponse } from '../models/lookup-table.model';
+import {
+  FieldMappingTemplate,
+  CreateTemplateRequest,
+  UpdateTemplateRequest,
+  TemplateListResponse,
+} from '../models/template.model';
+import {
+  FieldMapping,
+  CreateFieldMappingRequest,
+  UpdateFieldMappingRequest,
+  FieldMappingListResponse,
+} from '../models/field-mapping.model';
+import {
+  LookupTable,
+  CreateLookupTableRequest,
+  UpdateLookupTableRequest,
+  LookupTableListResponse,
+} from '../models/lookup-table.model';
 import { Customer, CustomerRequest, CustomerListResponse } from '../models/customer.model';
-import { TransformationLogSummary, TransformationLogDetail, TransformationLogListResponse } from '../models/transformation-log.model';
+import { TransformationLogDetail, TransformationLogListResponse } from '../models/transformation-log.model';
 import { environment } from '../../environments/environment';
 import { TransformRequest } from '../models/transformation-test.model';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class ApiService {
   private apiUrl = environment.apiUrl;
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {}
 
   // Customers
   getCustomers(activeOnly?: boolean): Observable<ApiResponse<CustomerListResponse>> {
-    const url = activeOnly !== undefined
-      ? `${this.apiUrl}/customers?activeOnly=${activeOnly}`
-      : `${this.apiUrl}/customers`;
+    const url =
+      activeOnly !== undefined ? `${this.apiUrl}/customers?activeOnly=${activeOnly}` : `${this.apiUrl}/customers`;
     return this.http.get<ApiResponse<CustomerListResponse>>(url);
   }
 
@@ -31,17 +45,11 @@ export class ApiService {
   }
 
   createCustomer(request: CustomerRequest): Observable<ApiResponse<Customer>> {
-    return this.http.post<ApiResponse<Customer>>(
-      `${this.apiUrl}/customers`,
-      request
-    );
+    return this.http.post<ApiResponse<Customer>>(`${this.apiUrl}/customers`, request);
   }
 
   updateCustomer(id: string, request: CustomerRequest): Observable<ApiResponse<Customer>> {
-    return this.http.put<ApiResponse<Customer>>(
-      `${this.apiUrl}/customers/${id}`,
-      request
-    );
+    return this.http.put<ApiResponse<Customer>>(`${this.apiUrl}/customers/${id}`, request);
   }
 
   deleteCustomer(id: string): Observable<void> {
@@ -49,10 +57,7 @@ export class ApiService {
   }
 
   setCustomerStatus(id: string, enabled: boolean): Observable<ApiResponse<Customer>> {
-    return this.http.patch<ApiResponse<Customer>>(
-      `${this.apiUrl}/customers/${id}/status?enabled=${enabled}`,
-      {}
-    );
+    return this.http.patch<ApiResponse<Customer>>(`${this.apiUrl}/customers/${id}/status?enabled=${enabled}`, {});
   }
 
   // TMS Systems
@@ -78,9 +83,7 @@ export class ApiService {
 
   // Templates
   getTemplates(tmsSystemId?: string): Observable<ApiResponse<TemplateListResponse>> {
-    const url = tmsSystemId
-      ? `${this.apiUrl}/templates?tmsSystemId=${tmsSystemId}`
-      : `${this.apiUrl}/templates`;
+    const url = tmsSystemId ? `${this.apiUrl}/templates?tmsSystemId=${tmsSystemId}` : `${this.apiUrl}/templates`;
     return this.http.get<ApiResponse<TemplateListResponse>>(url);
   }
 
@@ -91,7 +94,9 @@ export class ApiService {
     return this.http.get<ApiResponse<FieldMappingTemplate>>(url);
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getTemplateVersions(templateId: string): Observable<ApiResponse<any[]>> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return this.http.get<ApiResponse<any[]>>(`${this.apiUrl}/templates/${templateId}/versions`);
   }
 
@@ -110,40 +115,48 @@ export class ApiService {
     return this.http.delete<void>(url);
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   createTemplateVersion(templateId: string, baseVersion?: number): Observable<ApiResponse<any>> {
     const body = baseVersion !== undefined ? { baseVersion } : {};
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return this.http.post<ApiResponse<any>>(`${this.apiUrl}/templates/${templateId}/versions`, body);
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   publishTemplateVersion(templateId: string, version: number): Observable<ApiResponse<any>> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return this.http.post<ApiResponse<any>>(`${this.apiUrl}/templates/${templateId}/versions/${version}/publish`, {});
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   deleteTemplateVersion(templateId: string, version: number): Observable<ApiResponse<any>> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return this.http.delete<ApiResponse<any>>(`${this.apiUrl}/templates/${templateId}/versions/${version}`);
   }
 
-  duplicateTemplate(templateId: string, options?: { includeAllVersions: boolean }): Observable<ApiResponse<FieldMappingTemplate>> {
+  duplicateTemplate(
+    templateId: string,
+    options?: { includeAllVersions: boolean },
+  ): Observable<ApiResponse<FieldMappingTemplate>> {
     return this.http.post<ApiResponse<FieldMappingTemplate>>(
-      `${this.apiUrl}/templates/${templateId}/duplicate`, options ?? {}
+      `${this.apiUrl}/templates/${templateId}/duplicate`,
+      options ?? {},
     );
   }
 
   reactivateTemplate(templateId: string): Observable<void> {
-    return this.http.post<void>(
-      `${this.apiUrl}/templates/${templateId}/reactivate`, {}
-    );
+    return this.http.post<void>(`${this.apiUrl}/templates/${templateId}/reactivate`, {});
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   parseJson(jsonString: string, includeSampleValues: boolean = false): Observable<ApiResponse<any>> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return this.http.post<ApiResponse<any>>(`${this.apiUrl}/json/parse`, { jsonString, includeSampleValues });
   }
 
   // Field Mappings
   getFieldMappings(templateId?: string, templateVersionId?: string): Observable<ApiResponse<FieldMappingListResponse>> {
-    let url = templateId
-      ? `${this.apiUrl}/field-mappings?templateId=${templateId}`
-      : `${this.apiUrl}/field-mappings`;
+    let url = templateId ? `${this.apiUrl}/field-mappings?templateId=${templateId}` : `${this.apiUrl}/field-mappings`;
 
     if (templateVersionId) {
       url += (url.includes('?') ? '&' : '?') + `templateVersionId=${templateVersionId}`;
@@ -196,13 +209,17 @@ export class ApiService {
   }
 
   // Transformation Logs
-  getTransformationLogs(templateId?: string, status?: string, limit: number = 100): Observable<ApiResponse<TransformationLogListResponse>> {
+  getTransformationLogs(
+    templateId?: string,
+    status?: string,
+    limit: number = 100,
+  ): Observable<ApiResponse<TransformationLogListResponse>> {
     const params: string[] = [];
     if (templateId) params.push(`templateId=${encodeURIComponent(templateId)}`);
     if (status) params.push(`status=${encodeURIComponent(status)}`);
     params.push(`limit=${limit}`);
     return this.http.get<ApiResponse<TransformationLogListResponse>>(
-      `${this.apiUrl}/transform-logs?${params.join('&')}`
+      `${this.apiUrl}/transform-logs?${params.join('&')}`,
     );
   }
 
@@ -210,7 +227,9 @@ export class ApiService {
     return this.http.get<ApiResponse<TransformationLogDetail>>(`${this.apiUrl}/transform-logs/${id}`);
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   transformJsonWithTemplate(request: TransformRequest): Observable<any> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return this.http.post<any>(`${this.apiUrl}/transform`, request);
   }
 }

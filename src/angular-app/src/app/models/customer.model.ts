@@ -31,7 +31,6 @@ export interface CustomerRequest {
   outboundEnabled: boolean;
 }
 
-
 export interface CustomerListResponse {
   customers: Customer[];
   totalCount: number;

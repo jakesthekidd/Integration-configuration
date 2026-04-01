@@ -28,8 +28,8 @@ public interface ITemplatesService
 
     /// <summary>
     /// Publishes the specified Draft version, atomically marking the previously
-    /// Published version as Superseded. Returns null when the version is not found
-    /// or is not in Draft status.
+    /// Published version as Superseded. Returns null when the version is not found,
+    /// is not in Draft status, or fails field-mapping validation.
     /// </summary>
     Task<TemplateVersionResponse?> PublishVersionAsync(Guid templateId, int version, string? publishedBy = null);
     Task<bool> DeleteVersionAsync(Guid templateId, int version);

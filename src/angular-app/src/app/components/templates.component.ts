@@ -14,7 +14,6 @@ type Screen = 'list' | 'detail' | 'version';
   imports: [CommonModule, FormsModule, FieldMappingsComponent],
   template: `
     <div class="container">
-
       <!-- ==================== SCREEN: LIST ==================== -->
       <ng-container *ngIf="currentScreen === 'list'">
         <div class="page-header">
@@ -30,7 +29,14 @@ type Screen = 'list' | 'detail' | 'version';
         <div *ngIf="error" class="error">{{ error }}</div>
         <div *ngIf="success" class="success">
           {{ success }}
-          <button *ngIf="duplicatedTemplateId" class="btn-link" style="color: white; text-decoration: underline; margin-left: 10px;" (click)="viewDuplicated()">View it</button>
+          <button
+            *ngIf="duplicatedTemplateId"
+            class="btn-link"
+            style="color: white; text-decoration: underline; margin-left: 10px;"
+            (click)="viewDuplicated()"
+          >
+            View it
+          </button>
         </div>
 
         <!-- Create Form -->
@@ -39,33 +45,84 @@ type Screen = 'list' | 'detail' | 'version';
           <form (ngSubmit)="createTemplate()" #createForm="ngForm">
             <div class="form-row">
               <div class="form-group">
-                <label>Name <span class="required">*</span></label>
-                <input type="text" [(ngModel)]="newTemplate.name" name="name" required
-                       placeholder="e.g., McLeod to WFAI Transformation" />
+                <label for="newTemplateName">Name <span class="required">*</span></label>
+                <input
+                  id="newTemplateName"
+                  type="text"
+                  [(ngModel)]="newTemplate.name"
+                  name="name"
+                  required
+                  placeholder="e.g., McLeod to WFAI Transformation"
+                />
               </div>
               <div class="form-group">
-                <label>Description</label>
-                <textarea [(ngModel)]="newTemplate.description" name="description" rows="2"
-                          placeholder="Describe what this template transforms"></textarea>
+                <label for="newTemplateDescription">Description</label>
+                <textarea
+                  id="newTemplateDescription"
+                  [(ngModel)]="newTemplate.description"
+                  name="description"
+                  rows="2"
+                  placeholder="Describe what this template transforms"
+                ></textarea>
               </div>
             </div>
             <div class="form-row">
               <div class="form-group">
-                <label>Source Schema (JSON)</label>
-                <textarea [(ngModel)]="newTemplate.sourceSchema" name="sourceSchema" rows="5"
-                          class="json-textarea" placeholder='{ "field": "value", ... }'></textarea>
-                <div class="drop-zone" (click)="fileInputCreateSource.click()" (dragover)="$event.preventDefault()" (drop)="onFileDropSourceSchema($event, false)">
+                <label for="newSourceSchema">Source Schema (JSON)</label>
+                <textarea
+                  id="newSourceSchema"
+                  [(ngModel)]="newTemplate.sourceSchema"
+                  name="sourceSchema"
+                  rows="5"
+                  class="json-textarea"
+                  placeholder='{ "field": "value", ... }'
+                ></textarea>
+                <div
+                  class="drop-zone"
+                  (click)="fileInputCreateSource.click()"
+                  (keydown.enter)="fileInputCreateSource.click()"
+                  (dragover)="$event.preventDefault()"
+                  (drop)="onFileDropSourceSchema($event, false)"
+                  tabindex="0"
+                  role="button"
+                >
                   <p>Drag &amp; Drop JSON file or <strong>Click to Upload</strong></p>
-                  <input type="file" #fileInputCreateSource (change)="handleFileUploadSourceSchema($event, false)" accept=".json" style="display:none">
+                  <input
+                    type="file"
+                    #fileInputCreateSource
+                    (change)="handleFileUploadSourceSchema($event, false)"
+                    accept=".json"
+                    style="display:none"
+                  />
                 </div>
               </div>
               <div class="form-group">
-                <label>Target Schema (JSON)</label>
-                <textarea [(ngModel)]="newTemplate.targetSchema" name="targetSchema" rows="5"
-                          class="json-textarea" placeholder='{ "field": "value", ... }'></textarea>
-                <div class="drop-zone" (click)="fileInputCreateTarget.click()" (dragover)="$event.preventDefault()" (drop)="onFileDropTargetSchema($event, false)">
+                <label for="newTargetSchema">Target Schema (JSON)</label>
+                <textarea
+                  id="newTargetSchema"
+                  [(ngModel)]="newTemplate.targetSchema"
+                  name="targetSchema"
+                  rows="5"
+                  class="json-textarea"
+                  placeholder='{ "field": "value", ... }'
+                ></textarea>
+                <div
+                  class="drop-zone"
+                  (click)="fileInputCreateTarget.click()"
+                  (keydown.enter)="fileInputCreateTarget.click()"
+                  (dragover)="$event.preventDefault()"
+                  (drop)="onFileDropTargetSchema($event, false)"
+                  tabindex="0"
+                  role="button"
+                >
                   <p>Drag &amp; Drop JSON file or <strong>Click to Upload</strong></p>
-                  <input type="file" #fileInputCreateTarget (change)="handleFileUploadTargetSchema($event, false)" accept=".json" style="display:none">
+                  <input
+                    type="file"
+                    #fileInputCreateTarget
+                    (change)="handleFileUploadTargetSchema($event, false)"
+                    accept=".json"
+                    style="display:none"
+                  />
                 </div>
               </div>
             </div>
@@ -108,7 +165,9 @@ type Screen = 'list' | 'detail' | 'version';
                 <td class="description-cell">{{ template.description || '—' }}</td>
                 <td>{{ formatDate(template.createdAt) }}</td>
                 <td class="actions-cell" (click)="$event.stopPropagation()">
-                  <button class="btn-small btn-info" (click)="openDetail(template)" title="View Template Details">View</button>
+                  <button class="btn-small btn-info" (click)="openDetail(template)" title="View Template Details">
+                    View
+                  </button>
                   <button class="btn-small btn-danger" (click)="deleteTemplate(template)" title="Delete">Delete</button>
                 </td>
               </tr>
@@ -135,20 +194,50 @@ type Screen = 'list' | 'detail' | 'version';
               <button class="btn-small btn-duplicate dropdown-toggle" (click)="toggleDuplicateDropdown($event)">
                 Duplicate ▾
               </button>
-              <div class="dropdown-menu" [class.show]="showDuplicateDropdown" (click)="$event.stopPropagation()">
-                <button type="button" (click)="duplicateTemplate(selectedTemplate!, true)">Copy with all versions</button>
-                <button type="button" (click)="duplicateTemplate(selectedTemplate!, false)">Copy with last version</button>
+              <div
+                class="dropdown-menu"
+                [class.show]="showDuplicateDropdown"
+                (click)="$event.stopPropagation()"
+                (keydown)="$event.stopPropagation()"
+                tabindex="-1"
+                role="menu"
+              >
+                <button type="button" (click)="duplicateTemplate(selectedTemplate!, true)">
+                  Copy with all versions
+                </button>
+                <button type="button" (click)="duplicateTemplate(selectedTemplate!, false)">
+                  Copy with last version
+                </button>
               </div>
             </div>
-            <button class="btn-small btn-archive" *ngIf="selectedTemplate.status !== 'Archived'" (click)="archiveTemplate(selectedTemplate)">Archive</button>
-            <button class="btn-small btn-reactivate" *ngIf="selectedTemplate.status === 'Archived'" (click)="reactivateTemplate(selectedTemplate)">Reactivate</button>
+            <button
+              class="btn-small btn-archive"
+              *ngIf="selectedTemplate.status !== 'Archived'"
+              (click)="archiveTemplate(selectedTemplate)"
+            >
+              Archive
+            </button>
+            <button
+              class="btn-small btn-reactivate"
+              *ngIf="selectedTemplate.status === 'Archived'"
+              (click)="reactivateTemplate(selectedTemplate)"
+            >
+              Reactivate
+            </button>
           </div>
         </div>
 
         <div *ngIf="error" class="error">{{ error }}</div>
         <div *ngIf="success" class="success">
           {{ success }}
-          <button *ngIf="duplicatedTemplateId" class="btn-link" style="color: white; text-decoration: underline; margin-left: 10px;" (click)="viewDuplicated()">View it</button>
+          <button
+            *ngIf="duplicatedTemplateId"
+            class="btn-link"
+            style="color: white; text-decoration: underline; margin-left: 10px;"
+            (click)="viewDuplicated()"
+          >
+            View it
+          </button>
         </div>
 
         <!-- Edit Form -->
@@ -157,32 +246,84 @@ type Screen = 'list' | 'detail' | 'version';
           <form (ngSubmit)="updateTemplate()" #editForm="ngForm">
             <div class="form-row">
               <div class="form-group">
-                <label>Name <span class="required">*</span></label>
-                <input type="text" [(ngModel)]="editRequest.name" name="editName" required placeholder="Template name" />
+                <label for="editName">Name <span class="required">*</span></label>
+                <input
+                  id="editName"
+                  type="text"
+                  [(ngModel)]="editRequest.name"
+                  name="editName"
+                  required
+                  placeholder="Template name"
+                />
               </div>
               <div class="form-group">
-                <label>Description</label>
-                <textarea [(ngModel)]="editRequest.description" name="editDescription" rows="2"></textarea>
+                <label for="editDescription">Description</label>
+                <textarea
+                  id="editDescription"
+                  [(ngModel)]="editRequest.description"
+                  name="editDescription"
+                  rows="2"
+                ></textarea>
               </div>
             </div>
             <div class="form-row">
               <div class="form-group">
-                <label>Source Schema (JSON)</label>
-                <textarea [(ngModel)]="editRequest.sourceSchema" name="editSourceSchema" rows="5"
-                          class="json-textarea" placeholder='{ "field": "value", ... }'></textarea>
-                <div class="drop-zone" (click)="fileInputEditSource.click()" (dragover)="$event.preventDefault()" (drop)="onFileDropSourceSchema($event, true)">
+                <label for="editSourceSchema">Source Schema (JSON)</label>
+                <textarea
+                  id="editSourceSchema"
+                  [(ngModel)]="editRequest.sourceSchema"
+                  name="editSourceSchema"
+                  rows="5"
+                  class="json-textarea"
+                  placeholder='{ "field": "value", ... }'
+                ></textarea>
+                <div
+                  class="drop-zone"
+                  (click)="fileInputEditSource.click()"
+                  (keydown.enter)="fileInputEditSource.click()"
+                  (dragover)="$event.preventDefault()"
+                  (drop)="onFileDropSourceSchema($event, true)"
+                  tabindex="0"
+                  role="button"
+                >
                   <p>Drag &amp; Drop JSON file or <strong>Click to Upload</strong></p>
-                  <input type="file" #fileInputEditSource (change)="handleFileUploadSourceSchema($event, true)" accept=".json" style="display:none">
+                  <input
+                    type="file"
+                    #fileInputEditSource
+                    (change)="handleFileUploadSourceSchema($event, true)"
+                    accept=".json"
+                    style="display:none"
+                  />
                 </div>
                 <small>Used to auto-suggest source field paths in the Field Mappings screen.</small>
               </div>
               <div class="form-group">
-                <label>Target Schema (JSON)</label>
-                <textarea [(ngModel)]="editRequest.targetSchema" name="editTargetSchema" rows="5"
-                          class="json-textarea" placeholder='{ "field": "value", ... }'></textarea>
-                <div class="drop-zone" (click)="fileInputEditTarget.click()" (dragover)="$event.preventDefault()" (drop)="onFileDropTargetSchema($event, true)">
+                <label for="editTargetSchema">Target Schema (JSON)</label>
+                <textarea
+                  id="editTargetSchema"
+                  [(ngModel)]="editRequest.targetSchema"
+                  name="editTargetSchema"
+                  rows="5"
+                  class="json-textarea"
+                  placeholder='{ "field": "value", ... }'
+                ></textarea>
+                <div
+                  class="drop-zone"
+                  (click)="fileInputEditTarget.click()"
+                  (keydown.enter)="fileInputEditTarget.click()"
+                  (dragover)="$event.preventDefault()"
+                  (drop)="onFileDropTargetSchema($event, true)"
+                  tabindex="0"
+                  role="button"
+                >
                   <p>Drag &amp; Drop JSON file or <strong>Click to Upload</strong></p>
-                  <input type="file" #fileInputEditTarget (change)="handleFileUploadTargetSchema($event, true)" accept=".json" style="display:none">
+                  <input
+                    type="file"
+                    #fileInputEditTarget
+                    (change)="handleFileUploadTargetSchema($event, true)"
+                    accept=".json"
+                    style="display:none"
+                  />
                 </div>
               </div>
             </div>
@@ -197,19 +338,21 @@ type Screen = 'list' | 'detail' | 'version';
         <div class="detail-card">
           <div class="detail-grid">
             <div class="detail-item">
-              <label>ID</label>
+              <span class="detail-label">ID</span>
               <span class="muted">{{ selectedTemplate.id }}</span>
             </div>
             <div class="detail-item">
-              <label>Status</label>
-              <span class="badge" [ngClass]="getStatusClass(selectedTemplate.status)">{{ selectedTemplate.status }}</span>
+              <span class="detail-label">Status</span>
+              <span class="badge" [ngClass]="getStatusClass(selectedTemplate.status)">{{
+                selectedTemplate.status
+              }}</span>
             </div>
             <div class="detail-item">
-              <label>Description</label>
+              <span class="detail-label">Description</span>
               <span>{{ selectedTemplate.description || '—' }}</span>
             </div>
             <div class="detail-item">
-              <label>Created</label>
+              <span class="detail-label">Created</span>
               <span>{{ formatDate(selectedTemplate.createdAt) }}</span>
             </div>
           </div>
@@ -233,7 +376,9 @@ type Screen = 'list' | 'detail' | 'version';
             </thead>
             <tbody>
               <tr *ngFor="let v of templateVersions" class="clickable-row" (click)="openVersion(v)">
-                <td><span class="badge badge-version">v{{ v.version }}</span></td>
+                <td>
+                  <span class="badge badge-version">v{{ v.version }}</span>
+                </td>
                 <td>
                   <span class="badge badge-version" *ngIf="v.baseVersion">v{{ v.baseVersion }}</span>
                   <span *ngIf="!v.baseVersion">—</span>
@@ -245,20 +390,26 @@ type Screen = 'list' | 'detail' | 'version';
                 <td class="actions-cell" (click)="$event.stopPropagation()">
                   <!-- Draft Actions -->
                   <ng-container *ngIf="v.status === 'Draft' && selectedTemplate?.status !== 'Archived'">
-                    <button class="btn-small btn-danger" 
-                            *ngIf="templateVersions.length > 1"
-                            (click)="deleteVersion(v)" 
-                            title="Delete this draft">Delete</button>
+                    <button
+                      class="btn-small btn-danger"
+                      *ngIf="templateVersions.length > 1"
+                      (click)="deleteVersion(v)"
+                      title="Delete this draft"
+                    >
+                      Delete
+                    </button>
                   </ng-container>
 
                   <!-- Other Actions -->
-                  <button class="btn-small btn-secondary"
-                          *ngIf="v.status !== 'Draft' && !hasAnyDraft() && selectedTemplate?.status !== 'Archived'"
-                          (click)="createNewVersion(selectedTemplate!, v.version)"
-                          title="Create a new draft based on this version">
+                  <button
+                    class="btn-small btn-secondary"
+                    *ngIf="v.status !== 'Draft' && !hasAnyDraft() && selectedTemplate?.status !== 'Archived'"
+                    (click)="createNewVersion(selectedTemplate!, v.version)"
+                    title="Create a new draft based on this version"
+                  >
                     Copy to new version
                   </button>
-                  
+
                   <button class="btn-small btn-info" (click)="openVersion(v)">View Mappings</button>
                 </td>
               </tr>
@@ -284,9 +435,11 @@ type Screen = 'list' | 'detail' | 'version';
             <span class="badge" [ngClass]="getVersionStatusClass(selectedVersionObj.status)">
               {{ selectedVersionObj.status }}
             </span>
-            <button class="btn-small btn-publish"
-                    *ngIf="selectedVersionObj.status === 'Draft' && selectedTemplate?.status !== 'Archived'"
-                    (click)="publishVersion(selectedVersionObj)">
+            <button
+              class="btn-small btn-publish"
+              *ngIf="selectedVersionObj.status === 'Draft' && selectedTemplate?.status !== 'Archived'"
+              (click)="publishVersion(selectedVersionObj)"
+            >
               Publish
             </button>
           </div>
@@ -297,8 +450,12 @@ type Screen = 'list' | 'detail' | 'version';
 
         <!-- Read-only notice -->
         <div *ngIf="isMappingReadonly()" class="readonly-notice">
-          <span *ngIf="selectedTemplate.status === 'Archived'">🔒 This template is archived. Mappings are read-only.</span>
-          <span *ngIf="selectedTemplate.status !== 'Archived' && selectedVersionObj.status !== 'Draft'">🔒 This version is published. Mappings are read-only.</span>
+          <span *ngIf="selectedTemplate.status === 'Archived'"
+            >🔒 This template is archived. Mappings are read-only.</span
+          >
+          <span *ngIf="selectedTemplate.status !== 'Archived' && selectedVersionObj.status !== 'Draft'"
+            >🔒 This version is published. Mappings are read-only.</span
+          >
         </div>
 
         <!-- Field Mappings Sub-Component -->
@@ -308,511 +465,523 @@ type Screen = 'list' | 'detail' | 'version';
           [templateName]="selectedTemplate.name + ' v' + selectedVersionObj.version"
           [sampleInputJson]="selectedTemplate.sampleInputJson"
           [sourceSchema]="selectedTemplate.sourceSchema"
-          [isReadonly]="isMappingReadonly()">
+          [isReadonly]="isMappingReadonly()"
+        >
         </app-field-mappings>
       </ng-container>
-
     </div>
   `,
-  styles: [`
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-
-    .page-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-    }
-
-    .page-header h2 {
-      margin: 0;
-      color: #2c3e50;
-    }
-
-    .page-subtitle {
-      margin: 4px 0 0 0;
-      color: #7f8c8d;
-      font-size: 13px;
-    }
-
-    .header-actions {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-    }
-
-    .breadcrumb {
-      display: flex;
-      align-items: center;
-      gap: 15px;
-      margin-bottom: 25px;
-      padding: 14px 22px;
-      background: #f8fafc;
-      border-radius: 12px;
-      font-size: 17px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
-      border-left: 8px solid #3498db;
-    }
-
-    .breadcrumb button.btn-link {
-      color: #3498db;
-      text-decoration: none;
-      font-weight: 800;
-      padding: 0;
-      border: none;
-      background: transparent;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }
-
-    .breadcrumb button.btn-link:hover {
-      color: #1d4e89;
-      transform: scale(1.02);
-    }
-
-    .breadcrumb .breadcrumb-sep {
-      color: #cbd5e1;
-      font-weight: 200;
-      font-size: 22px;
-    }
-
-    .breadcrumb span:last-child {
-      color: #1e293b;
-      font-weight: 800;
-      padding: 4px 12px;
-      border-radius: 6px;
-    }
-
-    .btn-link {
-      background: none;
-      border: none;
-      color: #3498db;
-      cursor: pointer;
-      font-size: 15px;
-      padding: 0;
-      font-weight: 500;
-    }
-
-    .btn-link:hover {
-      text-decoration: underline;
-    }
-
-    .section-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin: 24px 0 12px 0;
-    }
-
-    .section-header h3 {
-      margin: 0;
-      color: #2c3e50;
-    }
-
-    .detail-card {
-      background: #f8f9fa;
-      border: 1px solid #e9ecef;
-      border-radius: 6px;
-      padding: 16px 20px;
-      margin-bottom: 16px;
-    }
-
-    .detail-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-
-    .detail-item label {
-      display: block;
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: #95a5a6;
-      font-weight: 600;
-      margin-bottom: 4px;
-    }
-
-    .filters {
-      display: flex;
-      gap: 15px;
-      align-items: center;
-      margin-bottom: 20px;
-      padding: 15px;
-      background: #f8f9fa;
-      border-radius: 4px;
-    }
-
-    .form-container {
-      background: #f8f9fa;
-      padding: 20px;
-      border-radius: 4px;
-      margin-bottom: 20px;
-      border-left: 4px solid #3498db;
-    }
-
-    .form-container h3 {
-      margin-top: 0;
-      color: #2c3e50;
-    }
-
-    .form-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 15px;
-    }
-
-    .form-group {
-      margin-bottom: 15px;
-    }
-
-    .form-group label {
-      display: block;
-      font-weight: 500;
-      margin-bottom: 5px;
-      color: #555;
-    }
-
-    .form-group input[type="text"],
-    .form-group select,
-    .form-group textarea {
-      width: 100%;
-      padding: 8px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      font-family: inherit;
-      font-size: 14px;
-      box-sizing: border-box;
-    }
-
-    .form-group input[readonly] {
-      background: #e9ecef;
-      cursor: not-allowed;
-    }
-
-    .json-textarea {
-      font-family: 'Courier New', monospace;
-      font-size: 12px;
-    }
-
-    .required {
-      color: #e74c3c;
-    }
-
-    .form-actions {
-      display: flex;
-      gap: 10px;
-      margin-top: 20px;
-    }
-
-    .btn-primary, .btn-secondary, .btn-small, .btn-danger, .btn-publish, .btn-archive, .btn-info {
-      padding: 8px 16px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 500;
-    }
-
-    .btn-primary {
-      background: #3498db;
-      color: white;
-    }
-
-    .btn-primary:hover:not(:disabled) {
-      background: #2980b9;
-    }
-
-    .btn-primary:disabled {
-      background: #95a5a6;
-      cursor: not-allowed;
-    }
-
-    .btn-secondary {
-      background: #95a5a6;
-      color: white;
-    }
-
-    .btn-secondary:hover {
-      background: #7f8c8d;
-    }
-
-    .btn-small {
-      padding: 4px 10px;
-      font-size: 12px;
-      margin-right: 4px;
-    }
-
-    .btn-info {
-      background: #3498db;
-      color: white;
-    }
-
-    .btn-info:hover {
-      background: #2980b9;
-    }
-
-    .btn-duplicate {
-      background: #8e44ad;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 12px;
-      padding: 4px 10px;
-      font-weight: 500;
-    }
-
-    .btn-duplicate:hover {
-      background: #7d3c98;
-    }
-
-    .dropdown {
-      position: relative;
-      display: inline-block;
-    }
-
-    .dropdown-toggle::after {
-      content: "";
-      display: inline-block;
-      margin-left: 0.255em;
-      vertical-align: 0.255em;
-    }
-
-    .dropdown-menu {
-      position: absolute;
-      top: 100%;
-      right: 0;
-      z-index: 1000;
-      display: none;
-      min-width: 220px;
-      padding: 5px 0;
-      margin: 2px 0 0;
-      font-size: 13px;
-      color: #212529;
-      text-align: left;
-      list-style: none;
-      background-color: #fff;
-      background-clip: padding-box;
-      border: 1px solid rgba(0,0,0,.15);
-      border-radius: 4px;
-      box-shadow: 0 0.5rem 1rem rgba(0,0,0,.175);
-    }
-
-    .dropdown-menu.show {
-      display: block;
-    }
-
-    .dropdown-menu button {
-      display: block;
-      width: 100%;
-      padding: 8px 16px;
-      clear: both;
-      font-weight: 400;
-      color: #212529;
-      text-align: inherit;
-      white-space: nowrap;
-      background-color: transparent;
-      border: 0;
-      cursor: pointer;
-    }
-
-    .dropdown-menu button:hover {
-      background-color: #f8f9fa;
-      color: #16181b;
-    }
-
-    .btn-publish {
-      background: #27ae60;
-      color: white;
-    }
-
-    .btn-publish:hover {
-      background: #219a52;
-    }
-
-    .btn-archive {
-      background: #f39c12;
-      color: white;
-    }
-
-    .btn-archive:hover {
-      background: #e67e22;
-    }
-
-    .btn-danger {
-      background: #e74c3c;
-      color: white;
-    }
-
-    .btn-danger:hover {
-      background: #c0392b;
-    }
-
-    .btn-reactivate {
-      background: #34495e;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 12px;
-      padding: 4px 10px;
-      font-weight: 500;
-    }
-
-    .btn-reactivate:hover {
-      background: #2c3e50;
-    }
-
-    .error {
-      background: #fee;
-      color: #c33;
-      padding: 10px 15px;
-      border-radius: 4px;
-      margin-bottom: 15px;
-      border-left: 4px solid #e74c3c;
-    }
-
-    .success {
-      background: #efe;
-      color: #2d6a2d;
-      padding: 10px 15px;
-      border-radius: 4px;
-      margin-bottom: 15px;
-      border-left: 4px solid #27ae60;
-    }
-
-    .table-container {
-      overflow-x: auto;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background: white;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-
-    th, td {
-      padding: 12px;
-      text-align: left;
-      border-bottom: 1px solid #ddd;
-    }
-
-    th {
-      background: #34495e;
-      color: white;
-      font-weight: 500;
-      white-space: nowrap;
-    }
-
-    tbody tr:hover {
-      background: #f5f5f5;
-    }
-
-    .clickable-row {
-      cursor: pointer;
-    }
-
-    .description-cell {
-      max-width: 280px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      color: #555;
-      font-size: 13px;
-    }
-
-    .actions-cell {
-      white-space: nowrap;
-    }
-
-    .muted {
-      color: #999;
-      font-size: 11px;
-      font-family: 'Courier New', monospace;
-    }
-
-    .badge {
-      display: inline-block;
-      padding: 3px 8px;
-      border-radius: 3px;
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .badge-version {
-      background: #ecf0f1;
-      color: #555;
-    }
-
-    .badge-draft {
-      background: #f39c12;
-      color: white;
-    }
-
-    .badge-published {
-      background: #27ae60;
-      color: white;
-    }
-
-    .badge-archived {
-      background: #95a5a6;
-      color: white;
-    }
-
-    .drop-zone {
-      border: 2px dashed #3498db;
-      border-radius: 4px;
-      padding: 15px;
-      text-align: center;
-      background: #fff;
-      cursor: pointer;
-      transition: background 0.2s;
-      margin-top: 5px;
-    }
-
-    .drop-zone:hover, .drop-zone.dragover {
-      background: #ebf5fb;
-    }
-
-    .no-data {
-      text-align: center;
-      color: #999;
-      font-style: italic;
-      padding: 30px;
-    }
-
-    .readonly-notice {
-      background: #fff8e1;
-      border-left: 4px solid #f39c12;
-      padding: 10px 15px;
-      border-radius: 4px;
-      margin-bottom: 16px;
-      font-size: 13px;
-      color: #7d5a00;
-    }
-
-    .total {
-      margin-top: 10px;
-      color: #666;
-      font-size: 13px;
-      text-align: right;
-    }
-  `]
+  styles: [
+    `
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+      }
+
+      .page-header h2 {
+        margin: 0;
+        color: #2c3e50;
+      }
+
+      .page-subtitle {
+        margin: 4px 0 0 0;
+        color: #7f8c8d;
+        font-size: 13px;
+      }
+
+      .header-actions {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+
+      .breadcrumb {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 25px;
+        padding: 14px 22px;
+        background: #f8fafc;
+        border-radius: 12px;
+        font-size: 17px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+        border-left: 8px solid #3498db;
+      }
+
+      .breadcrumb button.btn-link {
+        color: #3498db;
+        text-decoration: none;
+        font-weight: 800;
+        padding: 0;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+
+      .breadcrumb button.btn-link:hover {
+        color: #1d4e89;
+        transform: scale(1.02);
+      }
+
+      .breadcrumb .breadcrumb-sep {
+        color: #cbd5e1;
+        font-weight: 200;
+        font-size: 22px;
+      }
+
+      .breadcrumb span:last-child {
+        color: #1e293b;
+        font-weight: 800;
+        padding: 4px 12px;
+        border-radius: 6px;
+      }
+
+      .btn-link {
+        background: none;
+        border: none;
+        color: #3498db;
+        cursor: pointer;
+        font-size: 15px;
+        padding: 0;
+        font-weight: 500;
+      }
+
+      .btn-link:hover {
+        text-decoration: underline;
+      }
+
+      .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin: 24px 0 12px 0;
+      }
+
+      .section-header h3 {
+        margin: 0;
+        color: #2c3e50;
+      }
+
+      .detail-card {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 6px;
+        padding: 16px 20px;
+        margin-bottom: 16px;
+      }
+
+      .detail-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+
+      .detail-item label,
+      .detail-item .detail-label {
+        display: block;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #95a5a6;
+        font-weight: 600;
+        margin-bottom: 4px;
+      }
+
+      .filters {
+        display: flex;
+        gap: 15px;
+        align-items: center;
+        margin-bottom: 20px;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 4px;
+      }
+
+      .form-container {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 4px;
+        margin-bottom: 20px;
+        border-left: 4px solid #3498db;
+      }
+
+      .form-container h3 {
+        margin-top: 0;
+        color: #2c3e50;
+      }
+
+      .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+      }
+
+      .form-group {
+        margin-bottom: 15px;
+      }
+
+      .form-group label {
+        display: block;
+        font-weight: 500;
+        margin-bottom: 5px;
+        color: #555;
+      }
+
+      .form-group input[type='text'],
+      .form-group select,
+      .form-group textarea {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-family: inherit;
+        font-size: 14px;
+        box-sizing: border-box;
+      }
+
+      .form-group input[readonly] {
+        background: #e9ecef;
+        cursor: not-allowed;
+      }
+
+      .json-textarea {
+        font-family: 'Courier New', monospace;
+        font-size: 12px;
+      }
+
+      .required {
+        color: #e74c3c;
+      }
+
+      .form-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+      }
+
+      .btn-primary,
+      .btn-secondary,
+      .btn-small,
+      .btn-danger,
+      .btn-publish,
+      .btn-archive,
+      .btn-info {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+      }
+
+      .btn-primary {
+        background: #3498db;
+        color: white;
+      }
+
+      .btn-primary:hover:not(:disabled) {
+        background: #2980b9;
+      }
+
+      .btn-primary:disabled {
+        background: #95a5a6;
+        cursor: not-allowed;
+      }
+
+      .btn-secondary {
+        background: #95a5a6;
+        color: white;
+      }
+
+      .btn-secondary:hover {
+        background: #7f8c8d;
+      }
+
+      .btn-small {
+        padding: 4px 10px;
+        font-size: 12px;
+        margin-right: 4px;
+      }
+
+      .btn-info {
+        background: #3498db;
+        color: white;
+      }
+
+      .btn-info:hover {
+        background: #2980b9;
+      }
+
+      .btn-duplicate {
+        background: #8e44ad;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+        padding: 4px 10px;
+        font-weight: 500;
+      }
+
+      .btn-duplicate:hover {
+        background: #7d3c98;
+      }
+
+      .dropdown {
+        position: relative;
+        display: inline-block;
+      }
+
+      .dropdown-toggle::after {
+        content: '';
+        display: inline-block;
+        margin-left: 0.255em;
+        vertical-align: 0.255em;
+      }
+
+      .dropdown-menu {
+        position: absolute;
+        top: 100%;
+        right: 0;
+        z-index: 1000;
+        display: none;
+        min-width: 220px;
+        padding: 5px 0;
+        margin: 2px 0 0;
+        font-size: 13px;
+        color: #212529;
+        text-align: left;
+        list-style: none;
+        background-color: #fff;
+        background-clip: padding-box;
+        border: 1px solid rgba(0, 0, 0, 0.15);
+        border-radius: 4px;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.175);
+      }
+
+      .dropdown-menu.show {
+        display: block;
+      }
+
+      .dropdown-menu button {
+        display: block;
+        width: 100%;
+        padding: 8px 16px;
+        clear: both;
+        font-weight: 400;
+        color: #212529;
+        text-align: inherit;
+        white-space: nowrap;
+        background-color: transparent;
+        border: 0;
+        cursor: pointer;
+      }
+
+      .dropdown-menu button:hover {
+        background-color: #f8f9fa;
+        color: #16181b;
+      }
+
+      .btn-publish {
+        background: #27ae60;
+        color: white;
+      }
+
+      .btn-publish:hover {
+        background: #219a52;
+      }
+
+      .btn-archive {
+        background: #f39c12;
+        color: white;
+      }
+
+      .btn-archive:hover {
+        background: #e67e22;
+      }
+
+      .btn-danger {
+        background: #e74c3c;
+        color: white;
+      }
+
+      .btn-danger:hover {
+        background: #c0392b;
+      }
+
+      .btn-reactivate {
+        background: #34495e;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+        padding: 4px 10px;
+        font-weight: 500;
+      }
+
+      .btn-reactivate:hover {
+        background: #2c3e50;
+      }
+
+      .error {
+        background: #fee;
+        color: #c33;
+        padding: 10px 15px;
+        border-radius: 4px;
+        margin-bottom: 15px;
+        border-left: 4px solid #e74c3c;
+      }
+
+      .success {
+        background: #efe;
+        color: #2d6a2d;
+        padding: 10px 15px;
+        border-radius: 4px;
+        margin-bottom: 15px;
+        border-left: 4px solid #27ae60;
+      }
+
+      .table-container {
+        overflow-x: auto;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        background: white;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      th,
+      td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+      }
+
+      th {
+        background: #34495e;
+        color: white;
+        font-weight: 500;
+        white-space: nowrap;
+      }
+
+      tbody tr:hover {
+        background: #f5f5f5;
+      }
+
+      .clickable-row {
+        cursor: pointer;
+      }
+
+      .description-cell {
+        max-width: 280px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        color: #555;
+        font-size: 13px;
+      }
+
+      .actions-cell {
+        white-space: nowrap;
+      }
+
+      .muted {
+        color: #999;
+        font-size: 11px;
+        font-family: 'Courier New', monospace;
+      }
+
+      .badge {
+        display: inline-block;
+        padding: 3px 8px;
+        border-radius: 3px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .badge-version {
+        background: #ecf0f1;
+        color: #555;
+      }
+
+      .badge-draft {
+        background: #f39c12;
+        color: white;
+      }
+
+      .badge-published {
+        background: #27ae60;
+        color: white;
+      }
+
+      .badge-archived {
+        background: #95a5a6;
+        color: white;
+      }
+
+      .drop-zone {
+        border: 2px dashed #3498db;
+        border-radius: 4px;
+        padding: 15px;
+        text-align: center;
+        background: #fff;
+        cursor: pointer;
+        transition: background 0.2s;
+        margin-top: 5px;
+      }
+
+      .drop-zone:hover,
+      .drop-zone.dragover {
+        background: #ebf5fb;
+      }
+
+      .no-data {
+        text-align: center;
+        color: #999;
+        font-style: italic;
+        padding: 30px;
+      }
+
+      .readonly-notice {
+        background: #fff8e1;
+        border-left: 4px solid #f39c12;
+        padding: 10px 15px;
+        border-radius: 4px;
+        margin-bottom: 16px;
+        font-size: 13px;
+        color: #7d5a00;
+      }
+
+      .total {
+        margin-top: 10px;
+        color: #666;
+        font-size: 13px;
+        text-align: right;
+      }
+    `,
+  ],
 })
 export class TemplatesComponent implements OnInit {
   // --- Screen State ---
   currentScreen: Screen = 'list';
   selectedTemplate: FieldMappingTemplate | null = null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   selectedVersionObj: any = null;
 
   // --- List Screen ---
@@ -821,6 +990,7 @@ export class TemplatesComponent implements OnInit {
   newTemplate: CreateTemplateRequest = this.getEmptyCreateRequest();
 
   // --- Detail Screen ---
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   templateVersions: any[] = [];
   editingTemplate: FieldMappingTemplate | null = null;
   editRequest: UpdateTemplateRequest = this.getEmptyEditRequest();
@@ -832,7 +1002,10 @@ export class TemplatesComponent implements OnInit {
   error: string = '';
   success: string = '';
 
-  constructor(private apiService: ApiService, private generalService: GeneralService) { }
+  constructor(
+    private apiService: ApiService,
+    private generalService: GeneralService,
+  ) {}
 
   ngOnInit() {
     this.loadTemplates();
@@ -864,6 +1037,7 @@ export class TemplatesComponent implements OnInit {
     this.loadTemplateVersions(this.selectedTemplate.id);
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   openVersion(version: any) {
     this.selectedVersionObj = version;
     this.currentScreen = 'version';
@@ -878,7 +1052,7 @@ export class TemplatesComponent implements OnInit {
           this.openDetail(response.data);
           this.duplicatedTemplateId = null;
         }
-      }
+      },
     });
   }
 
@@ -904,7 +1078,7 @@ export class TemplatesComponent implements OnInit {
       error: (err) => {
         this.error = 'Failed to load templates';
         console.error(err);
-      }
+      },
     });
   }
 
@@ -917,7 +1091,7 @@ export class TemplatesComponent implements OnInit {
       },
       error: (err) => {
         console.error('Failed to load versions', err);
-      }
+      },
     });
   }
 
@@ -936,7 +1110,7 @@ export class TemplatesComponent implements OnInit {
       },
       error: (err) => {
         this.error = err.error?.message || 'Failed to create template';
-      }
+      },
     });
   }
 
@@ -946,7 +1120,7 @@ export class TemplatesComponent implements OnInit {
       name: template.name,
       description: template.description,
       sourceSchema: template.sourceSchema ?? '',
-      targetSchema: template.targetSchema ?? ''
+      targetSchema: template.targetSchema ?? '',
     };
     this.clearMessages();
   }
@@ -970,14 +1144,14 @@ export class TemplatesComponent implements OnInit {
               if (r.success && r.data) {
                 this.selectedTemplate = r.data;
               }
-            }
+            },
           });
           this.loadTemplates();
         }
       },
       error: (err) => {
         this.error = err.error?.message || 'Failed to update template';
-      }
+      },
     });
   }
 
@@ -993,12 +1167,12 @@ export class TemplatesComponent implements OnInit {
           this.loadTemplates();
         }
       },
-      error: (err) => this.error = err.error?.message || 'Failed to duplicate template'
+      error: (err) => (this.error = err.error?.message || 'Failed to duplicate template'),
     });
   }
 
   hasAnyDraft(): boolean {
-    return this.templateVersions.some(v => v.status === 'Draft');
+    return this.templateVersions.some((v) => v.status === 'Draft');
   }
 
   createNewVersion(template: FieldMappingTemplate, baseVersion?: number) {
@@ -1006,24 +1180,26 @@ export class TemplatesComponent implements OnInit {
       ? `Create a new version for "${template.name}" based on v${baseVersion}?`
       : `Create a new version for "${template.name}" based on the latest published version?`;
 
-    this.generalService.confirm({
-      title: 'Create New Version',
-      text: msg,
-      confirmText: 'Yes, Create',
-      icon: 'question'
-    }).then((result: any) => {
-      if (!result.isConfirmed) return;
-      this.clearMessages();
-      this.apiService.createTemplateVersion(template.id, baseVersion).subscribe({
-        next: (response) => {
-          if (response.success) {
-            this.generalService.success('New draft version created.');
-            this.loadTemplateVersions(template.id);
-          }
-        },
-        error: (err) => this.error = err.error?.message || 'Failed to create new version'
+    this.generalService
+      .confirm({
+        title: 'Create New Version',
+        text: msg,
+        confirmText: 'Yes, Create',
+        icon: 'question',
+      })
+      .then((result) => {
+        if (!result.isConfirmed) return;
+        this.clearMessages();
+        this.apiService.createTemplateVersion(template.id, baseVersion).subscribe({
+          next: (response) => {
+            if (response.success) {
+              this.generalService.success('New draft version created.');
+              this.loadTemplateVersions(template.id);
+            }
+          },
+          error: (err) => (this.error = err.error?.message || 'Failed to create new version'),
+        });
       });
-    });
   }
 
   isMappingReadonly(): boolean {
@@ -1032,6 +1208,7 @@ export class TemplatesComponent implements OnInit {
     return this.selectedTemplate.status === 'Archived' || this.selectedVersionObj.status !== 'Draft';
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   publishVersion(version: any) {
     if (!this.selectedTemplate) return;
     if (this.selectedTemplate.status === 'Archived') {
@@ -1039,124 +1216,138 @@ export class TemplatesComponent implements OnInit {
       return;
     }
 
-    this.generalService.confirm({
-      title: 'Publish Version',
-      text: `Publish version ${version.version} of "${this.selectedTemplate.name}"?`,
-      confirmText: 'Yes, Publish',
-      confirmColor: '#27ae60',
-      icon: 'question'
-    }).then((result: any) => {
-      if (!result.isConfirmed) return;
-      this.clearMessages();
-      this.apiService.publishTemplateVersion(this.selectedTemplate!.id, version.version).subscribe({
-        next: (response) => {
-          if (response.success) {
-            this.generalService.success('Version ' + version.version + ' published successfully.');
-            version.status = 'Published';
-            this.selectedVersionObj = { ...version, status: 'Published' };
-            this.loadTemplateVersions(this.selectedTemplate!.id);
-            this.loadTemplates();
-          }
-        },
-        error: (err) => this.error = err.error?.message || 'Failed to publish version'
+    this.generalService
+      .confirm({
+        title: 'Publish Version',
+        text: `Publish version ${version.version} of "${this.selectedTemplate.name}"?`,
+        confirmText: 'Yes, Publish',
+        confirmColor: '#27ae60',
+        icon: 'question',
+      })
+      .then((result) => {
+        if (!result.isConfirmed) return;
+        this.clearMessages();
+        this.apiService.publishTemplateVersion(this.selectedTemplate!.id, version.version).subscribe({
+          next: (response) => {
+            if (response.success) {
+              this.generalService.success('Version ' + version.version + ' published successfully.');
+              version.status = 'Published';
+              this.selectedVersionObj = { ...version, status: 'Published' };
+              this.loadTemplateVersions(this.selectedTemplate!.id);
+              this.loadTemplates();
+            }
+          },
+          error: (err) => (this.error = err.error?.message || 'Failed to publish version'),
+        });
       });
-    });
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   deleteVersion(version: any) {
     if (!this.selectedTemplate) return;
 
-    this.generalService.confirm({
-      title: 'Delete Version Draft',
-      text: `Are you sure you want to delete version ${version.version} draft? This will also delete all its field mappings.`,
-      confirmText: 'Yes, Delete',
-      confirmColor: '#e74c3c',
-      icon: 'warning'
-    }).then((result: any) => {
-      if (!result.isConfirmed) return;
-      this.clearMessages();
-      this.apiService.deleteTemplateVersion(this.selectedTemplate!.id, version.version).subscribe({
-        next: (response) => {
-          if (response.success) {
-            this.generalService.success('Version ' + version.version + ' deleted.');
-            this.loadTemplateVersions(this.selectedTemplate!.id);
-          }
-        },
-        error: (err) => this.error = err.error?.message || 'Failed to delete version'
+    this.generalService
+      .confirm({
+        title: 'Delete Version Draft',
+        text: `Are you sure you want to delete version ${version.version} draft? This will also delete all its field mappings.`,
+        confirmText: 'Yes, Delete',
+        confirmColor: '#e74c3c',
+        icon: 'warning',
+      })
+      .then((result) => {
+        if (!result.isConfirmed) return;
+        this.clearMessages();
+        this.apiService.deleteTemplateVersion(this.selectedTemplate!.id, version.version).subscribe({
+          next: (response) => {
+            if (response.success) {
+              this.generalService.success('Version ' + version.version + ' deleted.');
+              this.loadTemplateVersions(this.selectedTemplate!.id);
+            }
+          },
+          error: (err) => (this.error = err.error?.message || 'Failed to delete version'),
+        });
       });
-    });
   }
 
   archiveTemplate(template: FieldMappingTemplate) {
-    this.generalService.confirm({
-      title: 'Archive Template',
-      text: `Archive template "${template.name}"?`,
-      confirmText: 'Yes, Archive',
-      confirmColor: '#e74c3c',
-      icon: 'warning'
-    }).then((result: any) => {
-      if (!result.isConfirmed) return;
-      this.clearMessages();
-      this.apiService.updateTemplate(template.id, { name: template.name, description: template.description, status: 'Archived' }).subscribe({
-        next: (response) => {
-          if (response.success) {
-            this.generalService.success('Template "' + template.name + '" archived.');
-            if (this.selectedTemplate?.id === template.id) {
-              this.selectedTemplate = { ...template, status: 'Archived' };
-            }
-            this.loadTemplates();
-          }
-        },
-        error: (err) => this.error = err.error?.message || 'Failed to archive template'
+    this.generalService
+      .confirm({
+        title: 'Archive Template',
+        text: `Archive template "${template.name}"?`,
+        confirmText: 'Yes, Archive',
+        confirmColor: '#e74c3c',
+        icon: 'warning',
+      })
+      .then((result) => {
+        if (!result.isConfirmed) return;
+        this.clearMessages();
+        this.apiService
+          .updateTemplate(template.id, { name: template.name, description: template.description, status: 'Archived' })
+          .subscribe({
+            next: (response) => {
+              if (response.success) {
+                this.generalService.success('Template "' + template.name + '" archived.');
+                if (this.selectedTemplate?.id === template.id) {
+                  this.selectedTemplate = { ...template, status: 'Archived' };
+                }
+                this.loadTemplates();
+              }
+            },
+            error: (err) => (this.error = err.error?.message || 'Failed to archive template'),
+          });
       });
-    });
   }
 
   reactivateTemplate(template: FieldMappingTemplate) {
-    this.generalService.confirm({
-      title: 'Reactivate Template',
-      text: `Reactivate template "${template.name}"?`,
-      confirmText: 'Yes, Reactivate',
-      confirmColor: '#27ae60',
-      icon: 'question'
-    }).then((result: any) => {
-      if (!result.isConfirmed) return;
-      this.clearMessages();
-      this.apiService.reactivateTemplate(template.id).subscribe({
-        next: () => {
-          this.generalService.success('Template "' + template.name + '" reactivated.');
-          if (this.selectedTemplate?.id === template.id) {
-            this.selectedTemplate = { ...template, status: 'Active' };
-          }
-          this.loadTemplates();
-        },
-        error: (err) => this.error = err.error?.message || 'Failed to reactivate'
+    this.generalService
+      .confirm({
+        title: 'Reactivate Template',
+        text: `Reactivate template "${template.name}"?`,
+        confirmText: 'Yes, Reactivate',
+        confirmColor: '#27ae60',
+        icon: 'question',
+      })
+      .then((result) => {
+        if (!result.isConfirmed) return;
+        this.clearMessages();
+        this.apiService.reactivateTemplate(template.id).subscribe({
+          next: () => {
+            this.generalService.success('Template "' + template.name + '" reactivated.');
+            if (this.selectedTemplate?.id === template.id) {
+              this.selectedTemplate = { ...template, status: 'Active' };
+            }
+            this.loadTemplates();
+          },
+          error: (err) => (this.error = err.error?.message || 'Failed to reactivate'),
+        });
       });
-    });
   }
 
   deleteTemplate(template: FieldMappingTemplate) {
-    this.generalService.confirm({
-      title: 'Delete Template',
-      text: `Delete template "${template.name}"? This cannot be undone.`,
-      confirmText: 'Yes, Delete',
-      confirmColor: '#e74c3c',
-      icon: 'warning'
-    }).then((result: any) => {
-      if (!result.isConfirmed) return;
-      this.clearMessages();
-      this.apiService.deleteTemplate(template.id, template.version).subscribe({
-        next: () => {
-          this.generalService.success('Template "' + template.name + '" deleted.');
-          this.loadTemplates();
-        },
-        error: (err) => this.error = err.error?.message || 'Failed to delete template'
+    this.generalService
+      .confirm({
+        title: 'Delete Template',
+        text: `Delete template "${template.name}"? This cannot be undone.`,
+        confirmText: 'Yes, Delete',
+        confirmColor: '#e74c3c',
+        icon: 'warning',
+      })
+      .then((result) => {
+        if (!result.isConfirmed) return;
+        this.clearMessages();
+        this.apiService.deleteTemplate(template.id, template.version).subscribe({
+          next: () => {
+            this.generalService.success('Template "' + template.name + '" deleted.');
+            this.loadTemplates();
+          },
+          error: (err) => (this.error = err.error?.message || 'Failed to delete template'),
+        });
       });
-    });
   }
 
   // ===== File Upload =====
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   handleFileUploadSourceSchema(event: any, isEdit: boolean = false) {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -1170,6 +1361,7 @@ export class TemplatesComponent implements OnInit {
     this.readSchemaFile(file, isEdit, 'source');
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   handleFileUploadTargetSchema(event: any, isEdit: boolean = false) {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -1207,16 +1399,21 @@ export class TemplatesComponent implements OnInit {
 
   getStatusClass(status: string): string {
     switch (status?.toLowerCase()) {
-      case 'active': return 'badge-published';
-      case 'archived': return 'badge-archived';
-      default: return 'badge-draft';
+      case 'active':
+        return 'badge-published';
+      case 'archived':
+        return 'badge-archived';
+      default:
+        return 'badge-draft';
     }
   }
 
   getVersionStatusClass(status?: string): string {
     switch (status?.toLowerCase()) {
-      case 'published': return 'badge-published';
-      default: return 'badge-draft';
+      case 'published':
+        return 'badge-published';
+      default:
+        return 'badge-draft';
     }
   }
 
