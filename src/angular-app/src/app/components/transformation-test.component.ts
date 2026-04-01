@@ -51,7 +51,9 @@ import { MappingIssue, TransformRequest, TransformResult } from '../models/trans
           <div class="panel-header">
             <h3>Source JSON (Input)</h3>
             <div class="panel-header-actions">
-              <button class="btn-small" (click)="formatJson('source')" *ngIf="!showAnnotatedView">Format JSON</button>
+            <button class="btn-small" (click)="formatJson('source')" [disabled]="!sourceJson?.trim()" *ngIf="!showAnnotatedView">
+               Format JSON
+            </button>
               <button
                 *ngIf="annotatedIssueCount > 0"
                 class="btn-small btn-annotate"
@@ -73,13 +75,25 @@ import { MappingIssue, TransformRequest, TransformResult } from '../models/trans
             <div class="spinner"></div>
             <div class="spinner-text">Parsing JSON...</div>
           </div>
+          <div class="editor-container">
+          <div class="line-numbers">
+          <div class="line-numbers-inner" #lineNumbers>
+            <span *ngFor="let line of getLineNumbers(sourceJson)">
+              {{ line }}
+            </span>
+          </div>
+        </div>
+
           <textarea
-            *ngIf="!showAnnotatedView"
             [(ngModel)]="sourceJson"
-            class="json-editor"
+            *ngIf="!showAnnotatedView"
+            (ngModelChange)="onJsonChange($event)"
+            class="json-editor with-lines"
             placeholder="Paste JSON or drag & drop a JSON file here..."
             spellcheck="false"
+            (scroll)="syncScroll($event)"
           ></textarea>
+        </div>
 
           <div *ngIf="isDragOver" class="drop-overlay">
             Drop JSON file here
@@ -99,13 +113,26 @@ import { MappingIssue, TransformRequest, TransformResult } from '../models/trans
               <button class="btn-small btn-success" (click)="copyToClipboard()" *ngIf="transformedJson">Copy</button>
             </div>
           </div>
-          <textarea
-            [(ngModel)]="transformedJson"
-            class="json-editor"
-            placeholder="Transformed JSON will appear here..."
-            readonly
-            spellcheck="false"
-          ></textarea>
+          <div class="source-body source-dropzone">
+          <div class="editor-container">
+            <div class="line-numbers">
+              <div class="line-numbers-inner">
+                <span *ngFor="let line of getLineNumbers(transformedJson)">
+                  {{ line }}
+                </span>
+              </div>
+            </div>
+
+            <textarea
+              [(ngModel)]="transformedJson"
+              class="json-editor with-lines"
+              placeholder="Transformed JSON will appear here..."
+              readonly
+              spellcheck="false"
+              (scroll)="syncScroll($event)"
+            ></textarea>
+          </div>
+        </div>
           <div class="panel-footer" *ngIf="transformResult">
             <span class="stat">Fields Mapped: {{ transformResult.fieldsMapped || 0 }}</span>
             <span class="stat">Fields Skipped: {{ transformResult.fieldsSkipped || 0 }}</span>
@@ -333,21 +360,6 @@ import { MappingIssue, TransformRequest, TransformResult } from '../models/trans
       flex-direction: column;
     }
 
-    .json-editor {
-      flex: 1;
-      min-height: 400px;
-      padding: 15px;
-      border: none;
-      font-family: 'Courier New', monospace;
-      font-size: 13px;
-      line-height: 1.5;
-      resize: vertical;
-      outline: none;
-    }
-
-    .json-editor:focus {
-      background: #fafafa;
-    }
 
     .json-annotated-container {
       flex: 1;
@@ -705,6 +717,55 @@ import { MappingIssue, TransformRequest, TransformResult } from '../models/trans
         transform: rotate(360deg);
       }
     }
+
+    .editor-container {
+      display: flex;
+      height: 400px;  
+      position: relative;
+      overflow: hidden;
+    }
+
+    .line-numbers {
+      width: 50px;
+      background: #f4f4f4;
+      border-right: 1px solid #ddd;
+      text-align: right;
+      padding: 15px 5px;
+      font-family: monospace;
+      font-size: 13px;
+      line-height: 1.5;
+      overflow: hidden; 
+      position: relative;
+    }
+
+    .line-numbers-inner {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+    }
+
+    .line-numbers span {
+      display: block;
+      color: #888;
+    }
+
+    .with-lines {
+      flex: 1;
+      padding-left: 10px;
+    }
+    .json-editor {
+      height: 400px;          
+      max-height: 400px;
+      overflow: auto;         
+      padding: 15px;
+      border: none;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      line-height: 1.5;
+      resize: none;      
+      outline: none;
+    }
   `]
 })
 export class TransformationTestComponent implements OnInit {
@@ -722,6 +783,8 @@ export class TransformationTestComponent implements OnInit {
   annotatedSourceHtml: SafeHtml = '';
   isDragOver = false;
   isParsing = false;
+  lineNumbers: number[] = [1];
+  private typingTimeout: any;
 
   constructor(
     private apiService: ApiService,
@@ -753,7 +816,7 @@ export class TransformationTestComponent implements OnInit {
     this.apiService.getTemplates().subscribe({
       next: (response) => {
         if (response.success && response.data) {
-          this.templates = response.data.templates.filter(t => t.status === 'Published');
+          this.templates = response.data.templates.filter(t => t.status === 'Active');
         }
       },
       error: (err) => {
@@ -782,28 +845,37 @@ export class TransformationTestComponent implements OnInit {
 
   onFileSelected(event: any) {
     const file = event.target.files[0];
-    if (file) {
-      this.fileName = file.name;
-      const reader = new FileReader();
-      reader.onload = (e: any) => {
-        this.isParsing = true;
-
-        setTimeout(() => {
-          try {
-            const json = JSON.parse(e.target.result);
-            this.sourceJson = JSON.stringify(json, null, 2);
-            this.error = '';
-            this.showAnnotatedView = false;
-          } catch {
-            this.error = 'Invalid JSON file';
-            this.sourceJson = '';
-          } finally {
-            this.isParsing = false;
-          }
-        }, 0);
-      };
-      reader.readAsText(file);
+  
+    if (!file) return;
+  
+    const fileExtension = file.name.split('.').pop()?.toLowerCase();
+    if (fileExtension !== 'json') {
+      this.error = 'Only JSON files are supported';
+      this.fileName = '';
+      return;
     }
+  
+    this.error = '';
+    this.fileName = file.name;
+  
+    const reader = new FileReader();
+    reader.onload = (e: any) => {
+      this.isParsing = true;
+  
+      setTimeout(() => {
+        const content = e.target.result;
+        try {
+          const parsed = JSON.parse(content);
+          this.sourceJson = JSON.stringify(parsed, null, 2);
+          this.showAnnotatedView = false;
+        } catch (err) {
+          this.error = 'Invalid JSON file';
+          this.sourceJson = content; 
+        }
+        this.isParsing = false;
+      }, 0);
+    };
+    reader.readAsText(file);
   }
 
   loadSampleInput() {
@@ -871,15 +943,18 @@ export class TransformationTestComponent implements OnInit {
       this.error = 'Invalid JSON format in source';
       return;
     }
-
+    const selectedTemplate = this.templates.find(
+      t => t.id === this.selectedTemplateId
+    );
     const request: TransformRequest = {
       sourceJson: this.sourceJson,
-      templateId: this.selectedTemplateId
+      templateId: this.selectedTemplateId,
+      version: selectedTemplate?.version
     };
-
     // Server always returns HTTP 200 — read everything from the next callback
     this.apiService.transformJsonWithTemplate(request).subscribe({
       next: (response) => {
+        ;
         const data: TransformResult = response?.data ?? {};
 
         if (data.outputJson) {
@@ -1012,28 +1087,20 @@ export class TransformationTestComponent implements OnInit {
       if (target === 'source') {
         this.sourceJson = formatted;
       } else {
-
         this.transformedJson = formatted;
       }
 
       this.error = '';
+      this.errorDetails = '';
       this.annotatedSourceHtml = '';
     } catch (e: any) {
-
       const errors = this.validateJsonAllErrors(json);
 
-      if (errors.length > 0) {
+      this.error = errors.length
+        ? `Invalid JSON (${errors.length} errors found)`
+        : 'Invalid JSON format';
 
-        this.error = `Invalid JSON (${errors.length} errors found)`;
-
-        this.errorDetails = errors.join('\n');
-
-      } else {
-
-        this.error = 'Invalid JSON format';
-
-      }
-
+      this.errorDetails = errors.join('\n');
     }
   }
 
@@ -1159,17 +1226,12 @@ export class TransformationTestComponent implements OnInit {
           this.isParsing = true;
 
           setTimeout(() => {
-            try {
-              const json = JSON.parse(e.target.result);
-              this.sourceJson = JSON.stringify(json, null, 2);
-              this.error = '';
-              this.showAnnotatedView = false;
-            } catch {
-              this.error = 'Invalid JSON file';
-              this.sourceJson = '';
-            } finally {
-              this.isParsing = false;
-            }
+            const content = e.target.result;
+
+            this.sourceJson = content;
+            this.error = '';
+            this.showAnnotatedView = false;
+            this.isParsing = false;
           }, 0);
         };
         reader.readAsText(file);
@@ -1178,5 +1240,41 @@ export class TransformationTestComponent implements OnInit {
         this.error = 'Only JSON files are supported';
       }
     }
+  }
+
+  getLineNumbers(text: any): number[] {
+    if (typeof text !== 'string') {
+      text = text ? String(text) : '';
+    }
+  
+    const lines = text.split('\n').length;
+    return Array.from({ length: lines }, (_, i) => i + 1);
+  }
+  
+
+  syncScroll(event: any) {
+    const textarea = event.target;
+    const lineNumbers = textarea.parentElement.querySelector('.line-numbers-inner');
+  
+    if (lineNumbers) {
+      lineNumbers.style.transform = `translateY(-${textarea.scrollTop}px)`;
+    }
+  }
+  updateLineNumbers() {
+    const maxLines = 2000; 
+    const lines = this.sourceJson ? this.sourceJson.split('\n').length : 1;
+
+    const count = Math.min(lines, maxLines);
+
+    this.lineNumbers = Array.from({ length: count }, (_, i) => i + 1);
+  }
+  onJsonChange(value: string) {
+    this.sourceJson = value;
+
+    clearTimeout(this.typingTimeout);
+
+    this.typingTimeout = setTimeout(() => {
+      this.updateLineNumbers();
+    }, 300); 
   }
 }
