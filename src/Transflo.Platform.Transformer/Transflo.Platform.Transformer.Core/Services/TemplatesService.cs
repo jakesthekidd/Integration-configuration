@@ -1,6 +1,5 @@
 using Transflo.Platform.Transformer.Core.DTOs;
 using Transflo.Platform.Transformer.Core.Models;
-using Transflo.Platform.Transformer.Core.Repositories;
 using Transflo.Platform.Transformer.Core.Repositories.Interfaces;
 using Transflo.Platform.Transformer.Core.Services.Interfaces;
 
@@ -175,15 +174,9 @@ public class TemplatesService : ITemplatesService
         }
         else
         {
-            // Copy only the published version (or latest if none published) to v1
-            var sourceVersion = await _versionRepo.GetPublishedVersionAsync(templateId);
-            if (sourceVersion is null)
-            {
-                // Fallback to latest version if no published version
-                var allVersions = await _versionRepo.GetAllVersionsAsync(templateId);
-                sourceVersion = allVersions.OrderByDescending(v => v.Version).FirstOrDefault();
-            }
 
+            var allVersions = await _versionRepo.GetAllVersionsAsync(templateId);
+            var sourceVersion = allVersions.OrderByDescending(v => v.Version).FirstOrDefault();
             var newVersion = new TemplateVersion
             {
                 TemplateId = created.Id,
