@@ -32,7 +32,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAngular", policy =>
     {
-        policy.WithOrigins(["https://transformer.platform.dev.transflo.com"])
+        policy.WithOrigins(config.Cors.AllowedOrigins)
               .AllowAnyMethod()
               .AllowAnyHeader()
               .AllowCredentials();
@@ -90,7 +90,9 @@ builder.Services.AddScoped<ITemplatesService, TemplatesService>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline
-if (app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment()
+    || app.Environment.EnvironmentName.Equals("qa", StringComparison.OrdinalIgnoreCase)
+    || app.Environment.EnvironmentName.Equals("dev", StringComparison.OrdinalIgnoreCase))
 {
     app.UseSwagger();
     app.UseSwaggerUI();
@@ -100,8 +102,6 @@ app.UseCors("AllowAngular");
 
 app.MapGet("/health", () => Results.Ok(new { status = "Healthy" }));
 app.MapGet("/", () => Results.Ok("Transformer API is running"));
-app.MapGet("/config", () => Results.Ok(config));
-app.MapGet("/env", () => Results.Ok(app.Environment.EnvironmentName));
 
 app.MapControllers();
 app.Run();
