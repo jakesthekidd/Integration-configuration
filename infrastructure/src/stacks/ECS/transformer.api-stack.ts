@@ -9,6 +9,7 @@ import { Cluster } from "aws-cdk-lib/aws-ecs";
 import * as ecs from 'aws-cdk-lib/aws-ecs';
 import { EcsServiceConstruct } from "infrastructure-templates";
 import { PlatformEcrStack } from '../ecr-stack';
+import { PlatformSecretsStack } from '../secrets-stack';
 import { PolicyStatement } from "aws-cdk-lib/aws-iam";
 import { SubnetType } from "aws-cdk-lib/aws-ec2";
 
@@ -17,6 +18,8 @@ const config = env === 'prod' ? prodConfig : env === 'qa' ? qaConfig : devConfig
 
 interface PlatformEcsStackProps extends StackProps {
     ecrStack: PlatformEcrStack;
+    secretsStack: PlatformSecretsStack;
+
 }
 
 export class transformerapiStack extends Stack {
@@ -25,7 +28,7 @@ export class transformerapiStack extends Stack {
     constructor(scope: Construct, id: string, props: PlatformEcsStackProps) {
         super(scope, id, props);
 
-        const { ecrStack } = props;
+        const { ecrStack, secretsStack } = props;
 
         // Import VPC
         const vpc = getTransfloVpc(this);
@@ -50,6 +53,9 @@ export class transformerapiStack extends Stack {
 
         // Define the Transformer API ECR repository
         const transformerApiEcrRepository = ecrStack.transformerapiEcrRepository;
+
+        // Use secrets from SecretsStack
+        const transformerSecret = secretsStack.transformerSecret;
 
         // Define the ECS Service using EcsServiceConstruct
         this.usertransformerApiService = new EcsServiceConstruct(this, {
@@ -79,6 +85,9 @@ export class transformerapiStack extends Stack {
                 domainName: `${config.rootDomain}`,
                 hostedZoneId: config.hostedZoneId,
                 hostedZoneName: config.rootDomain,
+            },
+            secrets: {
+                SHARED_SECRET: ecs.Secret.fromSecretsManager(transformerSecret),
             },
         });
 

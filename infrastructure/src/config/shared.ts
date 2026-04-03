@@ -14,6 +14,7 @@ export const albSubnetType = SubnetType.PRIVATE_WITH_EGRESS;
 export const feAppName = "platform";
 export const plaformUIStackName = "PlaformUiStack";
 export const ecrStackName = "PlaformEcrStack";
+export const secretsStackName = 'PlatformSecretsStack';
 export const transformerapiStackName = "transformerapiStack";
 export const transformerapiSubDomain = 'api.transformer.platform';
 export const postgresStackName = 'PlaformPostgreSQLStack';

@@ -36,6 +36,7 @@ export const prodConfig: AppConfig = {
   indexFile,
   platformUIStackName: sharedConfig.plaformUIStackName,
   ecrStackName: sharedConfig.ecrStackName,
+  secretsStackName: sharedConfig.secretsStackName,
   postgresStackName: sharedConfig.postgresStackName,
   transformerapiStackName: sharedConfig.transformerapiStackName,
   transformerapiSubDomain: sharedConfig.transformerapiSubDomain,
@@ -64,7 +65,7 @@ postgresDBProps: (vpc: IVpc): PrivateRDSConstructProps => {
       ...sharedProps,
       name: `${sharedConfig.name}-transformer-pg`,
       databaseEngine: sharedConfig.dbEngine,
-      readReplicas: [],
+      readReplicas: [],  // still need to add this for backup plans
     };
   },
 };
