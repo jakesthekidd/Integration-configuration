@@ -65,11 +65,11 @@ export class transformerapiStack extends Stack {
             isPublic: false,
             environmentVariables: {
                 'ENVIRONMENT': `${config.env}`,
-                'ASPNETCORE_ENVIRONMENT': 'Development',
+                'ASPNETCORE_ENVIRONMENT': `${config.aspnetcoreEnv}`,
             },
             loadBalancerConfig: {
                 healthCheckPath: '/health',
-                allowedCidrs: [ sharedConfig.vpnCidr, vpc.vpcCidrBlock],
+                allowedCidrs: [sharedConfig.vpnCidr, vpc.vpcCidrBlock],
             },
             albSubnetOverride: {
                 subnets: albSubnets,
