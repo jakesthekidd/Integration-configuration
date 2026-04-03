@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ApiService } from '../services/api.service';
 import { GeneralService } from '../services/general.service';
 import { FieldMapping, CreateFieldMappingRequest, TransformationTypes } from '../models/field-mapping.model';
+import { LookupTable } from '../models/lookup-table.model';
 
 @Component({
   selector: 'app-field-mappings',
@@ -63,16 +64,27 @@ import { FieldMapping, CreateFieldMappingRequest, TransformationTypes } from '..
           <div class="form-group">
             <label for="transformationType">Transformation Type: <span class="required">*</span></label>
             <select
-              id="transformationType"
-              [(ngModel)]="newMapping.transformationType"
-              name="transformationType"
-              required
-            >
-              <option *ngFor="let type of transformationTypes" [value]="type">{{ type }}</option>
+              id="transformationType" [(ngModel)]="newMapping.transformationType"
+              name="transformationType" (change)="onTransformationTypeChange()" required>
+              <option *ngFor="let type of transformationTypes" [value]="type">
+                {{ type }}
+              </option>
             </select>
           </div>
-
-          <div class="form-group">
+          <div class="form-group" *ngIf="newMapping.transformationType === 'Lookup'">
+            <label for="lookupTable">Lookup Table:</label>
+            <select
+              id="lookupTable"
+              [(ngModel)]="newMapping.lookupTableId"
+              name="lookupTableId"
+            >
+              <option value="">-- Select Lookup Table --</option>
+              <option *ngFor="let table of lookupTables" [value]="table.id">
+                {{ table.fieldName }}
+              </option>
+            </select>
+          </div>
+          <div class="form-group" *ngIf="newMapping.transformationType !== 'Lookup'">
             <label for="transformationConfig">Transformation Config:</label>
             <textarea
               id="transformationConfig"
@@ -431,6 +443,7 @@ export class FieldMappingsComponent implements OnInit, OnChanges {
   success: string = '';
   sourcePaths: string[] = [];
   targetPaths: string[] = [];
+  lookupTables: LookupTable[] = [];
 
   newMapping: CreateFieldMappingRequest = this.getEmptyMapping();
 
@@ -441,6 +454,7 @@ export class FieldMappingsComponent implements OnInit, OnChanges {
 
   ngOnInit() {
     this.refreshMappingData();
+    this.loadLookupTables();
   }
 
   ngOnChanges(changes: SimpleChanges) {
@@ -499,7 +513,6 @@ export class FieldMappingsComponent implements OnInit, OnChanges {
         if (response.success && response.data?.fields) {
           const parsedPaths: string[] = Object.keys(response.data.fields);
           this.sourcePaths = [...new Set([...this.sourcePaths, ...parsedPaths])].sort();
-          console.log(this.sourcePaths);
         }
       },
       error: (err) => console.warn('Could not parse sample JSON for path suggestions', err),
@@ -513,8 +526,9 @@ export class FieldMappingsComponent implements OnInit, OnChanges {
     // Always stamp the current Input values in case newMapping was initialized before inputs were set
     this.newMapping.templateId = this.templateId;
     this.newMapping.templateVersionId = this.templateVersionId;
+    const payload = this.buildPayload(this.newMapping);
 
-    this.apiService.createFieldMapping(this.newMapping).subscribe({
+    this.apiService.createFieldMapping(payload).subscribe({
       next: (response) => {
         if (response.success) {
           this.success = 'Field mapping created successfully';
@@ -564,8 +578,19 @@ export class FieldMappingsComponent implements OnInit, OnChanges {
     this.error = '';
     this.success = '';
     this.refreshPathSuggestions();
-
-    // Populate form with mapping data
+  
+    let lookupTableId = '';
+  
+    try {
+      const config = mapping.transformationConfig
+        ? JSON.parse(mapping.transformationConfig)
+        : null;
+  
+      lookupTableId = config?.LookupTableId || '';
+    } catch {
+      lookupTableId = '';
+    }
+  
     this.newMapping = {
       templateId: this.templateId,
       templateVersionId: this.templateVersionId,
@@ -577,13 +602,14 @@ export class FieldMappingsComponent implements OnInit, OnChanges {
       isRequired: mapping.isRequired,
       defaultValue: mapping.defaultValue || '',
       validationRules: mapping.validationRules || '',
+      lookupTableId
     };
-
-    // Scroll to form
+  
     setTimeout(() => {
       document.querySelector('.form-container')?.scrollIntoView({ behavior: 'smooth' });
     }, 100);
   }
+  
 
   updateMapping() {
     if (!this.editingMapping) return;
@@ -591,16 +617,9 @@ export class FieldMappingsComponent implements OnInit, OnChanges {
     this.error = '';
     this.success = '';
 
-    const updateRequest = {
-      sourcePath: this.newMapping.sourcePath,
-      targetPath: this.newMapping.targetPath,
-      transformationType: this.newMapping.transformationType,
-      transformationConfig: this.newMapping.transformationConfig,
-      executionOrder: this.newMapping.executionOrder,
-      isRequired: this.newMapping.isRequired,
-      defaultValue: this.newMapping.defaultValue,
-      validationRules: this.newMapping.validationRules,
-    };
+
+    const updateRequest = this.buildPayload(this.newMapping);
+
 
     this.apiService.updateFieldMapping(this.editingMapping.id, updateRequest).subscribe({
       next: (response) => {
@@ -639,6 +658,44 @@ export class FieldMappingsComponent implements OnInit, OnChanges {
       isRequired: false,
       defaultValue: '',
       validationRules: '',
+      lookupTableId: '' 
+    };
+  }
+  loadLookupTables() {
+    this.apiService.getLookupTables().subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.lookupTables = response.data.lookupTables;
+        }
+      },
+      error: (err) => {
+        this.error = 'Failed to load lookup tables';
+        console.error(err);
+      },
+    });
+    }
+
+  onTransformationTypeChange() {
+    if (this.newMapping.transformationType !== 'Lookup') {
+      this.newMapping.lookupTableId = '';
+    }
+  }
+
+  private buildPayload(mapping: CreateFieldMappingRequest) {
+    let transformationConfig: string = mapping.transformationConfig ?? "";
+  
+    if (mapping.transformationType === "Lookup" && mapping.lookupTableId) {
+      transformationConfig = JSON.stringify({
+        LookupTableId: mapping.lookupTableId
+      });
+    } else {
+      transformationConfig = mapping.transformationConfig ?? "";
+    }
+  
+    return {
+      ...mapping,
+      transformationConfig,
+      lookupTableId: undefined
     };
   }
 }

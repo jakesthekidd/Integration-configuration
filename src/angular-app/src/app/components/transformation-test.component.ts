@@ -112,7 +112,14 @@ import { MappingIssue, TransformRequest, TransformResult } from '../models/trans
 
       <!-- Action bar -->
       <div class="action-bar">
-        <button class="btn-primary btn-large" (click)="transform()" [disabled]="!canTransform()">Transform</button>
+      <button class="btn-primary btn-large" (click)="transform()" [disabled]="!canTransform() || isTransforming">
+      <span *ngIf="!isTransforming">Transform</span>
+
+      <span *ngIf="isTransforming" class="btn-spinner-wrapper">
+        Transforming...
+        <span class="btn-spinner"></span>
+      </span>
+    </button>
       </div>
 
       <!-- Status messages -->
@@ -699,6 +706,20 @@ import { MappingIssue, TransformRequest, TransformResult } from '../models/trans
           transform: rotate(360deg);
         }
       }
+      .btn-spinner-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .btn-spinner {
+        width: 16px;
+        height: 16px;
+        border: 2px solid #ffffff;
+        border-top: 2px solid transparent;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
     `,
   ],
 })
@@ -717,6 +738,7 @@ export class TransformationTestComponent implements OnInit {
   annotatedSourceHtml: SafeHtml = '';
   isDragOver = false;
   isParsing = false;
+  isTransforming : boolean = false;
 
   constructor(
     private apiService: ApiService,
@@ -855,6 +877,7 @@ export class TransformationTestComponent implements OnInit {
   transform() {
     if (!this.canTransform()) return;
 
+    this.isTransforming = true;
     this.error = '';
     this.errorDetails = '';
     this.success = '';
@@ -868,12 +891,18 @@ export class TransformationTestComponent implements OnInit {
       JSON.parse(this.sourceJson);
     } catch (e) {
       this.error = 'Invalid JSON format in source';
+      this.isTransforming = false;
       return;
     }
 
+    const selectedTemplate = this.templates.find(
+      (t) => t.id === this.selectedTemplateId
+    );
+    
     const request: TransformRequest = {
       sourceJson: this.sourceJson,
       templateId: this.selectedTemplateId,
+      version: selectedTemplate?.version,
     };
 
     // Server always returns HTTP 200 — read everything from the next callback
@@ -927,6 +956,8 @@ export class TransformationTestComponent implements OnInit {
         if (this.annotatedIssueCount > 0) {
           this.buildAnnotatedJson();
         }
+
+        this.isTransforming = false;
       },
       error: (err) => {
         // Only reached on network errors or HTTP 5xx
@@ -935,6 +966,7 @@ export class TransformationTestComponent implements OnInit {
           this.errorDetails = JSON.stringify(err.error.errors, null, 2);
         }
         console.error(err);
+        this.isTransforming = false;
       },
     });
   }
