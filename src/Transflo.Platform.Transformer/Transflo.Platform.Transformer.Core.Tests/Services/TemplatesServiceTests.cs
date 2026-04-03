@@ -211,7 +211,7 @@ public class TemplatesServiceTests
     }
 
     [Fact]
-    public async Task DuplicateAsync_WithLastPublishedOnly_CopiesOnlyPublishedToV1()
+    public async Task DuplicateAsync_WithLatestVersionOnly_CopiesOnlyLatestToV1()
     {
         _templateRepoMock
             .Setup(r => r.GetByIdAsync(SampleTemplate.Id))
@@ -221,11 +221,12 @@ public class TemplatesServiceTests
             .Setup(r => r.GetAllAsync())
             .ReturnsAsync(new List<Template>());
 
-        var vPublished = new TemplateVersion { Id = Guid.NewGuid(), TemplateId = SampleTemplate.Id, Version = 2, Status = TemplateVersionStatus.Published };
+        var v1 = new TemplateVersion { Id = Guid.NewGuid(), TemplateId = SampleTemplate.Id, Version = 1, Status = TemplateVersionStatus.Superseded };
+        var v2 = new TemplateVersion { Id = Guid.NewGuid(), TemplateId = SampleTemplate.Id, Version = 2, Status = TemplateVersionStatus.Published };
 
         _versionRepoMock
-            .Setup(r => r.GetPublishedVersionAsync(SampleTemplate.Id))
-            .ReturnsAsync(vPublished);
+            .Setup(r => r.GetAllVersionsAsync(SampleTemplate.Id))
+            .ReturnsAsync(new List<TemplateVersion> { v1, v2 });
 
         _templateRepoMock
             .Setup(r => r.CreateAsync(It.IsAny<Template>()))
@@ -236,7 +237,7 @@ public class TemplatesServiceTests
             .ReturnsAsync((TemplateVersion v) => { v.Id = Guid.NewGuid(); return v; });
 
         _mappingRepoMock
-            .Setup(r => r.GetByTemplateVersionIdOrderedAsync(vPublished.Id))
+            .Setup(r => r.GetByTemplateVersionIdOrderedAsync(v2.Id))
             .ReturnsAsync(new List<FieldMapping> { new() { SourcePath = "src", TargetPath = "tgt" } });
 
         var result = await _sut.DuplicateAsync(SampleTemplate.Id, new DuplicateTemplateRequest { IncludeAllVersions = false });
