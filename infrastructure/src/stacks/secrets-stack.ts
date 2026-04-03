@@ -16,9 +16,9 @@ export class PlatformSecretsStack extends Stack {
 
         // Shared secret for Transformer Platform team
         this.transformerSecret = new Secret(this, 'transformerSecret', {
-            secretName: 'transformer-platform-secrets',
+            secretName: 'platform/transformer/secrets',
             description: 'Shared secret for Transformer Platform project',
-            removalPolicy: RemovalPolicy.RETAIN,
+            removalPolicy: RemovalPolicy.DESTROY,
         });
     }
 }
