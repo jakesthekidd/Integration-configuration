@@ -90,7 +90,9 @@ builder.Services.AddScoped<ITemplatesService, TemplatesService>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline
-if (app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment()
+    || app.Environment.EnvironmentName.Equals("qa", StringComparison.OrdinalIgnoreCase)
+    || app.Environment.EnvironmentName.Equals("dev", StringComparison.OrdinalIgnoreCase))
 {
     app.UseSwagger();
     app.UseSwaggerUI();
