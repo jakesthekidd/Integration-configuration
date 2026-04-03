@@ -32,7 +32,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAngular", policy =>
     {
-        policy.WithOrigins(config.Cors.AllowedOrigins)
+        policy.WithOrigins(["https://transformer.platform.dev.transflo.com"])
               .AllowAnyMethod()
               .AllowAnyHeader()
               .AllowCredentials();
