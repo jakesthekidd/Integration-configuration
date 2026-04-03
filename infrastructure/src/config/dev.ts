@@ -33,6 +33,7 @@ export const devConfig: AppConfig = {
   albSubnetType: sharedConfig.albSubnetType,
   feAppName: sharedConfig.feAppName,
   env,
+  aspnetcoreEnv: 'Dev',
   ecsClusterName,
   ecsClusterArn,
   rootDomain,
@@ -46,7 +47,7 @@ export const devConfig: AppConfig = {
   transformerapiSubDomain: sharedConfig.transformerapiSubDomain,
 
 
-postgresDBProps: (vpc: IVpc): PrivateRDSConstructProps => {
+  postgresDBProps: (vpc: IVpc): PrivateRDSConstructProps => {
     const sharedProps = {
       vpc,
       instanceClass: InstanceClass.T3,
@@ -59,9 +60,9 @@ postgresDBProps: (vpc: IVpc): PrivateRDSConstructProps => {
       allocatedStorageGiB: sharedConfig.dbAllocatedStorageGiB,
       availabiltyZone: sharedConfig.postgreSQLAvailabilityZone,
       vpn: {
-            cidrs: [
-              sharedConfig.vpnCidr,
-            ]
+        cidrs: [
+          sharedConfig.vpnCidr,
+        ]
       },
     }
 

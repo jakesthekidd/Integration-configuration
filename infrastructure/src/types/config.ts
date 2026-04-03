@@ -7,6 +7,7 @@ export type AppConfig = {
   feAppName: string;
   description: string;
   env: string;
+  aspnetcoreEnv: string;
   region: string;
   apiSubnetType: SubnetType;
   albSubnetType: SubnetType;
