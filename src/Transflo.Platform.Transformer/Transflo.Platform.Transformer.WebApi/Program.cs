@@ -100,6 +100,8 @@ app.UseCors("AllowAngular");
 
 app.MapGet("/health", () => Results.Ok(new { status = "Healthy" }));
 app.MapGet("/", () => Results.Ok("Transformer API is running"));
+app.MapGet("/config", () => Results.Ok(config));
+app.MapGet("/env", () => Results.Ok(app.Environment.EnvironmentName));
 
 app.MapControllers();
 app.Run();
