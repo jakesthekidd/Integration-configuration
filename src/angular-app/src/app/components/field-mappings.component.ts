@@ -527,30 +527,45 @@ export class FieldMappingsComponent implements OnInit, OnChanges {
     });
   }
 
-  createMapping() {
-    this.error = '';
-    this.success = '';
+  private isDuplicateTargetPath(targetPathVal: string, id?: string): boolean {
+    const value = targetPathVal?.trim().toLowerCase();
+    return this.mappings.some((m) => {
+      const samePath = m.targetPath?.trim().toLowerCase() === value;
+      const differentItem = !id || m.id !== id;
 
-    // Always stamp the current Input values in case newMapping was initialized before inputs were set
-    this.newMapping.templateId = this.templateId;
-    this.newMapping.templateVersionId = this.templateVersionId;
-    const payload = this.buildPayload(this.newMapping);
-
-    this.apiService.createFieldMapping(payload).subscribe({
-      next: (response) => {
-        if (response.success) {
-          this.success = 'Field mapping created successfully';
-          this.showCreateForm = false;
-          this.resetForm();
-          this.loadMappings();
-        }
-      },
-      error: (err) => {
-        this.error = err.error?.message || 'Failed to create field mapping';
-        console.error(err);
-      },
+      return samePath && differentItem;
     });
   }
+
+createMapping() {
+  this.error = '';
+  this.success = '';
+
+  this.newMapping.templateId = this.templateId;
+  this.newMapping.templateVersionId = this.templateVersionId;
+
+  if (this.isDuplicateTargetPath(this.newMapping.targetPath)) {
+    this.error = 'Duplicate target path! Failed to create field mapping.';
+    return;
+  }
+
+  const payload = this.buildPayload(this.newMapping);
+
+  this.apiService.createFieldMapping(payload).subscribe({
+    next: (response) => {
+      if (response.success) {
+        this.success = 'Field mapping created successfully';
+        this.showCreateForm = false;
+        this.resetForm();
+        this.loadMappings();
+      }
+    },
+    error: (err) => {
+      this.error = err.error?.message || 'Failed to create field mapping';
+      console.error(err);
+    },
+  });
+}
 
   deleteMapping(id: string) {
     this.generalService
@@ -629,6 +644,11 @@ export class FieldMappingsComponent implements OnInit, OnChanges {
     const updateRequest = this.buildPayload(this.newMapping);
 
 
+    if (this.isDuplicateTargetPath(updateRequest.targetPath, this.editingMapping.id)) {
+      this.error = 'Duplicate target path!  Failed to update field mapping.';
+      return;
+    }
+
     this.apiService.updateFieldMapping(this.editingMapping.id, updateRequest).subscribe({
       next: (response) => {
         if (response.success) {
@@ -651,6 +671,7 @@ export class FieldMappingsComponent implements OnInit, OnChanges {
   }
 
   resetForm() {
+    this.error = '';
     this.newMapping = this.getEmptyMapping();
   }
 

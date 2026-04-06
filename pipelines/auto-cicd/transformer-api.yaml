@@ -48,7 +48,7 @@ stages:
     - template: /pipelines/templates/api/deploy.yaml
       parameters:
         ECS_CLUSTER_NAME: "Dev-Cluster"
-        ECS_SERVICE_NAME: "transformerapiStack-platformtransformerapiStackecsecsserviceServiceA1814572-R1KDjxoIA3rc"
+        ECS_SERVICE_NAME: "transformerapiStack-platformtransformerapiStackecsecsserviceServiceA1814572-1cJn4a4Qtaet"
 
 - stage: qa_promote_and_deploy
   displayName: Promote & Deploy to QA
@@ -91,7 +91,7 @@ stages:
     - template: /pipelines/templates/api/deploy.yaml
       parameters:
         ECS_CLUSTER_NAME: "QA-Cluster"
-        # ECS_SERVICE_NAME: "transformerapiStack-platformtransformerapiStackecsecsserviceServiceA1814572-R1KDjxoIA3rc"
+        # ECS_SERVICE_NAME: "transformerapiStack-platformtransformerapiStackecsecsserviceServiceA1814572-1cJn4a4Qtaet"
 
 - stage: prod_promote_and_deploy
   displayName: Promote & Deploy to Prod
@@ -134,4 +134,4 @@ stages:
     - template: /pipelines/templates/api/deploy.yaml
       parameters:
         ECS_CLUSTER_NAME: "Prod-Cluster"
-        # ECS_SERVICE_NAME: "transformerapiStack-platformtransformerapiStackecsecsserviceServiceA1814572-R1KDjxoIA3rc"
+        # ECS_SERVICE_NAME: "transformerapiStack-platformtransformerapiStackecsecsserviceServiceA1814572-1cJn4a4Qtaet"

@@ -40,16 +40,26 @@ public class DateFormatTransformationStrategy : ITransformationStrategy
             return null;
         }
 
-        var inputFormat = config?.TryGetValue("DateInputFormat", out var inf) == true ? inf?.ToString() : null;
-        var outputFormat = config?.TryGetValue("DateOutputFormat", out var outf) == true
-            ? outf?.ToString() ?? "o"
-            : "o";
+        var inputFormat = config?.TryGetValue(TransformationConfigKeys.DateFormat.DateInputFormat, out var inf) == true
+            ? inf?.ToString()
+            : null;
+
+        var outputFormat = config?.TryGetValue(TransformationConfigKeys.DateFormat.DateOutputFormat, out var outf) == true
+            ? outf?.ToString() ?? TransformationConfigKeys.DateFormat.DefaultOutputFormat
+            : TransformationConfigKeys.DateFormat.DefaultOutputFormat;
 
         DateTimeOffset parsed;
 
         if (!string.IsNullOrEmpty(inputFormat))
         {
-            var formatsToTry = new[] { inputFormat, inputFormat.Replace("zzz", "zz") };
+            var formatsToTry = new[]
+            {
+                inputFormat,
+                inputFormat.Replace(
+                    TransformationConfigKeys.DateFormat.TimezoneOffsetLong,
+                    TransformationConfigKeys.DateFormat.TimezoneOffsetShort)
+            };
+
             if (!DateTimeOffset.TryParseExact(input, formatsToTry,
                     CultureInfo.InvariantCulture,
                     DateTimeStyles.None, out parsed))
@@ -72,8 +82,8 @@ public class DateFormatTransformationStrategy : ITransformationStrategy
             }
         }
 
-        return outputFormat == "o"
-            ? parsed.UtcDateTime.ToString("o")
+        return outputFormat == TransformationConfigKeys.DateFormat.DefaultOutputFormat
+            ? parsed.UtcDateTime.ToString(TransformationConfigKeys.DateFormat.DefaultOutputFormat)
             : parsed.ToString(outputFormat, CultureInfo.InvariantCulture);
     }
 

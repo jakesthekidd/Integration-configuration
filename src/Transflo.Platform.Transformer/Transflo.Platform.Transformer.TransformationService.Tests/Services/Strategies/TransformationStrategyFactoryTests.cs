@@ -47,6 +47,9 @@ public class TransformationStrategyFactoryTests
     [InlineData(TransformationType.ArrayMap)]
     [InlineData(TransformationType.ArrayFlatten)]
     [InlineData(TransformationType.Conditional)]
+    [InlineData(TransformationType.Substring)]
+    [InlineData(TransformationType.Template)]
+    [InlineData(TransformationType.Math)]
     public void GetStrategy_ReturnsStrategy_ForEachRegisteredType(TransformationType type)
     {
         var strategies = new[]
@@ -58,7 +61,10 @@ public class TransformationStrategyFactoryTests
             TransformationType.DateFormat,
             TransformationType.ArrayMap,
             TransformationType.ArrayFlatten,
-            TransformationType.Conditional
+            TransformationType.Conditional,
+            TransformationType.Substring,
+            TransformationType.Template,
+            TransformationType.Math
         }.Select(CreateStrategyMock).Select(m => m.Object);
 
         var factory = new TransformationStrategyFactory(strategies);
@@ -70,10 +76,8 @@ public class TransformationStrategyFactoryTests
     }
 
     [Theory]
-    [InlineData(TransformationType.Math)]
-    [InlineData(TransformationType.Substring)]
-    [InlineData(TransformationType.Template)]
-    public void GetStrategy_ReturnsNull_ForUnimplementedTypes(TransformationType type)
+    [InlineData((TransformationType)999)]
+    public void GetStrategy_ReturnsNull_ForUnknownType(TransformationType type)
     {
         var directMock = CreateStrategyMock(TransformationType.Direct);
         var factory = new TransformationStrategyFactory(

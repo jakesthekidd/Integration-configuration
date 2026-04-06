@@ -22,7 +22,7 @@ public class ArrayMapTransformationStrategy : ITransformationStrategy
     public async Task<object?> ApplyAsync(TransformationContext context)
     {
         var sourcePath = context.Mapping.SourcePath ?? string.Empty;
-        var wildcardIndex = sourcePath.IndexOf("[*]", StringComparison.Ordinal);
+        var wildcardIndex = sourcePath.IndexOf(TransformationConfigKeys.ArrayWildcard, StringComparison.Ordinal);
         if (wildcardIndex < 0)
         {
             _logger.LogWarning("ArrayMap source path must contain [*]: {SourcePath}", sourcePath);
