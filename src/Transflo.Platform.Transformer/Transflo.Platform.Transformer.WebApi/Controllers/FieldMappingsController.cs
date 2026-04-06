@@ -195,7 +195,11 @@ public class FieldMappingsController : ControllerBase
             return NotFound(ApiResponse<object>.ErrorResponse($"Field mapping not found: {id}"));
         }
 
-        await _repo.DeleteAsync(id);
+
+        existing.IsDeleted = true;
+        existing.DeletedAt = DateTime.UtcNow;
+
+        var updated = await _repo.UpdateAsync(existing);
         return NoContent();
     }
 
