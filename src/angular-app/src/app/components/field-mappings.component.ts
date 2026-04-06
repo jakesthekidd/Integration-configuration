@@ -72,18 +72,26 @@ import { LookupTable } from '../models/lookup-table.model';
             </select>
           </div>
           <div class="form-group" *ngIf="newMapping.transformationType === 'Lookup'">
-            <label for="lookupTable">Lookup Table:</label>
+            <label for="lookupTable">
+              Lookup Table: <span class="required">*</span>
+            </label>
             <select
               id="lookupTable"
               [(ngModel)]="newMapping.lookupTableId"
               name="lookupTableId"
+              [required]="newMapping.transformationType === 'Lookup'"
+              #lookupTable="ngModel"
             >
               <option value="">-- Select Lookup Table --</option>
               <option *ngFor="let table of lookupTables" [value]="table.id">
                 {{ table.fieldName }}
               </option>
             </select>
-          </div>
+
+            <div class="error" *ngIf="lookupTable.invalid && lookupTable.touched">
+              Lookup Table is required for Lookup transformation
+            </div>
+        </div>
           <div class="form-group" *ngIf="newMapping.transformationType !== 'Lookup'">
             <label for="transformationConfig">Transformation Config:</label>
             <textarea
