@@ -81,23 +81,26 @@ public class ConditionalTransformationStrategy : ITransformationStrategy
     public async Task<object?> ApplyAsync(TransformationContext context)
     {
         var config = ParseConfig(context.Mapping.TransformationConfig);
-        if (config is null) return null;
+        if (config is null)
+        {
+            return null;
+        }
 
         bool passed;
 
-        if (config.TryGetValue("ConditionGroups", out var groupsRaw)
+        if (config.TryGetValue(TransformationConfigKeys.Conditional.ConditionGroups, out var groupsRaw)
             && groupsRaw is JsonElement groupsEl
             && groupsEl.ValueKind == JsonValueKind.Array
             && groupsEl.GetArrayLength() > 0)
         {
             passed = await EvaluateGroupsAsync(groupsEl, config, context.SourceData);
         }
-        else if (config.TryGetValue("Conditions", out var conditionsRaw)
+        else if (config.TryGetValue(TransformationConfigKeys.Conditional.Conditions, out var conditionsRaw)
             && conditionsRaw is JsonElement conditionsEl
             && conditionsEl.ValueKind == JsonValueKind.Array
             && conditionsEl.GetArrayLength() > 0)
         {
-            var logic = ResolveLogic(config, "ConditionLogic");
+            var logic = ResolveLogic(config, TransformationConfigKeys.Conditional.ConditionLogic);
             passed = await EvaluateConditionsAsync(conditionsEl, logic, context.SourceData);
         }
         else
@@ -106,11 +109,13 @@ public class ConditionalTransformationStrategy : ITransformationStrategy
         }
 
         if (passed && IsMapSourceOnTrue(config))
+        {
             return await _jsonParser.GetValueAtPathAsync(context.SourceData, context.Mapping.SourcePath);
+        }
 
         return passed
-            ? await ResolveOutputAsync(config, "TruePath", "TrueValue", context.SourceData)
-            : await ResolveOutputAsync(config, "FalsePath", "FalseValue", context.SourceData);
+            ? await ResolveOutputAsync(config, TransformationConfigKeys.Conditional.TruePath, TransformationConfigKeys.Conditional.TrueValue, context.SourceData)
+            : await ResolveOutputAsync(config, TransformationConfigKeys.Conditional.FalsePath, TransformationConfigKeys.Conditional.FalseValue, context.SourceData);
     }
 
     // ── Group evaluation ──────────────────────────────────────────────────────
@@ -120,30 +125,36 @@ public class ConditionalTransformationStrategy : ITransformationStrategy
         Dictionary<string, object> config,
         Dictionary<string, object> sourceData)
     {
-        var groupLogic = ResolveLogic(config, "GroupLogic");
+        var groupLogic = ResolveLogic(config, TransformationConfigKeys.Conditional.GroupLogic);
         var groupResults = new List<bool>();
 
         foreach (var group in groupsEl.EnumerateArray())
         {
-            if (group.ValueKind != JsonValueKind.Object) continue;
+            if (group.ValueKind != JsonValueKind.Object)
+            {
+                continue;
+            }
 
-            if (!group.TryGetProperty("Conditions", out var condEl)
+            if (!group.TryGetProperty(TransformationConfigKeys.Conditional.Conditions, out var condEl)
                 || condEl.ValueKind != JsonValueKind.Array
                 || condEl.GetArrayLength() == 0)
             {
                 continue;
             }
 
-            var innerLogic = group.TryGetProperty("Logic", out var logicEl)
-                ? logicEl.GetString()?.ToUpperInvariant() ?? "AND"
-                : "AND";
+            var innerLogic = group.TryGetProperty(TransformationConfigKeys.Conditional.Logic, out var logicEl)
+                ? logicEl.GetString()?.ToUpperInvariant() ?? TransformationConfigKeys.Conditional.DefaultLogic
+                : TransformationConfigKeys.Conditional.DefaultLogic;
 
             groupResults.Add(await EvaluateConditionsAsync(condEl, innerLogic, sourceData));
         }
 
-        if (groupResults.Count == 0) return false;
+        if (groupResults.Count == 0)
+        {
+            return false;
+        }
 
-        return groupLogic == "OR"
+        return groupLogic == ConditionalOperators.Or
             ? groupResults.Any(r => r)
             : groupResults.All(r => r);
     }
@@ -161,7 +172,7 @@ public class ConditionalTransformationStrategy : ITransformationStrategy
             results.Add(await EvaluateConditionAsync(condition, sourceData));
         }
 
-        return logic == "OR"
+        return logic == ConditionalOperators.Or
             ? results.Any(r => r)
             : results.All(r => r);
     }
@@ -170,8 +181,8 @@ public class ConditionalTransformationStrategy : ITransformationStrategy
 
     private async Task<bool> EvaluateConditionAsync(JsonElement condition, Dictionary<string, object> sourceData)
     {
-        if (!condition.TryGetProperty("Field", out var fieldEl)
-            || !condition.TryGetProperty("Operator", out var operatorEl))
+        if (!condition.TryGetProperty(TransformationConfigKeys.Conditional.Field, out var fieldEl)
+            || !condition.TryGetProperty(TransformationConfigKeys.Conditional.Operator, out var operatorEl))
         {
             return false;
         }
@@ -182,51 +193,51 @@ public class ConditionalTransformationStrategy : ITransformationStrategy
         var raw = await _jsonParser.GetValueAtPathAsync(sourceData, field);
         var fieldValue = raw is JsonElement je ? je.GetString() : raw?.ToString();
 
-        var conditionValue = condition.TryGetProperty("Value", out var valueEl)
+        var conditionValue = condition.TryGetProperty(TransformationConfigKeys.Conditional.Value, out var valueEl)
             ? valueEl.GetString()
             : null;
 
         return op switch
         {
-            "equals" or "eq"
+            ConditionalOperators.Equals or ConditionalOperators.Eq
                 => string.Equals(fieldValue, conditionValue, StringComparison.OrdinalIgnoreCase),
 
-            "notequals" or "ne"
+            ConditionalOperators.NotEquals or ConditionalOperators.Ne
                 => !string.Equals(fieldValue, conditionValue, StringComparison.OrdinalIgnoreCase),
 
-            "contains"
+            ConditionalOperators.Contains
                 => fieldValue?.Contains(conditionValue ?? string.Empty, StringComparison.OrdinalIgnoreCase) == true,
 
-            "startswith"
+            ConditionalOperators.StartsWith
                 => fieldValue?.StartsWith(conditionValue ?? string.Empty, StringComparison.OrdinalIgnoreCase) == true,
 
-            "endswith"
+            ConditionalOperators.EndsWith
                 => fieldValue?.EndsWith(conditionValue ?? string.Empty, StringComparison.OrdinalIgnoreCase) == true,
 
-            "greaterthan" or "gt"
+            ConditionalOperators.GreaterThan or ConditionalOperators.Gt
                 => CompareNumeric(fieldValue, conditionValue) > 0,
 
-            "lessthan" or "lt"
+            ConditionalOperators.LessThan or ConditionalOperators.Lt
                 => CompareNumeric(fieldValue, conditionValue) < 0,
 
-            "greaterthanorequals" or "gte"
+            ConditionalOperators.GreaterThanOrEquals or ConditionalOperators.Gte
                 => CompareNumeric(fieldValue, conditionValue) >= 0,
 
-            "lessthanorequals" or "lte"
+            ConditionalOperators.LessThanOrEquals or ConditionalOperators.Lte
                 => CompareNumeric(fieldValue, conditionValue) <= 0,
 
-            "isempty"
+            ConditionalOperators.IsEmpty
                 => string.IsNullOrEmpty(fieldValue),
 
-            "isnotempty"
+            ConditionalOperators.IsNotEmpty
                 => !string.IsNullOrEmpty(fieldValue),
 
-            "in"
+            ConditionalOperators.In
                 => conditionValue?
                        .Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
                        .Any(v => string.Equals(v, fieldValue, StringComparison.OrdinalIgnoreCase)) == true,
 
-            "notin"
+            ConditionalOperators.NotIn
                 => conditionValue?
                        .Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
                        .All(v => !string.Equals(v, fieldValue, StringComparison.OrdinalIgnoreCase)) != false,
@@ -249,32 +260,39 @@ public class ConditionalTransformationStrategy : ITransformationStrategy
         Dictionary<string, object> sourceData)
     {
         if (config.TryGetValue(pathKey, out var pathRaw) && pathRaw?.ToString() is { Length: > 0 } path)
+        {
             return await _jsonParser.GetValueAtPathAsync(sourceData, path);
+        }
 
         return config.TryGetValue(valueKey, out var literal) ? literal?.ToString() : null;
     }
 
     private static bool IsMapSourceOnTrue(Dictionary<string, object> config) =>
-        config.TryGetValue("MapSourceOnTrue", out var raw)
+        config.TryGetValue(TransformationConfigKeys.Conditional.MapSourceOnTrue, out var raw)
         && raw is JsonElement el
         && el.ValueKind == JsonValueKind.True;
 
     private static string ResolveLogic(Dictionary<string, object> config, string key) =>
         config.TryGetValue(key, out var raw)
-            ? raw?.ToString()?.ToUpperInvariant() ?? "AND"
-            : "AND";
+            ? raw?.ToString()?.ToUpperInvariant() ?? TransformationConfigKeys.Conditional.DefaultLogic
+            : TransformationConfigKeys.Conditional.DefaultLogic;
 
     private static int CompareNumeric(string? a, string? b)
     {
         if (double.TryParse(a, out var da) && double.TryParse(b, out var db))
+        {
             return da.CompareTo(db);
+        }
 
         return string.Compare(a, b, StringComparison.OrdinalIgnoreCase);
     }
 
     private static Dictionary<string, object>? ParseConfig(string? configJson)
     {
-        if (string.IsNullOrWhiteSpace(configJson)) return null;
+        if (string.IsNullOrWhiteSpace(configJson))
+        {
+            return null;
+        }
         try { return JsonSerializer.Deserialize<Dictionary<string, object>>(configJson); }
         catch { return null; }
     }
