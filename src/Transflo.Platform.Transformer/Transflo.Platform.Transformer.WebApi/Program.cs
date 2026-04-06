@@ -80,6 +80,9 @@ builder.Services.AddScoped<ITransformationStrategy, DateFormatTransformationStra
 builder.Services.AddScoped<ITransformationStrategy, ArrayMapTransformationStrategy>();
 builder.Services.AddScoped<ITransformationStrategy, ArrayFlattenTransformationStrategy>();
 builder.Services.AddScoped<ITransformationStrategy, ConditionalTransformationStrategy>();
+builder.Services.AddScoped<ITransformationStrategy, SubstringTransformationStrategy>();
+builder.Services.AddScoped<ITransformationStrategy, TemplateTransformationStrategy>();
+builder.Services.AddScoped<ITransformationStrategy, MathTransformationStrategy>();
 builder.Services.AddScoped<ITransformationStrategyFactory, TransformationStrategyFactory>();
 
 builder.Services.AddScoped<ITransformationService, TransformationService>();
