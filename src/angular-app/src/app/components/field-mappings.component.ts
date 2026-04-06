@@ -508,7 +508,7 @@ export class FieldMappingsComponent implements OnInit, OnChanges {
 
   isDuplicateTargetPath(targetPathVal: string, id?: string): boolean {
         const value = targetPathVal?.trim().toLowerCase();
-      debugger;
+      
         return this.mappings.some(m => {
             const samePath = m.targetPath?.trim().toLowerCase() === value;
             const differentItem = !id || m.id !== id;
