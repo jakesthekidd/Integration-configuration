@@ -34,5 +34,5 @@ public class TemplateVersion : BaseEntity
     public virtual Template? Template { get; set; }
 
     public virtual ICollection<FieldMapping> FieldMappings { get; set; } = new List<FieldMapping>();
-    public virtual ICollection<TemplateAssignment> TemplateAssignments { get; set; } = new List<TemplateAssignment>();
+    public virtual ICollection<ApiClientTemplateVersion> ApiClientTemplateVersions { get; set; } = new List<ApiClientTemplateVersion>();
 }

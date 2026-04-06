@@ -6,6 +6,7 @@ public sealed record TemplateVersionResponse
     public Guid Id { get; set; }
 
     public Guid TemplateId { get; set; }
+    public string? TemplateName { get; set; }
     public int Version { get; set; }
     public int? BaseVersion { get; set; }
     public string Status { get; set; } = string.Empty;

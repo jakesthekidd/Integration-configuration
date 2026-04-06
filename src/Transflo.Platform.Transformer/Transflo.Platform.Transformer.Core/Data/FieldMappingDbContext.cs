@@ -14,7 +14,8 @@ public class FieldMappingDbContext : DbContext
     public DbSet<Partner> Partners { get; set; } = null!;
     public DbSet<Template> Templates { get; set; } = null!;
     public DbSet<TemplateVersion> TemplateVersions { get; set; } = null!;
-    public DbSet<TemplateAssignment> TemplateAssignments { get; set; } = null!;
+    public DbSet<ApiClient> ApiClients { get; set; } = null!;
+    public DbSet<ApiClientTemplateVersion> ApiClientTemplateVersions { get; set; } = null!;
     public DbSet<FieldMapping> FieldMappings { get; set; } = null!;
     public DbSet<LookupTable> LookupTables { get; set; } = null!;
     public DbSet<TransformationLog> TransformationLogs { get; set; } = null!;
@@ -59,25 +60,29 @@ public class FieldMappingDbContext : DbContext
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
-        // TemplateAssignment configuration
-        modelBuilder.Entity<TemplateAssignment>(entity =>
+        // ApiClient configuration
+        modelBuilder.Entity<ApiClient>(entity =>
         {
-            entity.HasIndex(e => e.TemplateVersionId);
-            entity.HasIndex(e => e.SourcePartnerId);
-            entity.HasIndex(e => e.TargetPartnerId);
+            entity.HasIndex(e => e.Name);
+            entity.HasIndex(e => e.IsActive);
+        });
 
-            entity.HasOne(e => e.TemplateVersion)
-                .WithMany(v => v.TemplateAssignments)
-                .HasForeignKey(e => e.TemplateVersionId)
+        // ApiClientTemplateVersion configuration
+        modelBuilder.Entity<ApiClientTemplateVersion>(entity =>
+        {
+            entity.HasIndex(e => e.ApiClientId);
+            entity.HasIndex(e => e.TemplateVersionId);
+            entity.HasIndex(e => new { e.ApiClientId, e.TemplateVersionId }).IsUnique();
+
+            entity.HasOne(e => e.ApiClient)
+                .WithMany(c => c.ApiClientTemplateVersions)
+                .HasForeignKey(e => e.ApiClientId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            entity.HasOne(e => e.SourcePartner)
-                .WithMany()
-                .HasForeignKey(e => e.SourcePartnerId);
-
-            entity.HasOne(e => e.TargetPartner)
-                .WithMany()
-                .HasForeignKey(e => e.TargetPartnerId);
+            entity.HasOne(e => e.TemplateVersion)
+                .WithMany(v => v.ApiClientTemplateVersions)
+                .HasForeignKey(e => e.TemplateVersionId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         // FieldMapping configuration
@@ -134,32 +139,31 @@ public class FieldMappingDbContext : DbContext
 
     private void SeedData(ModelBuilder modelBuilder)
     {
-        var now = DateTime.UtcNow;
+        var seedDate = new DateTime(2024, 3, 1, 0, 0, 0, DateTimeKind.Utc);
 
-        // Seed TMS Systems
         modelBuilder.Entity<TmsSystem>().HasData(
             new TmsSystem
             {
-                Id = Guid.Parse("00000000-0000-0000-0000-000000000001"),
+                Id = Guid.Parse("b5f3a9c2-7d4e-4f8b-9a1c-3e6d2b0f8c47"),
                 Name = "TruckMate",
                 DisplayName = "TruckMate TMS",
                 Description = "TruckMate Transportation Management System",
                 Version = "1.0",
                 IsActive = true,
-                CreatedAt = now,
-                UpdatedAt = now,
+                CreatedAt = seedDate,
+                UpdatedAt = seedDate,
                 CreatedBy = "System"
             },
             new TmsSystem
             {
-                Id = Guid.Parse("00000000-0000-0000-0000-000000000002"),
+                Id = Guid.Parse("a2c8e4d6-1f3b-4a7c-8e9d-5b0c2f6a4e83"),
                 Name = "McLeod",
                 DisplayName = "McLeod Software",
                 Description = "McLeod Transportation Management System",
                 Version = "1.0",
                 IsActive = true,
-                CreatedAt = now,
-                UpdatedAt = now,
+                CreatedAt = seedDate,
+                UpdatedAt = seedDate,
                 CreatedBy = "System"
             }
         );
