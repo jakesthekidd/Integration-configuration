@@ -6,6 +6,7 @@ import { PlatformUIStack } from "./stacks/platform-ui-stack";
 import { PlatformEcrStack } from "./stacks/ecr-stack";
 import { PlatformPostgresStack } from "./stacks/postgres-rds-stack";
 import { transformerapiStack } from "./stacks/ECS/transformer.api-stack";
+import { PlatformSecretsStack } from "./stacks/secrets-stack";
 
 // Determine environment
 const env = process.env.ENV ?? "dev";
@@ -19,6 +20,8 @@ const PlatformUiStack = new PlatformUIStack(app, config.platformUIStackName, { e
 
 const ecrStack = new PlatformEcrStack(app, config.ecrStackName, { env: cdkEnv });
 
+const secretsStack = new PlatformSecretsStack(app, config.secretsStackName, { env: cdkEnv });
+
 const postgresStack = new PlatformPostgresStack(app, config.postgresStackName, { env: cdkEnv });
 
-const ecstransformerapiStack = new transformerapiStack (app, config.transformerapiStackName, { env: cdkEnv, ecrStack: ecrStack });
+const ecstransformerapiStack = new transformerapiStack (app, config.transformerapiStackName, { env: cdkEnv, ecrStack: ecrStack, secretsStack: secretsStack });
