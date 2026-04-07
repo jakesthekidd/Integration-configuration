@@ -111,7 +111,13 @@ import { environment } from '../../environments/environment';
                 <td>V{{ template.version }}</td>
                 <td>{{ template.status }}</td>
                 <td>
-                  <button (click)="selectedApiDetails = template" class="btn btn-secondary btn-sm" style="margin-right: 8px;">API Details</button>
+                  <button
+                    (click)="selectedApiDetails = template"
+                    class="btn btn-secondary btn-sm"
+                    style="margin-right: 8px;"
+                  >
+                    API Details
+                  </button>
                   <button (click)="removeTemplate(template.id)" class="btn btn-danger btn-sm">Remove</button>
                 </td>
               </tr>
@@ -122,19 +128,37 @@ import { environment } from '../../environments/environment';
       </div>
 
       <!-- API Details Modal Overlay -->
-      <div class="modal-overlay" *ngIf="selectedApiDetails" (click)="selectedApiDetails = null" tabindex="0" role="button" (keydown.enter)="selectedApiDetails = null" aria-label="Close modal">
-        <div class="modal-container" (click)="$event.stopPropagation()" tabindex="0" role="document" (keydown.enter)="$event.stopPropagation()">
+      <div
+        class="modal-overlay"
+        *ngIf="selectedApiDetails"
+        (click)="selectedApiDetails = null"
+        tabindex="0"
+        role="button"
+        (keydown.enter)="selectedApiDetails = null"
+        aria-label="Close modal"
+      >
+        <div
+          class="modal-container"
+          (click)="$event.stopPropagation()"
+          tabindex="0"
+          role="document"
+          (keydown.enter)="$event.stopPropagation()"
+        >
           <div class="modal-header">
             <h4>API Details for {{ selectedApiDetails.templateName }} V{{ selectedApiDetails.version }}</h4>
-            <button class="btn-close-modal" (click)="selectedApiDetails = null" aria-label="Close API Details">&times;</button>
+            <button class="btn-close-modal" (click)="selectedApiDetails = null" aria-label="Close API Details">
+              &times;
+            </button>
           </div>
-          
+
           <div class="modal-body">
             <div class="snippet-section">
               <h5>Transformation API</h5>
               <div class="http-route"><strong>POST</strong> {{ apiUrl }}/transform</div>
               <div class="snippet-box">
-                <button class="btn-copy" (click)="copySnippet(getTransformPayload(selectedApiDetails))">Copy JSON</button>
+                <button class="btn-copy" (click)="copySnippet(getTransformPayload(selectedApiDetails))">
+                  Copy JSON
+                </button>
                 <pre><code>{{ getTransformPayload(selectedApiDetails) }}</code></pre>
               </div>
             </div>
@@ -143,7 +167,9 @@ import { environment } from '../../environments/environment';
               <h5>Preview / Validate API</h5>
               <div class="http-route"><strong>POST</strong> {{ apiUrl }}/transform/preview</div>
               <div class="snippet-box">
-                <button class="btn-copy" (click)="copySnippet(getTransformPayload(selectedApiDetails))">Copy JSON</button>
+                <button class="btn-copy" (click)="copySnippet(getTransformPayload(selectedApiDetails))">
+                  Copy JSON
+                </button>
                 <pre><code>{{ getTransformPayload(selectedApiDetails) }}</code></pre>
               </div>
             </div>
@@ -303,7 +329,7 @@ import { environment } from '../../environments/environment';
         width: 100%;
         max-width: 700px;
         border-radius: 8px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         display: flex;
         flex-direction: column;
         max-height: 90vh;
@@ -410,7 +436,7 @@ export class IntegrationsComponent implements OnInit {
   constructor(
     private apiService: ApiService,
     private generalService: GeneralService,
-  ) { }
+  ) {}
 
   @HostListener('window:keydown.escape', ['$event'])
   handleKeyDown(_event: KeyboardEvent) {
@@ -558,7 +584,7 @@ export class IntegrationsComponent implements OnInit {
     const payload = {
       templateId: template.templateId,
       version: template.version,
-      sourceJson: '{ "your": "data" }'
+      sourceJson: '{ "your": "data" }',
     };
     return JSON.stringify(payload, null, 2);
   }
@@ -566,7 +592,7 @@ export class IntegrationsComponent implements OnInit {
   copySnippet(text: string) {
     navigator.clipboard.writeText(text).then(
       () => this.generalService.success('Copied to clipboard!'),
-      () => this.generalService.error('Failed to copy to clipboard')
+      () => this.generalService.error('Failed to copy to clipboard'),
     );
   }
 }
