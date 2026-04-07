@@ -33,6 +33,6 @@ stages:
             parameters:
               ENVIRONMENT: "qa"
               S3_BUCKET_NAME: "transformer-platform-app-qa"
-              CLOUDFRONT_DISTRIBUTION_ID: "E2S3051WWOF0PG"
+              CLOUDFRONT_DISTRIBUTION_ID: "E129XUDMH1HGCR"
               PROJECT_ABBREVIATION: "platform"
               PROJECT_NAME: "platform-transformer"
