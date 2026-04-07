@@ -12,5 +12,6 @@ public enum TransformationType
     Math,
     Substring,
     Constant,
-    Template
+    Template,
+    PrefixMap
 }

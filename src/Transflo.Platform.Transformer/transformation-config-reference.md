@@ -7,6 +7,7 @@ Each section shows the available fields, their types, and multiple real-world ex
 > - The column is stored as **JSONB** (PostgreSQL).
 > - All keys are **case-sensitive** unless noted otherwise.
 > - `null` or an absent `transformation_config` is acceptable for types that do not require one (Constant, ArrayMap).
+> - `PrefixMap` uses `source_path` as a **key prefix**, not an exact field path.
 
 ---
 
@@ -22,6 +23,7 @@ Each section shows the available fields, their types, and multiple real-world ex
 8. [Template](#8-template)
 9. [Math](#9-math)
 10. [Conditional](#10-conditional)
+11. [PrefixMap](#11-prefixmap)
 
 ---
 
@@ -797,3 +799,95 @@ Use `ConditionGroups` to mix AND and OR logic in the same mapping, e.g. `(A AND 
   "FalseValue": "N/A"
 }
 ```
+
+---
+
+## 11. PrefixMap
+
+Scans the source document for all top-level properties whose names share a common prefix, splits each value by a separator, and emits a structured array of objects.
+
+**`source_path`** is the key prefix to match (e.g. `deliveryDriver`). Every property whose name *starts with* the prefix and has at least one additional character is included. Matched keys are sorted lexicographically so numbered suffixes remain in order (`driver1` → `driver2` → `driver3`).
+
+| Key | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `Fields` | `string[]` | Yes | — | Ordered list of property names to assign to each split part |
+| `Separator` | `string` | No | `" "` | String to split each source value on |
+| `SkipEmpty` | `"true"` \| `"false"` | No | `"false"` | When `"true"`, source entries whose value is null or whitespace are omitted from the output array |
+
+> **Part mapping rules**
+> - If a value produces **fewer parts** than `Fields`, the remaining field names are set to `null`.
+> - If a value produces **more parts** than `Fields`, the extra parts are silently ignored.
+> - The prefix match is **case-insensitive**.
+
+### Examples
+
+**Map numbered delivery drivers to a typed array:**
+
+```sql
+source_path           = 'deliveryDriver'
+target_path           = 'drivers'
+transformation_type   = 'PrefixMap'
+```
+```json
+{
+  "Fields": ["firstName", "lastName"]
+}
+```
+
+Source document:
+```json
+{
+  "deliveryDriver1": "Ateeq test",
+  "deliveryDriver2": "Ateeq test1"
+}
+```
+Output:
+```json
+[
+  { "firstName": "Ateeq", "lastName": "test"  },
+  { "firstName": "Ateeq", "lastName": "test1" }
+]
+```
+
+**Map pickup drivers with skip-empty:**
+
+```json
+{
+  "Fields": ["firstName", "lastName"],
+  "SkipEmpty": "true"
+}
+```
+Source: `pickupDriver1 = "John Doe"`, `pickupDriver2 = ""`, `pickupDriver3 = "Jane Smith"`
+→ Only `John Doe` and `Jane Smith` entries are emitted; the blank `pickupDriver2` is omitted.
+
+**Three-part name split:**
+
+```json
+{
+  "Fields": ["firstName", "middleName", "lastName"]
+}
+```
+Source: `contact1 = "John Michael Doe"`
+→ `{ "firstName": "John", "middleName": "Michael", "lastName": "Doe" }`
+
+**Custom separator (comma-delimited):**
+
+```json
+{
+  "Fields": ["firstName", "lastName", "suffix"],
+  "Separator": ","
+}
+```
+Source: `driver1 = "John,Doe,Jr"`
+→ `{ "firstName": "John", "lastName": "Doe", "suffix": "Jr" }`
+
+**Single-field flat list (collect all tag values):**
+
+```json
+{
+  "Fields": ["value"],
+  "SkipEmpty": "true"
+}
+```
+Source: `tag1 = "urgent"`, `tag2 = ""`, `tag3 = "fragile"`
+→ `[{ "value": "urgent" }, { "value": "fragile" }]`

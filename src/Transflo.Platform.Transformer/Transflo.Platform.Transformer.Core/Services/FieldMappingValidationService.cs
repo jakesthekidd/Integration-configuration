@@ -199,6 +199,21 @@ public class FieldMappingValidationService : IFieldMappingValidationService
                     });
                 }
                 break;
+
+            case TransformationType.PrefixMap:
+                var hasPrefixMapFields = config is not null && config.ContainsKey("Fields");
+                if (!hasPrefixMapFields)
+                {
+                    issues.Add(new ValidationIssue
+                    {
+                        Severity = ValidationSeverity.Error,
+                        Code = ValidationCodes.MissingConfigFields,
+                        Message = "PrefixMap transformation requires 'Fields' in TransformationConfig.",
+                        MappingIndex = index,
+                        TargetPath = fieldMapping.TargetPath
+                    });
+                }
+                break;
         }
     }
 
@@ -528,8 +543,10 @@ public class FieldMappingValidationService : IFieldMappingValidationService
 
     private static void ValidateFieldValue(FieldMapping fieldMapping, int index, JsonElement sourceDocument, List<ValidationIssue> issues)
     {
-        // Constant mappings derive their value from config, not from the source document
-        if (fieldMapping.TransformationType == TransformationType.Constant)
+        // Constant mappings derive their value from config, not from the source document.
+        // PrefixMap uses SourcePath as a key prefix, not an exact field path.
+        if (fieldMapping.TransformationType == TransformationType.Constant
+            || fieldMapping.TransformationType == TransformationType.PrefixMap)
         {
             return;
         }
