@@ -77,6 +77,18 @@ public static class TransformationConfigKeys
         public const string DefaultLogic = "AND";
     }
 
+    public static class PrefixMap
+    {
+        /// <summary>Array of field names to map each split part into (e.g. <c>["firstName","lastName"]</c>).</summary>
+        public const string Fields    = "Fields";
+        /// <summary>String to split the source value on. Defaults to a single space.</summary>
+        public const string Separator = "Separator";
+        /// <summary>When <c>"true"</c>, source entries whose value is null or whitespace are omitted from the result array.</summary>
+        public const string SkipEmpty = "SkipEmpty";
+
+        public const string DefaultSeparator = " ";
+    }
+
     /// <summary>Wildcard token used in array source paths (e.g. <c>items[*].field</c>).</summary>
     public const string ArrayWildcard = "[*]";
 

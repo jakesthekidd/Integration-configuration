@@ -83,6 +83,7 @@ builder.Services.AddScoped<ITransformationStrategy, ConditionalTransformationStr
 builder.Services.AddScoped<ITransformationStrategy, SubstringTransformationStrategy>();
 builder.Services.AddScoped<ITransformationStrategy, TemplateTransformationStrategy>();
 builder.Services.AddScoped<ITransformationStrategy, MathTransformationStrategy>();
+builder.Services.AddScoped<ITransformationStrategy, PrefixMapTransformationStrategy>();
 builder.Services.AddScoped<ITransformationStrategyFactory, TransformationStrategyFactory>();
 
 builder.Services.AddScoped<ITransformationService, TransformationService>();

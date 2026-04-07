@@ -50,6 +50,7 @@ public class TransformationStrategyFactoryTests
     [InlineData(TransformationType.Substring)]
     [InlineData(TransformationType.Template)]
     [InlineData(TransformationType.Math)]
+    [InlineData(TransformationType.PrefixMap)]
     public void GetStrategy_ReturnsStrategy_ForEachRegisteredType(TransformationType type)
     {
         var strategies = new[]
@@ -64,7 +65,8 @@ public class TransformationStrategyFactoryTests
             TransformationType.Conditional,
             TransformationType.Substring,
             TransformationType.Template,
-            TransformationType.Math
+            TransformationType.Math,
+            TransformationType.PrefixMap
         }.Select(CreateStrategyMock).Select(m => m.Object);
 
         var factory = new TransformationStrategyFactory(strategies);
