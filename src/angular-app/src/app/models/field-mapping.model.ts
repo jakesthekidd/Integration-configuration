@@ -24,6 +24,7 @@ export interface CreateFieldMappingRequest {
   isRequired: boolean;
   defaultValue?: string;
   validationRules?: string;
+  lookupTableId?: string;
 }
 
 export interface UpdateFieldMappingRequest {
