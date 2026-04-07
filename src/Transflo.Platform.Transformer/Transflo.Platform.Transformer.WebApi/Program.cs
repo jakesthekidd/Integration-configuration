@@ -93,6 +93,13 @@ builder.Services.AddScoped<ITemplatesService, TemplatesService>();
 
 var app = builder.Build();
 
+// Apply database pending migrations if any
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<FieldMappingDbContext>();
+    await dbContext.Database.MigrateAsync();
+}
+
 // Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment()
     || app.Environment.EnvironmentName.Equals("qa", StringComparison.OrdinalIgnoreCase)

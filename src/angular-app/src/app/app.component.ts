@@ -6,6 +6,7 @@ import { LookupTablesComponent } from './components/lookup-tables.component';
 import { TransformationTestComponent } from './components/transformation-test.component';
 import { TransformationLogsComponent } from './components/transformation-logs.component';
 import { CustomersComponent } from './components/customers.component';
+import { IntegrationsComponent } from './components/integrations.component';
 
 @Component({
   selector: 'app-root',
@@ -18,6 +19,7 @@ import { CustomersComponent } from './components/customers.component';
     LookupTablesComponent,
     TransformationTestComponent,
     TransformationLogsComponent,
+    IntegrationsComponent,
   ],
   template: `
     <header>
@@ -29,6 +31,9 @@ import { CustomersComponent } from './components/customers.component';
         <button [class.active]="currentTab === 'lookups'" (click)="currentTab = 'lookups'">Lookup Tables</button>
         <button [class.active]="currentTab === 'test'" (click)="currentTab = 'test'">Test Transform</button>
         <button [class.active]="currentTab === 'logs'" (click)="currentTab = 'logs'">Logs</button>
+        <button [class.active]="currentTab === 'integrations'" (click)="currentTab = 'integrations'">
+          Integrations
+        </button>
       </nav>
     </header>
     <main>
@@ -38,6 +43,7 @@ import { CustomersComponent } from './components/customers.component';
       <app-lookup-tables *ngIf="currentTab === 'lookups'"></app-lookup-tables>
       <app-transformation-test *ngIf="currentTab === 'test'"></app-transformation-test>
       <app-transformation-logs *ngIf="currentTab === 'logs'"></app-transformation-logs>
+      <app-integrations *ngIf="currentTab === 'integrations'"></app-integrations>
     </main>
   `,
   styles: [
