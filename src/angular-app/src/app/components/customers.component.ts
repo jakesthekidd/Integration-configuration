@@ -37,7 +37,14 @@ import { GeneralService } from '../services/general.service';
           <div class="form-row">
             <div class="form-group">
               <label for="customerId">Customer ID <span class="required">*</span></label>
-              <input id="customerId" type="text" [(ngModel)]="formData.customerId" name="customerId" required [disabled]="!!editingCustomer"/>
+              <input
+                id="customerId"
+                type="text"
+                [(ngModel)]="formData.customerId"
+                name="customerId"
+                required
+                [disabled]="!!editingCustomer"
+              />
             </div>
             <div class="form-group">
               <label for="customerName">Customer Name <span class="required">*</span></label>
@@ -80,7 +87,7 @@ import { GeneralService } from '../services/general.service';
             </div>
             <div class="form-group">
               <label for="tonuCode">Tonu Code</label>
-              <input id="tonuCode" type="text" [(ngModel)]="formData.tonuCode" name="tonuCode" class="form-control"/>
+              <input id="tonuCode" type="text" [(ngModel)]="formData.tonuCode" name="tonuCode" class="form-control" />
             </div>
           </div>
 
