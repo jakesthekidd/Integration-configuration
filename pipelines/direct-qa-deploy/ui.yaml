@@ -1,0 +1,37 @@
+name: Transformer UI Direct QA CD
+
+variables:
+  qaBranch: ${{ eq(variables['Build.SourceBranchName'], 'QA') }}
+
+trigger:
+  branches:
+    include:
+      - QA
+  paths:
+    include:
+      - src/angular-app/**
+    exclude:
+      - src/Transflo.Platform.Transformer/**
+      - infrastructure/**
+  batch: true
+pr: none
+
+pool:
+  vmImage: ubuntu-latest
+
+stages:
+  - stage: QA_Deploy
+    displayName: QA Deploy
+    condition: eq(variables['qaBranch'], 'true')
+    jobs:
+      - job: QA_Deploy
+        variables:
+          - template: /pipelines/templates/variables-qa.yaml
+        steps:
+          - template: /pipelines/templates/ui/build_push_and_deploy.yaml
+            parameters:
+              ENVIRONMENT: "qa"
+              S3_BUCKET_NAME: "transformer-platform-app-qa"
+              CLOUDFRONT_DISTRIBUTION_ID: "E2S3051WWOF0PG"
+              PROJECT_ABBREVIATION: "platform"
+              PROJECT_NAME: "platform-transformer"

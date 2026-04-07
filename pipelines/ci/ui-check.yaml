@@ -22,5 +22,5 @@ stages:
         steps:
           - template: /pipelines/templates/ui/check.yaml
             parameters:
-              PROJECT_ABBREVIATION: "carrier"
-              PROJECT_NAME: "carrier-workflow"
+              PROJECT_ABBREVIATION: "platform"
+              PROJECT_NAME: "platform-transformer"

@@ -23,27 +23,9 @@ pool:
   vmImage: ubuntu-latest
 
 stages:
-- stage: manual_approval
-  displayName: QA Approval (Pre-Build)
-  condition: eq(variables['qaBranch'], 'true')
-  jobs:
-  - job: wait_for_approval
-    displayName: Manual Approval Before Build & Deploy
-    pool: server
-    steps:
-    - task: ManualValidation@1
-      inputs:
-        instructions: "Please approve before building and deploying BFF to QA."
-        approvers: |
-          [Workflow AI]\QA-Approvers
-        onTimeout: reject
-        allowApproversToApproveTheirOwnRuns: true
-      timeoutInMinutes: 1440
-
 - stage: transformer_api
   displayName: Build & Push QA Transformer Image
-  dependsOn: manual_approval
-  condition: succeeded()
+  condition: eq(variables['qaBranch'], 'true')
   jobs:
   - job:
     variables:
@@ -68,4 +50,4 @@ stages:
     - template: /pipelines/templates/api/deploy.yaml
       parameters:
         ECS_CLUSTER_NAME: "QA-Cluster"
-        # ECS_SERVICE_NAME: "transformerapiStack-platformtransformerapiStackecsecsserviceServiceA1814572-R1KDjxoIA3rc"
+        ECS_SERVICE_NAME: "transformerapiStack-platformtransformerapiStackecsecsserviceServiceA1814572-1cJn4a4Qtaet"
