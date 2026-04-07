@@ -64,17 +64,19 @@ import { LookupTable } from '../models/lookup-table.model';
           <div class="form-group">
             <label for="transformationType">Transformation Type: <span class="required">*</span></label>
             <select
-              id="transformationType" [(ngModel)]="newMapping.transformationType"
-              name="transformationType" (change)="onTransformationTypeChange()" required>
+              id="transformationType"
+              [(ngModel)]="newMapping.transformationType"
+              name="transformationType"
+              (change)="onTransformationTypeChange()"
+              required
+            >
               <option *ngFor="let type of transformationTypes" [value]="type">
                 {{ type }}
               </option>
             </select>
           </div>
           <div class="form-group" *ngIf="newMapping.transformationType === 'Lookup'">
-            <label for="lookupTable">
-              Lookup Table: <span class="required">*</span>
-            </label>
+            <label for="lookupTable"> Lookup Table: <span class="required">*</span> </label>
             <select
               id="lookupTable"
               [(ngModel)]="newMapping.lookupTableId"
@@ -91,7 +93,7 @@ import { LookupTable } from '../models/lookup-table.model';
             <div class="error" *ngIf="lookupTable.invalid && lookupTable.touched">
               Lookup Table is required for Lookup transformation
             </div>
-        </div>
+          </div>
           <div class="form-group" *ngIf="newMapping.transformationType !== 'Lookup'">
             <label for="transformationConfig">Transformation Config:</label>
             <textarea
@@ -537,35 +539,35 @@ export class FieldMappingsComponent implements OnInit, OnChanges {
     });
   }
 
-createMapping() {
-  this.error = '';
-  this.success = '';
+  createMapping() {
+    this.error = '';
+    this.success = '';
 
-  this.newMapping.templateId = this.templateId;
-  this.newMapping.templateVersionId = this.templateVersionId;
+    this.newMapping.templateId = this.templateId;
+    this.newMapping.templateVersionId = this.templateVersionId;
 
-  if (this.isDuplicateTargetPath(this.newMapping.targetPath)) {
-    this.error = 'Duplicate target path! Failed to create field mapping.';
-    return;
+    if (this.isDuplicateTargetPath(this.newMapping.targetPath)) {
+      this.error = 'Duplicate target path! Failed to create field mapping.';
+      return;
+    }
+
+    const payload = this.buildPayload(this.newMapping);
+
+    this.apiService.createFieldMapping(payload).subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.success = 'Field mapping created successfully';
+          this.showCreateForm = false;
+          this.resetForm();
+          this.loadMappings();
+        }
+      },
+      error: (err) => {
+        this.error = err.error?.message || 'Failed to create field mapping';
+        console.error(err);
+      },
+    });
   }
-
-  const payload = this.buildPayload(this.newMapping);
-
-  this.apiService.createFieldMapping(payload).subscribe({
-    next: (response) => {
-      if (response.success) {
-        this.success = 'Field mapping created successfully';
-        this.showCreateForm = false;
-        this.resetForm();
-        this.loadMappings();
-      }
-    },
-    error: (err) => {
-      this.error = err.error?.message || 'Failed to create field mapping';
-      console.error(err);
-    },
-  });
-}
 
   deleteMapping(id: string) {
     this.generalService
@@ -601,19 +603,17 @@ createMapping() {
     this.error = '';
     this.success = '';
     this.refreshPathSuggestions();
-  
+
     let lookupTableId = '';
-  
+
     try {
-      const config = mapping.transformationConfig
-        ? JSON.parse(mapping.transformationConfig)
-        : null;
-  
+      const config = mapping.transformationConfig ? JSON.parse(mapping.transformationConfig) : null;
+
       lookupTableId = config?.LookupTableId || '';
     } catch {
       lookupTableId = '';
     }
-  
+
     this.newMapping = {
       templateId: this.templateId,
       templateVersionId: this.templateVersionId,
@@ -625,14 +625,13 @@ createMapping() {
       isRequired: mapping.isRequired,
       defaultValue: mapping.defaultValue || '',
       validationRules: mapping.validationRules || '',
-      lookupTableId
+      lookupTableId,
     };
-  
+
     setTimeout(() => {
       document.querySelector('.form-container')?.scrollIntoView({ behavior: 'smooth' });
     }, 100);
   }
-  
 
   updateMapping() {
     if (!this.editingMapping) return;
@@ -640,9 +639,7 @@ createMapping() {
     this.error = '';
     this.success = '';
 
-
     const updateRequest = this.buildPayload(this.newMapping);
-
 
     if (this.isDuplicateTargetPath(updateRequest.targetPath, this.editingMapping.id)) {
       this.error = 'Duplicate target path!  Failed to update field mapping.';
@@ -687,7 +684,7 @@ createMapping() {
       isRequired: false,
       defaultValue: '',
       validationRules: '',
-      lookupTableId: '' 
+      lookupTableId: '',
     };
   }
   loadLookupTables() {
@@ -702,7 +699,7 @@ createMapping() {
         console.error(err);
       },
     });
-    }
+  }
 
   onTransformationTypeChange() {
     if (this.newMapping.transformationType !== 'Lookup') {
@@ -711,20 +708,20 @@ createMapping() {
   }
 
   private buildPayload(mapping: CreateFieldMappingRequest) {
-    let transformationConfig: string = mapping.transformationConfig ?? "";
-  
-    if (mapping.transformationType === "Lookup" && mapping.lookupTableId) {
+    let transformationConfig: string = mapping.transformationConfig ?? '';
+
+    if (mapping.transformationType === 'Lookup' && mapping.lookupTableId) {
       transformationConfig = JSON.stringify({
-        LookupTableId: mapping.lookupTableId
+        LookupTableId: mapping.lookupTableId,
       });
     } else {
-      transformationConfig = mapping.transformationConfig ?? "";
+      transformationConfig = mapping.transformationConfig ?? '';
     }
-  
+
     return {
       ...mapping,
       transformationConfig,
-      lookupTableId: undefined
+      lookupTableId: undefined,
     };
   }
 }

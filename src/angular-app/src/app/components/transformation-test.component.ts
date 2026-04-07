@@ -112,14 +112,14 @@ import { MappingIssue, TransformRequest, TransformResult } from '../models/trans
 
       <!-- Action bar -->
       <div class="action-bar">
-      <button class="btn-primary btn-large" (click)="transform()" [disabled]="!canTransform() || isTransforming">
-      <span *ngIf="!isTransforming">Transform</span>
+        <button class="btn-primary btn-large" (click)="transform()" [disabled]="!canTransform() || isTransforming">
+          <span *ngIf="!isTransforming">Transform</span>
 
-      <span *ngIf="isTransforming" class="btn-spinner-wrapper">
-        Transforming...
-        <span class="btn-spinner"></span>
-      </span>
-    </button>
+          <span *ngIf="isTransforming" class="btn-spinner-wrapper">
+            Transforming...
+            <span class="btn-spinner"></span>
+          </span>
+        </button>
       </div>
 
       <!-- Status messages -->
@@ -738,7 +738,7 @@ export class TransformationTestComponent implements OnInit {
   annotatedSourceHtml: SafeHtml = '';
   isDragOver = false;
   isParsing = false;
-  isTransforming : boolean = false;
+  isTransforming: boolean = false;
 
   constructor(
     private apiService: ApiService,
@@ -895,10 +895,8 @@ export class TransformationTestComponent implements OnInit {
       return;
     }
 
-    const selectedTemplate = this.templates.find(
-      (t) => t.id === this.selectedTemplateId
-    );
-    
+    const selectedTemplate = this.templates.find((t) => t.id === this.selectedTemplateId);
+
     const request: TransformRequest = {
       sourceJson: this.sourceJson,
       templateId: this.selectedTemplateId,
