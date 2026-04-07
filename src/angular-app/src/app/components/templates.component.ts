@@ -465,6 +465,7 @@ type Screen = 'list' | 'detail' | 'version';
           [templateName]="selectedTemplate.name + ' v' + selectedVersionObj.version"
           [sampleInputJson]="selectedTemplate.sampleInputJson"
           [sourceSchema]="selectedTemplate.sourceSchema"
+          [targetSchema]="selectedTemplate.targetSchema"
           [isReadonly]="isMappingReadonly()"
         >
         </app-field-mappings>
