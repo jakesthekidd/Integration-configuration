@@ -29,7 +29,6 @@ import {
   CreateApiClientRequest,
   UpdateApiClientRequest,
   ApiClientListResponse,
-  ApiClientTemplateAssignmentRequest,
 } from '../models/api-client.model';
 import { TemplateVersionResponse } from '../models/template.model';
 
@@ -39,7 +38,7 @@ import { TemplateVersionResponse } from '../models/template.model';
 export class ApiService {
   private apiUrl = environment.apiUrl;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   // API Clients
   getApiClients(): Observable<ApiResponse<ApiClientListResponse>> {

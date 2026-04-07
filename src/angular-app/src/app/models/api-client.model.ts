@@ -1,5 +1,3 @@
-import { TemplateVersionResponse } from './template.model';
-
 export interface ApiClient {
   id: string;
   name: string;

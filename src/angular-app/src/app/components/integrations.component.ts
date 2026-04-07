@@ -425,7 +425,7 @@ export class IntegrationsComponent implements OnInit {
 
   selectedClient: ApiClient | null = null;
   assignedTemplates: TemplateVersionResponse[] = [];
-  availableTemplatesGrouped: any[] = [];
+  availableTemplatesGrouped: { id: string; name: string; versions: TemplateVersionResponse[] }[] = [];
   selectedTemplateId: string | null = null;
   selectedApiDetails: TemplateVersionResponse | null = null;
 
@@ -436,7 +436,7 @@ export class IntegrationsComponent implements OnInit {
   constructor(
     private apiService: ApiService,
     private generalService: GeneralService,
-  ) {}
+  ) { }
 
   @HostListener('window:keydown.escape', ['$event'])
   handleKeyDown(_event: KeyboardEvent) {
