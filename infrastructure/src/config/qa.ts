@@ -37,6 +37,7 @@ export const qaConfig: AppConfig = {
   indexFile,
   platformUIStackName: sharedConfig.plaformUIStackName,
   ecrStackName: sharedConfig.ecrStackName,
+  secretsStackName: sharedConfig.secretsStackName,
   postgresStackName: sharedConfig.postgresStackName,
   transformerapiStackName: sharedConfig.transformerapiStackName,
   transformerapiSubDomain: sharedConfig.transformerapiSubDomain,
