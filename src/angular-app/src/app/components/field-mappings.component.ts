@@ -454,8 +454,8 @@ export class FieldMappingsComponent implements OnInit, OnChanges {
   refreshMappingData() {
     if (this.templateId && this.templateVersionId) {
       this.loadMappings();
-        this.loadSourcePathsFromSourceSchema();
-        this.loadTargetPathsFromTargetSchema();
+      this.loadSourcePathsFromSourceSchema();
+      this.loadTargetPathsFromTargetSchema();
     }
   }
 
@@ -493,35 +493,35 @@ export class FieldMappingsComponent implements OnInit, OnChanges {
     });
   }
 
-    private loadSourcePathsFromSourceSchema(): void {
-        if (!this.sourceSchema) return;
+  private loadSourcePathsFromSourceSchema(): void {
+    if (!this.sourceSchema) return;
 
-        this.apiService.parseJson(this.sourceSchema).subscribe({
-            next: (response) => {
-                if (response.success && response.data?.fields) {
-                    const parsedPaths: string[] = Object.keys(response.data.fields);
-                    this.sourcePaths = [...new Set([...this.sourcePaths, ...parsedPaths])].sort();
-                    console.log(this.sourcePaths);
-                }
-            },
-            error: (err) => console.warn('Could not parse Source Schema JSON for path suggestions', err),
-        });
-    }
+    this.apiService.parseJson(this.sourceSchema).subscribe({
+      next: (response) => {
+        if (response.success && response.data?.fields) {
+          const parsedPaths: string[] = Object.keys(response.data.fields);
+          this.sourcePaths = [...new Set([...this.sourcePaths, ...parsedPaths])].sort();
+          console.log(this.sourcePaths);
+        }
+      },
+      error: (err) => console.warn('Could not parse Source Schema JSON for path suggestions', err),
+    });
+  }
 
-    private loadTargetPathsFromTargetSchema(): void {
-        if (!this.targetSchema) return;
+  private loadTargetPathsFromTargetSchema(): void {
+    if (!this.targetSchema) return;
 
-        this.apiService.parseJson(this.targetSchema).subscribe({
-            next: (response) => {
-                if (response.success && response.data?.fields) {
-                    const parsedPaths: string[] = Object.keys(response.data.fields);
-                    this.targetPaths = [...new Set([...this.targetPaths, ...parsedPaths])].sort();
-                    console.log(this.targetPaths);
-                }
-            },
-            error: (err) => console.warn('Could not parse Target Schema JSON for path suggestions', err),
-        });
-    }
+    this.apiService.parseJson(this.targetSchema).subscribe({
+      next: (response) => {
+        if (response.success && response.data?.fields) {
+          const parsedPaths: string[] = Object.keys(response.data.fields);
+          this.targetPaths = [...new Set([...this.targetPaths, ...parsedPaths])].sort();
+          console.log(this.targetPaths);
+        }
+      },
+      error: (err) => console.warn('Could not parse Target Schema JSON for path suggestions', err),
+    });
+  }
 
   private isDuplicateTargetPath(targetPathVal: string, id?: string): boolean {
     const value = targetPathVal?.trim().toLowerCase();
