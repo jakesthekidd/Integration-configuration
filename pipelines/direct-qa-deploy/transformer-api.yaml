@@ -2,7 +2,6 @@ name: "Transformer Direct QA CI/CD"
 
 variables:
   qaBranch: ${{ eq(variables['Build.SourceBranchName'], 'QA') }}
-  isManual: ${{ eq(variables['Build.Reason'], 'Manual') }}
   tags: |
     latest
     $(Build.BuildId)-qa
@@ -26,7 +25,7 @@ pool:
 stages:
 - stage: transformer_api
   displayName: Build & Push QA Transformer Image
-  condition: or(eq(variables['qaBranch'], 'true'), eq(variables['isManual'], 'true'))
+  condition: eq(variables['qaBranch'], 'true')
   jobs:
   - job:
     variables:

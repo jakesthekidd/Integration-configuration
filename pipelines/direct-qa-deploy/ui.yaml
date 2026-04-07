@@ -2,7 +2,6 @@ name: Transformer UI Direct QA CD
 
 variables:
   qaBranch: ${{ eq(variables['Build.SourceBranchName'], 'QA') }}
-  isManual: ${{ eq(variables['Build.Reason'], 'Manual') }}
 
 trigger:
   branches:
@@ -23,7 +22,7 @@ pool:
 stages:
   - stage: QA_Deploy
     displayName: QA Deploy
-    condition: or(eq(variables['qaBranch'], 'true'), eq(variables['isManual'], 'true'))
+    condition: eq(variables['qaBranch'], 'true')
     jobs:
       - job: QA_Deploy
         variables:
