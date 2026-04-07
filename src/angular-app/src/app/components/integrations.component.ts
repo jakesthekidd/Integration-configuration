@@ -436,7 +436,7 @@ export class IntegrationsComponent implements OnInit {
   constructor(
     private apiService: ApiService,
     private generalService: GeneralService,
-  ) { }
+  ) {}
 
   @HostListener('window:keydown.escape', ['$event'])
   handleKeyDown(_event: KeyboardEvent) {
