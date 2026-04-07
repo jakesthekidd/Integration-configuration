@@ -35,13 +35,13 @@ export class transformerapiStack extends Stack {
         const availableAlbSubnets = vpc.selectSubnets({
             subnetType: SubnetType.PRIVATE_WITH_EGRESS,
         }).subnets;
-        const albSubnetIds = new Set(config.albSubnetIds ?? []);
-        const albSubnets = albSubnetIds.size > 0
-            ? availableAlbSubnets.filter((subnet) => albSubnetIds.has(subnet.subnetId))
-            : availableAlbSubnets.filter((subnet) => subnet.availabilityZone !== 'us-east-1c');
+        const devAlbSubnetIds = env === 'dev' ? new Set(config.albSubnetIds ?? []) : undefined;
+        const albSubnets = devAlbSubnetIds && devAlbSubnetIds.size > 0
+            ? availableAlbSubnets.filter((subnet) => devAlbSubnetIds.has(subnet.subnetId))
+            : availableAlbSubnets;
 
-        if (albSubnets.length < 2) {
-            throw new Error('ALB requires at least two subnets in different Availability Zones. Check albSubnetIds in config.');
+        if (env === 'dev' && albSubnets.length < 2) {
+            throw new Error('ALB requires at least two dev subnets in different Availability Zones. Check albSubnetIds in config.');
         }
 
         // Import the Dev ECS cluster
@@ -77,9 +77,11 @@ export class transformerapiStack extends Stack {
                 healthCheckPath: '/health',
                 allowedCidrs: [sharedConfig.vpnCidr, vpc.vpcCidrBlock],
             },
-            albSubnetOverride: {
-                subnets: albSubnets,
-            },
+            albSubnetOverride: env === 'dev'
+                ? {
+                    subnets: albSubnets,
+                }
+                : undefined,
             dnsConfig: {
                 subDomain: `${config.transformerapiSubDomain}`,
                 domainName: `${config.rootDomain}`,
