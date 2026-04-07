@@ -443,6 +443,7 @@ export class FieldMappingsComponent implements OnInit, OnChanges {
   @Input() templateName: string = '';
   @Input() sampleInputJson?: string;
   @Input() sourceSchema?: string;
+  @Input() targetSchema?: string;
   @Input() isReadonly: boolean = false;
 
   mappings: FieldMapping[] = [];
@@ -478,6 +479,7 @@ export class FieldMappingsComponent implements OnInit, OnChanges {
     if (this.templateId && this.templateVersionId) {
       this.loadMappings();
       this.loadSourcePathsFromSourceSchema();
+      this.loadTargetPathsFromTargetSchema();
     }
   }
 
@@ -525,7 +527,22 @@ export class FieldMappingsComponent implements OnInit, OnChanges {
           this.sourcePaths = [...new Set([...this.sourcePaths, ...parsedPaths])].sort();
         }
       },
-      error: (err) => console.warn('Could not parse sample JSON for path suggestions', err),
+      error: (err) => console.warn('Could not parse Source Schema JSON for path suggestions', err),
+    });
+  }
+
+  private loadTargetPathsFromTargetSchema(): void {
+    if (!this.targetSchema) return;
+
+    this.apiService.parseJson(this.targetSchema).subscribe({
+      next: (response) => {
+        if (response.success && response.data?.fields) {
+          const parsedPaths: string[] = Object.keys(response.data.fields);
+          this.targetPaths = [...new Set([...this.targetPaths, ...parsedPaths])].sort();
+          console.log(this.targetPaths);
+        }
+      },
+      error: (err) => console.warn('Could not parse Target Schema JSON for path suggestions', err),
     });
   }
 
