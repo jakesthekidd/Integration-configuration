@@ -51,4 +51,4 @@ stages:
     - template: /pipelines/templates/api/deploy.yaml
       parameters:
         ECS_CLUSTER_NAME: "QA-Cluster"
-        ECS_SERVICE_NAME: "transformerapiStack-platformtransformerapiStackecsecsserviceServiceA1814572-1cJn4a4Qtaet"
+        ECS_SERVICE_NAME: "transformerapiStack-platformtransformerapiStackecsecsserviceServiceA1814572-klVq6TNgAhwA"
