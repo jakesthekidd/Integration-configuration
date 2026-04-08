@@ -24,6 +24,7 @@ Each section shows the available fields, their types, and multiple real-world ex
 9. [Math](#9-math)
 10. [Conditional](#10-conditional)
 11. [PrefixMap](#11-prefixmap)
+12. [ConditionalDateFormat](#12-conditionaldateformat)
 
 ---
 
@@ -891,3 +892,108 @@ Source: `driver1 = "John,Doe,Jr"`
 ```
 Source: `tag1 = "urgent"`, `tag2 = ""`, `tag3 = "fragile"`
 → `[{ "value": "urgent" }, { "value": "fragile" }]`
+
+---
+
+## 12. ConditionalDateFormat
+
+Selects a DateTime source field based on a **condition field value**, converts the result to UTC, and formats it with a configurable output format.
+
+This type exists because no single existing strategy can chain conditional source selection, path coalescing, and date conversion together in one step:
+
+| Capability | `Conditional` | `DateFormat` | `ConditionalDateFormat` |
+|---|---|---|---|
+| Branch on a field value | ✓ | ✗ | ✓ |
+| Try multiple source paths (coalesce) | ✗ | ✗ | ✓ |
+| Convert to UTC + format | ✗ | ✓ | ✓ |
+
+| Key | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `ConditionField` | `string` | Yes | — | Source path of the field whose value drives branch selection (e.g. `stopType`) |
+| `Branches` | `object[]` | Yes | — | Array of branch objects (see below) |
+| `OutputFormat` | `string` | No | `"yyyy-MM-ddTHH:mm:ss.ffffffZ"` | .NET format string applied to the UTC result |
+
+**Branch object fields:**
+
+| Key | Type | Required | Description |
+|---|---|---|---|
+| `Value` | `string` | Yes | Condition value that activates this branch (case-insensitive) |
+| `SourcePaths` | `string[]` | Yes | Ordered source paths to try; the **first non-null, non-empty value** wins |
+
+> **Behaviour notes**
+> - When no branch matches the condition value, `null` is returned.
+> - When a branch matches but all its `SourcePaths` resolve to null / empty, `null` is returned.
+> - When the resolved value cannot be parsed as a date, it is returned **unchanged** (consistent with `DateFormat`).
+> - The default `OutputFormat` produces ISO 8601 UTC with microsecond precision: `2024-03-15T10:30:00.000000Z`.
+
+### Examples
+
+**`actualArrival` — different source fields per stop type, with fallback:**
+
+```sql
+source_path           = 'irrelevant'
+target_path           = 'actualArrival'
+transformation_type   = 'ConditionalDateFormat'
+```
+```json
+{
+  "ConditionField": "stopType",
+  "Branches": [
+    {
+      "Value": "Origin",
+      "SourcePaths": ["actualPickup", "pickUpBy"]
+    },
+    {
+      "Value": "Destination",
+      "SourcePaths": ["actualDelivery"]
+    }
+  ]
+}
+```
+- `stopType = "Origin"`, `actualPickup = "2024-03-15T10:30:00Z"` → `"2024-03-15T10:30:00.000000Z"`
+- `stopType = "Origin"`, `actualPickup = null`, `pickUpBy = "2024-03-15T08:00:00Z"` → `"2024-03-15T08:00:00.000000Z"` (fallback)
+- `stopType = "Destination"`, `actualDelivery = "2024-03-16T14:00:00Z"` → `"2024-03-16T14:00:00.000000Z"`
+- `stopType = "StopOff"` → `null` (no matching branch)
+
+**`scheduledEarlyArrival` — Destination only, with fallback:**
+
+```json
+{
+  "ConditionField": "stopType",
+  "Branches": [
+    {
+      "Value": "Destination",
+      "SourcePaths": ["deliverBy", "deliverByEnd"]
+    }
+  ]
+}
+```
+- `stopType = "Destination"`, `deliverBy = "2024-03-16T12:00:00Z"` → `"2024-03-16T12:00:00.000000Z"`
+- `stopType = "Destination"`, `deliverBy = null`, `deliverByEnd = "2024-03-16T18:00:00Z"` → `"2024-03-16T18:00:00.000000Z"` (fallback)
+- `stopType = "Origin"` → `null`
+
+**Three-way stop type switch:**
+
+```json
+{
+  "ConditionField": "stopType",
+  "Branches": [
+    { "Value": "Origin",      "SourcePaths": ["actualPickup",  "pickUpBy"]     },
+    { "Value": "StopOff",     "SourcePaths": ["stopOffArrival"               ] },
+    { "Value": "Destination", "SourcePaths": ["actualDelivery"               ] }
+  ]
+}
+```
+
+**With timezone offset conversion — custom format:**
+
+```json
+{
+  "ConditionField": "stopType",
+  "OutputFormat": "yyyy-MM-dd",
+  "Branches": [
+    { "Value": "Origin", "SourcePaths": ["actualPickup"] }
+  ]
+}
+```
+`actualPickup = "2024-03-15T12:30:00+02:00"` → `"2024-03-15"` (converted to UTC first: `10:30:00Z`, then date extracted)
