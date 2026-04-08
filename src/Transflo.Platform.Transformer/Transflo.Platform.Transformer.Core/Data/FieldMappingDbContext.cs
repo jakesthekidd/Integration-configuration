@@ -89,7 +89,6 @@ public class FieldMappingDbContext : DbContext
         modelBuilder.Entity<FieldMapping>(entity =>
         {
             entity.HasIndex(e => e.TemplateVersionId);
-            entity.HasIndex(e => new { e.TemplateVersionId, e.ExecutionOrder });
 
             // Configure enum to string conversion
             entity.Property(e => e.TransformationType)

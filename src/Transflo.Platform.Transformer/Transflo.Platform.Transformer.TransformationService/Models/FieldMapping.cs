@@ -8,7 +8,6 @@ public class FieldMapping
     public string TargetPath { get; set; } = string.Empty;
     public TransformationType TransformationType { get; set; } = TransformationType.Direct;
     public string? TransformationConfig { get; set; }
-    public int ExecutionOrder { get; set; }
     public bool IsRequired { get; set; }
     public string? DefaultValue { get; set; }
     public string? ValidationRules { get; set; }

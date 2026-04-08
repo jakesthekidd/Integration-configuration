@@ -129,10 +129,6 @@ namespace Transflo.Platform.Transformer.Core.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("deleted_at");
 
-                    b.Property<int>("ExecutionOrder")
-                        .HasColumnType("integer")
-                        .HasColumnName("execution_order");
-
                     b.Property<bool>("IsRequired")
                         .HasColumnType("boolean")
                         .HasColumnName("is_required");
@@ -188,8 +184,6 @@ namespace Transflo.Platform.Transformer.Core.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("TemplateVersionId");
-
-                    b.HasIndex("TemplateVersionId", "ExecutionOrder");
 
                     b.ToTable("field_mappings");
                 });

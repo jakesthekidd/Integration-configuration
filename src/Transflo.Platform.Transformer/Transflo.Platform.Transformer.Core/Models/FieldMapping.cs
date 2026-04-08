@@ -28,9 +28,6 @@ public class FieldMapping : BaseEntity
     [Column("transformation_config", TypeName = "jsonb")]
     public string? TransformationConfig { get; set; }
 
-    [Column("execution_order")]
-    public int ExecutionOrder { get; set; }
-
     [Column("is_required")]
     public bool IsRequired { get; set; }
 
