@@ -13,5 +13,6 @@ public enum TransformationType
     Substring,
     Constant,
     Template,
-    PrefixMap
+    PrefixMap,
+    ConditionalDateFormat
 }

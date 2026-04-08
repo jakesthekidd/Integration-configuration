@@ -77,6 +77,23 @@ public static class TransformationConfigKeys
         public const string DefaultLogic = "AND";
     }
 
+    public static class ConditionalDateFormat
+    {
+        /// <summary>Source path of the field whose value drives branch selection (e.g. <c>stopType</c>).</summary>
+        public const string ConditionField = "ConditionField";
+        /// <summary>Array of branch objects, each with a <c>Value</c> and <c>SourcePaths</c>.</summary>
+        public const string Branches       = "Branches";
+        /// <summary>The condition value to match for this branch (case-insensitive).</summary>
+        public const string Value          = "Value";
+        /// <summary>Ordered list of source paths to try; first non-null non-empty value wins.</summary>
+        public const string SourcePaths    = "SourcePaths";
+        /// <summary>.NET format string applied to the UTC result. Defaults to ISO microseconds.</summary>
+        public const string OutputFormat   = "OutputFormat";
+
+        /// <summary>Default output: ISO 8601 UTC with microsecond precision (e.g. <c>2024-03-15T10:30:00.000000Z</c>).</summary>
+        public const string DefaultOutputFormat = "yyyy-MM-ddTHH:mm:ss.ffffffZ";
+    }
+
     public static class PrefixMap
     {
         /// <summary>Array of field names to map each split part into (e.g. <c>["firstName","lastName"]</c>).</summary>

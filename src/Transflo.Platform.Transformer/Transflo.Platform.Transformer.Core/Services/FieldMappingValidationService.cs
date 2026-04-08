@@ -214,6 +214,23 @@ public class FieldMappingValidationService : IFieldMappingValidationService
                     });
                 }
                 break;
+
+            case TransformationType.ConditionalDateFormat:
+                var hasCondDateConfig = config is not null
+                    && config.ContainsKey("ConditionField")
+                    && config.ContainsKey("Branches");
+                if (!hasCondDateConfig)
+                {
+                    issues.Add(new ValidationIssue
+                    {
+                        Severity = ValidationSeverity.Error,
+                        Code = ValidationCodes.MissingConfigFields,
+                        Message = "ConditionalDateFormat transformation requires 'ConditionField' and 'Branches' in TransformationConfig.",
+                        MappingIndex = index,
+                        TargetPath = fieldMapping.TargetPath
+                    });
+                }
+                break;
         }
     }
 
