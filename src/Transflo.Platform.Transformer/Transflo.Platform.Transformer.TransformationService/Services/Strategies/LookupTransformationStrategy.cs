@@ -31,12 +31,12 @@ public class LookupTransformationStrategy : ITransformationStrategy
         }
 
         var config = ParseConfig(context.Mapping.TransformationConfig);
-        if (config == null || !config.ContainsKey("LookupTableId"))
+        if (config == null || !config.ContainsKey(TransformationConfigKeys.Lookup.LookupTableId))
         {
             return sourceValue;
         }
 
-        if (!config.TryGetValue("LookupTableId", out var lookupTableIdRaw) ||
+        if (!config.TryGetValue(TransformationConfigKeys.Lookup.LookupTableId, out var lookupTableIdRaw) ||
             lookupTableIdRaw == null ||
             !Guid.TryParse(lookupTableIdRaw.ToString(), out var lookupTableId))
         {

@@ -24,14 +24,14 @@ public class FieldMappingRepository : IFieldMappingRepository
     public async Task<List<FieldMapping>> GetByTemplateVersionIdAsync(Guid templateVersionId)
     {
         return await _context.FieldMappings
-            .Where(m => m.TemplateVersionId == templateVersionId)
+            .Where(m => m.TemplateVersionId == templateVersionId && !m.IsDeleted)
             .ToListAsync();
     }
 
     public async Task<List<FieldMapping>> GetByTemplateVersionIdOrderedAsync(Guid templateVersionId)
     {
         return await _context.FieldMappings
-            .Where(m => m.TemplateVersionId == templateVersionId)
+            .Where(m => m.TemplateVersionId == templateVersionId && !m.IsDeleted)
             .OrderBy(m => m.ExecutionOrder)
             .ToListAsync();
     }
@@ -40,6 +40,7 @@ public class FieldMappingRepository : IFieldMappingRepository
     {
         mapping.CreatedAt = DateTime.UtcNow;
         mapping.UpdatedAt = DateTime.UtcNow;
+        mapping.IsDeleted = false;
 
         _context.FieldMappings.Add(mapping);
         await _context.SaveChangesAsync();
@@ -55,6 +56,7 @@ public class FieldMappingRepository : IFieldMappingRepository
         {
             mapping.CreatedAt = now;
             mapping.UpdatedAt = now;
+            mapping.IsDeleted = false;
         }
 
         _context.FieldMappings.AddRange(mappings);

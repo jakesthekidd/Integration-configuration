@@ -18,13 +18,17 @@ public class ArrayFlattenTransformationStrategy : ITransformationStrategy
     public async Task<object?> ApplyAsync(TransformationContext context)
     {
         var config = ParseConfig(context.Mapping.TransformationConfig);
-        var arrayName = config?.TryGetValue("SourceArrayPath", out var ap) == true ? ap?.ToString() : null;
-        var itemField = config?.TryGetValue("ItemField", out var fi) == true ? fi?.ToString() : null;
+        var arrayName = config?.TryGetValue(TransformationConfigKeys.ArrayFlatten.SourceArrayPath, out var ap) == true
+            ? ap?.ToString()
+            : null;
+        var itemField = config?.TryGetValue(TransformationConfigKeys.ArrayFlatten.ItemField, out var fi) == true
+            ? fi?.ToString()
+            : null;
 
         if (string.IsNullOrEmpty(arrayName))
         {
             var sourcePath = context.Mapping.SourcePath ?? string.Empty;
-            var wildcardIndex = sourcePath.IndexOf("[*]", StringComparison.Ordinal);
+            var wildcardIndex = sourcePath.IndexOf(TransformationConfigKeys.ArrayWildcard, StringComparison.Ordinal);
             if (wildcardIndex >= 0)
             {
                 arrayName = sourcePath[..wildcardIndex];
@@ -46,8 +50,8 @@ public class ArrayFlattenTransformationStrategy : ITransformationStrategy
             _ => Enumerable.Empty<object?>()
         };
 
-        bool filterEmpty = config?.TryGetValue("FilterEmpty", out var fe) == true
-            && fe?.ToString()?.ToLowerInvariant() == "true";
+        bool filterEmpty = config?.TryGetValue(TransformationConfigKeys.ArrayFlatten.FilterEmpty, out var fe) == true
+            && fe?.ToString()?.ToLowerInvariant() == TransformationConfigKeys.BoolTrue;
 
         var result = new List<object>();
         foreach (var item in items)

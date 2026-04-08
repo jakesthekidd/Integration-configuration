@@ -29,6 +29,7 @@ export const qaConfig: AppConfig = {
   albSubnetType: sharedConfig.albSubnetType,
   feAppName: sharedConfig.feAppName,
   env,
+  aspnetcoreEnv: 'QA',
   ecsClusterName,
   ecsClusterArn,
   rootDomain,
@@ -36,12 +37,13 @@ export const qaConfig: AppConfig = {
   indexFile,
   platformUIStackName: sharedConfig.plaformUIStackName,
   ecrStackName: sharedConfig.ecrStackName,
+  secretsStackName: sharedConfig.secretsStackName,
   postgresStackName: sharedConfig.postgresStackName,
   transformerapiStackName: sharedConfig.transformerapiStackName,
   transformerapiSubDomain: sharedConfig.transformerapiSubDomain,
 
 
-postgresDBProps: (vpc: IVpc): PrivateRDSConstructProps => {
+  postgresDBProps: (vpc: IVpc): PrivateRDSConstructProps => {
     const sharedProps = {
       vpc,
       instanceClass: InstanceClass.T3,
@@ -54,9 +56,9 @@ postgresDBProps: (vpc: IVpc): PrivateRDSConstructProps => {
       allocatedStorageGiB: sharedConfig.dbAllocatedStorageGiB,
       availabiltyZone: sharedConfig.postgreSQLAvailabilityZone,
       vpn: {
-            cidrs: [
-              sharedConfig.vpnCidr,
-            ]
+        cidrs: [
+          sharedConfig.vpnCidr,
+        ]
       },
     }
 

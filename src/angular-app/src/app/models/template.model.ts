@@ -37,3 +37,12 @@ export interface TemplateListResponse {
   templates: FieldMappingTemplate[];
   totalCount: number;
 }
+
+export interface TemplateVersionResponse {
+  id: string;
+  templateId: string;
+  templateName?: string;
+  version: number;
+  status: string;
+  publishedAt?: string;
+}

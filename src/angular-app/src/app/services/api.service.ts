@@ -24,6 +24,13 @@ import { Customer, CustomerRequest, CustomerListResponse } from '../models/custo
 import { TransformationLogDetail, TransformationLogListResponse } from '../models/transformation-log.model';
 import { environment } from '../../environments/environment';
 import { TransformRequest } from '../models/transformation-test.model';
+import {
+  ApiClient,
+  CreateApiClientRequest,
+  UpdateApiClientRequest,
+  ApiClientListResponse,
+} from '../models/api-client.model';
+import { TemplateVersionResponse } from '../models/template.model';
 
 @Injectable({
   providedIn: 'root',
@@ -32,6 +39,39 @@ export class ApiService {
   private apiUrl = environment.apiUrl;
 
   constructor(private http: HttpClient) {}
+
+  // API Clients
+  getApiClients(): Observable<ApiResponse<ApiClientListResponse>> {
+    return this.http.get<ApiResponse<ApiClientListResponse>>(`${this.apiUrl}/apiclients`);
+  }
+
+  getApiClientById(id: string): Observable<ApiResponse<ApiClient>> {
+    return this.http.get<ApiResponse<ApiClient>>(`${this.apiUrl}/apiclients/${id}`);
+  }
+
+  createApiClient(request: CreateApiClientRequest): Observable<ApiResponse<ApiClient>> {
+    return this.http.post<ApiResponse<ApiClient>>(`${this.apiUrl}/apiclients`, request);
+  }
+
+  updateApiClient(id: string, request: UpdateApiClientRequest): Observable<ApiResponse<ApiClient>> {
+    return this.http.put<ApiResponse<ApiClient>>(`${this.apiUrl}/apiclients/${id}`, request);
+  }
+
+  deleteApiClient(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/apiclients/${id}`);
+  }
+
+  getAssignedTemplates(id: string): Observable<ApiResponse<TemplateVersionResponse[]>> {
+    return this.http.get<ApiResponse<TemplateVersionResponse[]>>(`${this.apiUrl}/apiclients/${id}/templates`);
+  }
+
+  assignTemplate(id: string, templateVersionId: string): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/apiclients/${id}/templates`, { templateVersionId });
+  }
+
+  removeTemplate(id: string, templateVersionId: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/apiclients/${id}/templates/${templateVersionId}`);
+  }
 
   // Customers
   getCustomers(activeOnly?: boolean): Observable<ApiResponse<CustomerListResponse>> {

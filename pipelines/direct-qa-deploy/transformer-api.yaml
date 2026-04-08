@@ -1,0 +1,53 @@
+name: "Transformer Direct QA CI/CD"
+
+variables:
+  qaBranch: ${{ eq(variables['Build.SourceBranchName'], 'QA') }}
+  tags: |
+    latest
+    $(Build.BuildId)-qa
+
+trigger:
+  branches:
+    include:
+      - QA
+  paths:
+    include:
+      - src/Transflo.Platform.Transformer/**
+    exclude:
+      - src/angular-app/**
+      - infrastructure/**
+  batch: true
+pr: none
+
+pool:
+  vmImage: ubuntu-latest
+
+stages:
+- stage: transformer_api
+  displayName: Build & Push QA Transformer Image
+  condition: eq(variables['qaBranch'], 'true')
+  jobs:
+  - job:
+    variables:
+    - template: /pipelines/templates/variables-qa.yaml
+    steps:
+    - template: /pipelines/templates/api/build_and_push.yaml
+      parameters:
+        IMAGE_NAME: platform-ue1-ecr-tranformer-api
+        PROJECT_FILE: "$(System.DefaultWorkingDirectory)/src/Transflo.Platform.Transformer/Transflo.Platform.Transformer.WebApi/Transflo.Platform.Transformer.WebApi.csproj"
+        TEST_FILES: "$(System.DefaultWorkingDirectory)/src/Transflo.Platform.Transformer/**/*.Tests.csproj"
+        tag: ${{ variables.tags }}
+
+- stage: qa_deploy
+  displayName: Deploy to QA
+  dependsOn: transformer_api
+  condition: succeeded()
+  jobs:
+  - job:
+    variables:
+    - template: /pipelines/templates/variables-qa.yaml
+    steps:
+    - template: /pipelines/templates/api/deploy.yaml
+      parameters:
+        ECS_CLUSTER_NAME: "QA-Cluster"
+        ECS_SERVICE_NAME: "transformerapiStack-platformtransformerapiStackecsecsserviceServiceA1814572-klVq6TNgAhwA"

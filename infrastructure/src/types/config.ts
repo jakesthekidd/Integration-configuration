@@ -7,6 +7,7 @@ export type AppConfig = {
   feAppName: string;
   description: string;
   env: string;
+  aspnetcoreEnv: string;
   region: string;
   apiSubnetType: SubnetType;
   albSubnetType: SubnetType;
@@ -24,6 +25,7 @@ export type AppConfig = {
   platformUIStackName: string;
   ecrStackName: string;
   postgresStackName: string;
+  secretsStackName: string;
 
   postgresDBProps: (vpc: IVpc) => PrivateRDSConstructProps;
 

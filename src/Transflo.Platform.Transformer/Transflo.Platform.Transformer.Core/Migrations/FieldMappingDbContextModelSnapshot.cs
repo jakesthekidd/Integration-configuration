@@ -22,6 +22,133 @@ namespace Transflo.Platform.Transformer.Core.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Transflo.Platform.Transformer.Core.Models.ApiClient", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text")
+                        .HasColumnName("description");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_active");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_deleted");
+
+                    b.Property<string>("Metadata")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("metadata");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("name");
+
+                    b.Property<int>("Revision")
+                        .IsConcurrencyToken()
+                        .HasColumnType("integer")
+                        .HasColumnName("revision");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("updated_by");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IsActive");
+
+                    b.HasIndex("Name");
+
+                    b.ToTable("api_clients");
+                });
+
+            modelBuilder.Entity("Transflo.Platform.Transformer.Core.Models.ApiClientTemplateVersion", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("ApiClientId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("api_client_id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_deleted");
+
+                    b.Property<string>("Metadata")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("metadata");
+
+                    b.Property<int>("Revision")
+                        .IsConcurrencyToken()
+                        .HasColumnType("integer")
+                        .HasColumnName("revision");
+
+                    b.Property<Guid>("TemplateVersionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("template_version_id");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("updated_by");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApiClientId");
+
+                    b.HasIndex("TemplateVersionId");
+
+                    b.HasIndex("ApiClientId", "TemplateVersionId")
+                        .IsUnique();
+
+                    b.ToTable("api_client_template_versions");
+                });
+
             modelBuilder.Entity("Transflo.Platform.Transformer.Core.Models.FieldMapping", b =>
                 {
                     b.Property<Guid>("Id")
@@ -332,79 +459,6 @@ namespace Transflo.Platform.Transformer.Core.Migrations
                     b.ToTable("templates");
                 });
 
-            modelBuilder.Entity("Transflo.Platform.Transformer.Core.Models.TemplateAssignment", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
-
-                    b.Property<string>("CreatedBy")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("created_by");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("deleted_at");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_deleted");
-
-                    b.Property<string>("Metadata")
-                        .HasColumnType("jsonb")
-                        .HasColumnName("metadata");
-
-                    b.Property<int>("Revision")
-                        .IsConcurrencyToken()
-                        .HasColumnType("integer")
-                        .HasColumnName("revision");
-
-                    b.Property<Guid>("SourcePartnerId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("source_partner_id");
-
-                    b.Property<Guid>("TargetPartnerId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("target_partner_id");
-
-                    b.Property<Guid>("TemplateVersionId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("template_version_id");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("updated_at");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("updated_by");
-
-                    b.Property<DateTimeOffset?>("ValidFrom")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("valid_from");
-
-                    b.Property<DateTimeOffset?>("ValidTo")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("valid_to");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("SourcePartnerId");
-
-                    b.HasIndex("TargetPartnerId");
-
-                    b.HasIndex("TemplateVersionId");
-
-                    b.ToTable("template_assignments");
-                });
-
             modelBuilder.Entity("Transflo.Platform.Transformer.Core.Models.TemplateVersion", b =>
                 {
                     b.Property<Guid>("Id")
@@ -573,6 +627,36 @@ namespace Transflo.Platform.Transformer.Core.Migrations
                         .IsUnique();
 
                     b.ToTable("tms_systems");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("b5f3a9c2-7d4e-4f8b-9a1c-3e6d2b0f8c47"),
+                            CreatedAt = new DateTime(2024, 3, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedBy = "System",
+                            Description = "TruckMate Transportation Management System",
+                            DisplayName = "TruckMate TMS",
+                            IsActive = true,
+                            IsDeleted = false,
+                            Name = "TruckMate",
+                            Revision = 1,
+                            UpdatedAt = new DateTime(2024, 3, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Version = "1.0"
+                        },
+                        new
+                        {
+                            Id = new Guid("a2c8e4d6-1f3b-4a7c-8e9d-5b0c2f6a4e83"),
+                            CreatedAt = new DateTime(2024, 3, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedBy = "System",
+                            Description = "McLeod Transportation Management System",
+                            DisplayName = "McLeod Software",
+                            IsActive = true,
+                            IsDeleted = false,
+                            Name = "McLeod",
+                            Revision = 1,
+                            UpdatedAt = new DateTime(2024, 3, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Version = "1.0"
+                        });
                 });
 
             modelBuilder.Entity("Transflo.Platform.Transformer.Core.Models.TransformationLog", b =>
@@ -657,6 +741,25 @@ namespace Transflo.Platform.Transformer.Core.Migrations
                     b.ToTable("transformation_logs");
                 });
 
+            modelBuilder.Entity("Transflo.Platform.Transformer.Core.Models.ApiClientTemplateVersion", b =>
+                {
+                    b.HasOne("Transflo.Platform.Transformer.Core.Models.ApiClient", "ApiClient")
+                        .WithMany("ApiClientTemplateVersions")
+                        .HasForeignKey("ApiClientId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Transflo.Platform.Transformer.Core.Models.TemplateVersion", "TemplateVersion")
+                        .WithMany("ApiClientTemplateVersions")
+                        .HasForeignKey("TemplateVersionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ApiClient");
+
+                    b.Navigation("TemplateVersion");
+                });
+
             modelBuilder.Entity("Transflo.Platform.Transformer.Core.Models.FieldMapping", b =>
                 {
                     b.HasOne("Transflo.Platform.Transformer.Core.Models.TemplateVersion", "TemplateVersion")
@@ -686,33 +789,6 @@ namespace Transflo.Platform.Transformer.Core.Migrations
                     b.Navigation("TmsSystem");
                 });
 
-            modelBuilder.Entity("Transflo.Platform.Transformer.Core.Models.TemplateAssignment", b =>
-                {
-                    b.HasOne("Transflo.Platform.Transformer.Core.Models.Partner", "SourcePartner")
-                        .WithMany()
-                        .HasForeignKey("SourcePartnerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Transflo.Platform.Transformer.Core.Models.Partner", "TargetPartner")
-                        .WithMany()
-                        .HasForeignKey("TargetPartnerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Transflo.Platform.Transformer.Core.Models.TemplateVersion", "TemplateVersion")
-                        .WithMany("TemplateAssignments")
-                        .HasForeignKey("TemplateVersionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("SourcePartner");
-
-                    b.Navigation("TargetPartner");
-
-                    b.Navigation("TemplateVersion");
-                });
-
             modelBuilder.Entity("Transflo.Platform.Transformer.Core.Models.TemplateVersion", b =>
                 {
                     b.HasOne("Transflo.Platform.Transformer.Core.Models.Template", "Template")
@@ -722,6 +798,11 @@ namespace Transflo.Platform.Transformer.Core.Migrations
                         .IsRequired();
 
                     b.Navigation("Template");
+                });
+
+            modelBuilder.Entity("Transflo.Platform.Transformer.Core.Models.ApiClient", b =>
+                {
+                    b.Navigation("ApiClientTemplateVersions");
                 });
 
             modelBuilder.Entity("Transflo.Platform.Transformer.Core.Models.Partner", b =>
@@ -736,9 +817,9 @@ namespace Transflo.Platform.Transformer.Core.Migrations
 
             modelBuilder.Entity("Transflo.Platform.Transformer.Core.Models.TemplateVersion", b =>
                 {
-                    b.Navigation("FieldMappings");
+                    b.Navigation("ApiClientTemplateVersions");
 
-                    b.Navigation("TemplateAssignments");
+                    b.Navigation("FieldMappings");
                 });
 
             modelBuilder.Entity("Transflo.Platform.Transformer.Core.Models.TmsSystem", b =>

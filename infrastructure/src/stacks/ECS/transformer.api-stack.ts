@@ -9,6 +9,7 @@ import { Cluster } from "aws-cdk-lib/aws-ecs";
 import * as ecs from 'aws-cdk-lib/aws-ecs';
 import { EcsServiceConstruct } from "infrastructure-templates";
 import { PlatformEcrStack } from '../ecr-stack';
+import { PlatformSecretsStack } from '../secrets-stack';
 import { PolicyStatement } from "aws-cdk-lib/aws-iam";
 import { SubnetType } from "aws-cdk-lib/aws-ec2";
 
@@ -17,6 +18,8 @@ const config = env === 'prod' ? prodConfig : env === 'qa' ? qaConfig : devConfig
 
 interface PlatformEcsStackProps extends StackProps {
     ecrStack: PlatformEcrStack;
+    secretsStack: PlatformSecretsStack;
+
 }
 
 export class transformerapiStack extends Stack {
@@ -25,20 +28,20 @@ export class transformerapiStack extends Stack {
     constructor(scope: Construct, id: string, props: PlatformEcsStackProps) {
         super(scope, id, props);
 
-        const { ecrStack } = props;
+        const { ecrStack, secretsStack } = props;
 
         // Import VPC
         const vpc = getTransfloVpc(this);
         const availableAlbSubnets = vpc.selectSubnets({
             subnetType: SubnetType.PRIVATE_WITH_EGRESS,
         }).subnets;
-        const albSubnetIds = new Set(config.albSubnetIds ?? []);
-        const albSubnets = albSubnetIds.size > 0
-            ? availableAlbSubnets.filter((subnet) => albSubnetIds.has(subnet.subnetId))
-            : availableAlbSubnets.filter((subnet) => subnet.availabilityZone !== 'us-east-1c');
+        const devAlbSubnetIds = env === 'dev' ? new Set(config.albSubnetIds ?? []) : undefined;
+        const albSubnets = devAlbSubnetIds && devAlbSubnetIds.size > 0
+            ? availableAlbSubnets.filter((subnet) => devAlbSubnetIds.has(subnet.subnetId))
+            : availableAlbSubnets;
 
-        if (albSubnets.length < 2) {
-            throw new Error('ALB requires at least two subnets in different Availability Zones. Check albSubnetIds in config.');
+        if (env === 'dev' && albSubnets.length < 2) {
+            throw new Error('ALB requires at least two dev subnets in different Availability Zones. Check albSubnetIds in config.');
         }
 
         // Import the Dev ECS cluster
@@ -50,6 +53,9 @@ export class transformerapiStack extends Stack {
 
         // Define the Transformer API ECR repository
         const transformerApiEcrRepository = ecrStack.transformerapiEcrRepository;
+
+        // Use secrets from SecretsStack
+        const transformerSecret = secretsStack.transformerSecret;
 
         // Define the ECS Service using EcsServiceConstruct
         this.usertransformerApiService = new EcsServiceConstruct(this, {
@@ -65,20 +71,25 @@ export class transformerapiStack extends Stack {
             isPublic: false,
             environmentVariables: {
                 'ENVIRONMENT': `${config.env}`,
-                'ASPNETCORE_ENVIRONMENT': 'Development',
+                'ASPNETCORE_ENVIRONMENT': `${config.aspnetcoreEnv}`,
             },
             loadBalancerConfig: {
                 healthCheckPath: '/health',
-                allowedCidrs: [ sharedConfig.vpnCidr, vpc.vpcCidrBlock],
+                allowedCidrs: [sharedConfig.vpnCidr, vpc.vpcCidrBlock],
             },
-            albSubnetOverride: {
-                subnets: albSubnets,
-            },
+            albSubnetOverride: env === 'dev'
+                ? {
+                    subnets: albSubnets,
+                }
+                : undefined,
             dnsConfig: {
                 subDomain: `${config.transformerapiSubDomain}`,
                 domainName: `${config.rootDomain}`,
                 hostedZoneId: config.hostedZoneId,
                 hostedZoneName: config.rootDomain,
+            },
+            secrets: {
+                SHARED_SECRET: ecs.Secret.fromSecretsManager(transformerSecret),
             },
         });
 
