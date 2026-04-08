@@ -150,6 +150,7 @@ import { GeneralService } from '../services/general.service';
               <th>Sync (min)</th>
               <th>Retention (days)</th>
               <th>Last Sync</th>
+              <th>Tonu Code</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -171,6 +172,7 @@ import { GeneralService } from '../services/general.service';
               <td>{{ c.orderRetentionDays || '—' }}</td>
 
               <td>{{ c.lastSyncTime | date: 'medium' }}</td>
+              <td>{{ c.tonuCode || '—' }}</td>
 
               <td class="actions">
                 <button class="btn-small btn-info" (click)="startEdit(c)">Edit</button>
