@@ -1008,7 +1008,7 @@ export class TemplatesComponent implements OnInit {
   constructor(
     private apiService: ApiService,
     private generalService: GeneralService,
-  ) { }
+  ) {}
 
   ngOnInit() {
     this.loadTemplates();

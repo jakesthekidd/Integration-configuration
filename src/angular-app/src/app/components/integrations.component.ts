@@ -33,11 +33,24 @@ import { environment } from '../../environments/environment';
             <div class="form-row">
               <div class="form-group">
                 <label for="clientName">Name <span class="required">*</span></label>
-                <input id="clientName" type="text" [(ngModel)]="newClient.name" name="name" required placeholder="e.g., MyApp Integration" />
+                <input
+                  id="clientName"
+                  type="text"
+                  [(ngModel)]="newClient.name"
+                  name="name"
+                  required
+                  placeholder="e.g., MyApp Integration"
+                />
               </div>
               <div class="form-group">
                 <label for="clientDescription">Description</label>
-                <textarea id="clientDescription" [(ngModel)]="newClient.description" name="description" rows="2" placeholder="Describe this API client"></textarea>
+                <textarea
+                  id="clientDescription"
+                  [(ngModel)]="newClient.description"
+                  name="description"
+                  rows="2"
+                  placeholder="Describe this API client"
+                ></textarea>
               </div>
             </div>
             <div class="form-actions">
@@ -93,16 +106,16 @@ import { environment } from '../../environments/environment';
           </div>
           <div class="header-actions">
             <button class="btn-small btn-info" (click)="startEdit()">Edit</button>
-            <button
-              *ngIf="selectedClient.isActive"
-              class="btn-small btn-archive"
-              (click)="toggleClientActive(false)"
-            >Deactivate</button>
+            <button *ngIf="selectedClient.isActive" class="btn-small btn-archive" (click)="toggleClientActive(false)">
+              Deactivate
+            </button>
             <button
               *ngIf="!selectedClient.isActive"
               class="btn-small btn-reactivate"
               (click)="toggleClientActive(true)"
-            >Reactivate</button>
+            >
+              Reactivate
+            </button>
           </div>
         </div>
 
@@ -149,7 +162,12 @@ import { environment } from '../../environments/environment';
             </div>
             <div class="detail-item">
               <span class="detail-label">Status</span>
-              <span class="badge" style="width: fit-content" [class.badge-active]="selectedClient.isActive" [class.badge-inactive]="!selectedClient.isActive">
+              <span
+                class="badge"
+                style="width: fit-content"
+                [class.badge-active]="selectedClient.isActive"
+                [class.badge-inactive]="!selectedClient.isActive"
+              >
                 {{ selectedClient.isActive ? 'Active' : 'Inactive' }}
               </span>
             </div>
@@ -175,9 +193,7 @@ import { environment } from '../../environments/environment';
                 </option>
               </optgroup>
             </select>
-            <button (click)="assignTemplate()" class="btn-primary" [disabled]="!selectedTemplateId">
-              Assign
-            </button>
+            <button (click)="assignTemplate()" class="btn-primary" [disabled]="!selectedTemplateId">Assign</button>
           </div>
         </div>
 
@@ -197,15 +213,17 @@ import { environment } from '../../environments/environment';
             </thead>
             <tbody>
               <tr *ngFor="let template of assignedTemplates">
-                <td><strong>{{ template.templateName }}</strong></td>
-                <td><span class="badge badge-version">v{{ template.version }}</span></td>
+                <td>
+                  <strong>{{ template.templateName }}</strong>
+                </td>
+                <td>
+                  <span class="badge badge-version">v{{ template.version }}</span>
+                </td>
                 <td>
                   <span class="badge" [ngClass]="getVersionStatusClass(template.status)">{{ template.status }}</span>
                 </td>
                 <td class="actions-cell">
-                  <button (click)="selectedApiDetails = template" class="btn-small btn-info">
-                    API Access Details
-                  </button>
+                  <button (click)="selectedApiDetails = template" class="btn-small btn-info">API Access Details</button>
                   <button (click)="removeTemplate(template.id)" class="btn-small btn-danger">Remove</button>
                 </td>
               </tr>
@@ -245,9 +263,7 @@ import { environment } from '../../environments/environment';
             <div class="snippet-section">
               <h5>Required Header</h5>
               <div class="snippet-box">
-                <button class="btn-copy" (click)="copySnippet('x-client-id: ' + selectedClient!.id)">
-                  Copy
-                </button>
+                <button class="btn-copy" (click)="copySnippet('x-client-id: ' + selectedClient!.id)">Copy</button>
                 <pre><code>x-client-id: {{ selectedClient!.id }}</code></pre>
               </div>
             </div>
@@ -835,7 +851,7 @@ export class IntegrationsComponent implements OnInit {
   constructor(
     private apiService: ApiService,
     private generalService: GeneralService,
-  ) { }
+  ) {}
 
   @HostListener('window:keydown.escape', ['$event'])
   handleKeyDown(_event: KeyboardEvent) {
@@ -1037,11 +1053,16 @@ export class IntegrationsComponent implements OnInit {
 
   getVersionStatusClass(status: string | undefined): string {
     switch (status) {
-      case 'Draft': return 'badge-draft';
-      case 'Published': return 'badge-published';
-      case 'Superseded': return 'badge-superseded';
-      case 'Archived': return 'badge-archived';
-      default: return '';
+      case 'Draft':
+        return 'badge-draft';
+      case 'Published':
+        return 'badge-published';
+      case 'Superseded':
+        return 'badge-superseded';
+      case 'Archived':
+        return 'badge-archived';
+      default:
+        return '';
     }
   }
 
