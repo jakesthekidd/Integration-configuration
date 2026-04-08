@@ -9,6 +9,7 @@ public interface ITemplateVersionRepository
     Task<List<TemplateVersion>> GetAllVersionsAsync(Guid templateId);
     Task<TemplateVersion> CreateAsync(TemplateVersion version);
     Task<TemplateVersion> UpdateAsync(TemplateVersion version);
+    Task<bool> HasClientAccessAsync(Guid templateVersionId, Guid clientId);
 
     /// <summary>
     /// Atomically marks the currently <see cref="TemplateVersionStatus.Published"/> version as
