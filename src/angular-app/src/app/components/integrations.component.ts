@@ -153,6 +153,16 @@ import { environment } from '../../environments/environment';
 
           <div class="modal-body">
             <div class="snippet-section">
+              <h5>Required Header</h5>
+              <div class="snippet-box">
+                <button class="btn-copy" (click)="copySnippet('x-client-id: ' + selectedClient!.id)">
+                  Copy
+                </button>
+                <pre><code>x-client-id: {{ selectedClient!.id }}</code></pre>
+              </div>
+            </div>
+
+            <div class="snippet-section">
               <h5>Transformation API</h5>
               <div class="http-route"><strong>POST</strong> {{ apiUrl }}/transform</div>
               <div class="snippet-box">
@@ -436,7 +446,7 @@ export class IntegrationsComponent implements OnInit {
   constructor(
     private apiService: ApiService,
     private generalService: GeneralService,
-  ) {}
+  ) { }
 
   @HostListener('window:keydown.escape', ['$event'])
   handleKeyDown(_event: KeyboardEvent) {
@@ -488,6 +498,7 @@ export class IntegrationsComponent implements OnInit {
                       name: t.name,
                       versions: validVersions,
                     });
+                    this.availableTemplatesGrouped.sort((a, b) => a.name.localeCompare(b.name));
                   }
                 }
               },
@@ -507,7 +518,9 @@ export class IntegrationsComponent implements OnInit {
     this.apiService.getAssignedTemplates(clientId).subscribe({
       next: (response) => {
         if (response.success && response.data) {
-          this.assignedTemplates = response.data;
+          this.assignedTemplates = response.data.sort((a, b) =>
+            (a.templateName ?? '').localeCompare(b.templateName ?? ''),
+          );
         }
       },
     });
