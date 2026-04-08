@@ -171,7 +171,10 @@ type Screen = 'list' | 'detail' | 'version';
                   <button class="btn-small btn-danger" (click)="deleteTemplate(template)" title="Delete">Delete</button>
                 </td>
               </tr>
-              <tr *ngIf="templates.length === 0">
+              <tr *ngIf="isInitialLoading">
+                <td colspan="6" class="no-data">Loading templates...</td>
+              </tr>
+              <tr *ngIf="templates.length === 0 && !isInitialLoading">
                 <td colspan="6" class="no-data">No templates found. Click "New Template" to get started.</td>
               </tr>
             </tbody>
@@ -1005,7 +1008,7 @@ export class TemplatesComponent implements OnInit {
   constructor(
     private apiService: ApiService,
     private generalService: GeneralService,
-  ) {}
+  ) { }
 
   ngOnInit() {
     this.loadTemplates();
@@ -1069,14 +1072,17 @@ export class TemplatesComponent implements OnInit {
   // ===== Data Loading =====
 
   loadTemplates() {
+    this.isInitialLoading = true;
     this.apiService.getTemplates().subscribe({
       next: (response) => {
         if (response.success && response.data) {
           this.templates = response.data.templates;
         }
+        this.isInitialLoading = false;
       },
       error: (err) => {
         this.error = 'Failed to load templates';
+        this.isInitialLoading = false;
         console.error(err);
       },
     });

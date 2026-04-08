@@ -66,6 +66,7 @@ builder.Services.AddScoped<ITemplateVersionRepository, TemplateVersionRepository
 builder.Services.AddScoped<IFieldMappingRepository, FieldMappingRepository>();
 builder.Services.AddScoped<ILookupTableRepository, LookupTableRepository>();
 builder.Services.AddScoped<ITransformationLogRepository, TransformationLogRepository>();
+builder.Services.AddScoped<IApiClientRepository, ApiClientRepository>();
 
 // Register services
 builder.Services.AddScoped<IJsonParserService, JsonParserService>();

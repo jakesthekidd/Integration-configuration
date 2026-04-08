@@ -13,13 +13,16 @@ public class TransformController : ControllerBase
 {
     private readonly ITransformationCoordinator _coordinator;
     private readonly ITemplateVersionRepository _templateVersionRepository;
+    private readonly IApiClientRepository _apiClientRepository;
 
     public TransformController(
         ITransformationCoordinator coordinator,
-        ITemplateVersionRepository templateVersionRepository)
+        ITemplateVersionRepository templateVersionRepository,
+        IApiClientRepository apiClientRepository)
     {
         _coordinator = coordinator;
         _templateVersionRepository = templateVersionRepository;
+        _apiClientRepository = apiClientRepository;
     }
 
     [HttpPost]
@@ -82,6 +85,21 @@ public class TransformController : ControllerBase
     /// </summary>
     private async Task<IActionResult?> ValidateClientAccessAsync(Guid clientId, Guid templateId, int? version)
     {
+        var apiClient = await _apiClientRepository.GetByIdAsync(clientId);
+        if (apiClient == null)
+        {
+            return StatusCode(
+                StatusCodes.Status401Unauthorized,
+                ApiResponse<object>.ErrorResponse("Unauthorized. API client not found."));
+        }
+
+        if (!apiClient.IsActive)
+        {
+            return StatusCode(
+                StatusCodes.Status401Unauthorized,
+                ApiResponse<object>.ErrorResponse("Unauthorized. API client is inactive."));
+        }
+
         var targetVersion = version.HasValue
             ? await _templateVersionRepository.GetByVersionAsync(templateId, version.Value)
             : await _templateVersionRepository.GetPublishedVersionAsync(templateId);
