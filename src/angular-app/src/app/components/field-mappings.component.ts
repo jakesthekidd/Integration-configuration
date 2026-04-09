@@ -539,7 +539,6 @@ export class FieldMappingsComponent implements OnInit, OnChanges {
         if (response.success && response.data?.fields) {
           const parsedPaths: string[] = Object.keys(response.data.fields);
           this.targetPaths = [...new Set([...this.targetPaths, ...parsedPaths])].sort();
-          console.log(this.targetPaths);
         }
       },
       error: (err) => console.warn('Could not parse Target Schema JSON for path suggestions', err),
