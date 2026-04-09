@@ -6,41 +6,52 @@ using Transflo.Platform.Transformer.TransformationService.Services.Interfaces;
 namespace Transflo.Platform.Transformer.TransformationService.Services.Strategies;
 
 /// <summary>
-/// Selects a DateTime source field based on a condition field value, converts the result
-/// to UTC, and formats it with a configurable output format.
+/// Resolves a DateTime value, converts it to UTC, and formats it with a configurable
+/// output format. Supports two operating modes:
 ///
-/// This combines three capabilities that no single existing strategy covers together:
-/// <list type="number">
-///   <item>Conditional source path selection — different fields are read depending on the value of a "condition field" (e.g. <c>stopType</c>).</item>
-///   <item>Path coalescing — multiple source paths can be listed per branch; the first non-null, non-empty value wins.</item>
-///   <item>DateTime UTC conversion + formatting — the resolved value is parsed, converted to UTC, and formatted.</item>
-/// </list>
+/// ──────────────────────────────────────────────────────────────────────────────
+/// <b>Mode 1 — Coalesce (top-level SourcePaths)</b>
+/// ──────────────────────────────────────────────────────────────────────────────
+/// Tries each path in order; the first non-null, non-empty value wins and is
+/// converted to UTC. No condition field or branches are needed.
 ///
-/// <b>TransformationConfig schema</b>
+/// Use this when the logic is simply:
+///   "Use field A if it has a value, otherwise fall back to field B, and convert
+///    whichever one wins to UTC."
+///
+/// <code>
+/// {
+///   "SourcePaths":  ["actualPickup", "pickUpBy"],
+///   "OutputFormat": "yyyy-MM-ddTHH:mm:ss.ffffffZ"   // optional
+/// }
+/// </code>
+///
+/// ──────────────────────────────────────────────────────────────────────────────
+/// <b>Mode 2 — Condition field + branches</b>
+/// ──────────────────────────────────────────────────────────────────────────────
+/// Reads a condition field (e.g. <c>stopType</c>), matches its value against the
+/// <c>Branches</c> array, and within the matched branch tries <c>SourcePaths</c>
+/// in order. Useful when the source field itself changes depending on a context value.
+///
 /// <code>
 /// {
 ///   "ConditionField": "stopType",
-///   "OutputFormat":   "yyyy-MM-ddTHH:mm:ss.ffffffZ",   // optional; defaults to ISO microseconds
+///   "OutputFormat":   "yyyy-MM-ddTHH:mm:ss.ffffffZ",
 ///   "Branches": [
-///     {
-///       "Value":       "Origin",
-///       "SourcePaths": ["actualPickup", "pickUpBy"]    // first non-null wins
-///     },
-///     {
-///       "Value":       "Destination",
-///       "SourcePaths": ["actualDelivery"]
-///     }
+///     { "Value": "Origin",      "SourcePaths": ["actualPickup", "pickUpBy"] },
+///     { "Value": "Destination", "SourcePaths": ["actualDelivery"] }
 ///   ]
 /// }
 /// </code>
 ///
-/// <b>Behaviour</b>
+/// ──────────────────────────────────────────────────────────────────────────────
+/// <b>Shared behaviour (both modes)</b>
 /// <list type="bullet">
-///   <item>Branch matching is case-insensitive.</item>
-///   <item>When no branch matches the condition field value, <c>null</c> is returned.</item>
-///   <item>When a branch matches but all its source paths resolve to null / empty, <c>null</c> is returned.</item>
-///   <item>When the resolved value cannot be parsed as a date, it is returned unchanged.</item>
-///   <item>The default <c>OutputFormat</c> is <c>yyyy-MM-ddTHH:mm:ss.ffffffZ</c> (ISO 8601 UTC, microsecond precision).</item>
+///   <item>The first non-null, non-empty path value wins.</item>
+///   <item>The resolved value is parsed and converted to UTC before formatting.</item>
+///   <item>When the value cannot be parsed as a date it is returned unchanged.</item>
+///   <item>Default <c>OutputFormat</c> is <c>yyyy-MM-ddTHH:mm:ss.ffffffZ</c>.</item>
+///   <item>Mode 1 takes precedence when <c>SourcePaths</c> exists at the root level.</item>
 /// </list>
 /// </summary>
 public class ConditionalDateFormatTransformationStrategy : ITransformationStrategy
@@ -62,6 +73,18 @@ public class ConditionalDateFormatTransformationStrategy : ITransformationStrate
             return null;
         }
 
+        var outputFormat = ResolveOutputFormat(config);
+
+        // ── Mode 1: top-level SourcePaths coalesce ────────────────────────────
+        if (config.TryGetValue(TransformationConfigKeys.ConditionalDateFormat.SourcePaths, out var topPathsRaw)
+            && topPathsRaw is JsonElement topPathsEl
+            && topPathsEl.ValueKind == JsonValueKind.Array
+            && topPathsEl.GetArrayLength() > 0)
+        {
+            return await CoalesceAndConvertAsync(topPathsEl, outputFormat, context.SourceData);
+        }
+
+        // ── Mode 2: condition field + branches ────────────────────────────────
         if (!config.TryGetValue(TransformationConfigKeys.ConditionalDateFormat.ConditionField, out var condFieldRaw)
             || condFieldRaw?.ToString() is not { Length: > 0 } conditionField)
         {
@@ -76,11 +99,6 @@ public class ConditionalDateFormatTransformationStrategy : ITransformationStrate
             return null;
         }
 
-        var outputFormat = config.TryGetValue(TransformationConfigKeys.ConditionalDateFormat.OutputFormat, out var fmtRaw)
-            ? fmtRaw?.ToString() ?? TransformationConfigKeys.ConditionalDateFormat.DefaultOutputFormat
-            : TransformationConfigKeys.ConditionalDateFormat.DefaultOutputFormat;
-
-        // Resolve the condition field value
         var condRaw = await _jsonParser.GetValueAtPathAsync(context.SourceData, conditionField);
         var condValue = condRaw is JsonElement je ? je.GetString() : condRaw?.ToString();
 
@@ -89,7 +107,6 @@ public class ConditionalDateFormatTransformationStrategy : ITransformationStrate
             return null;
         }
 
-        // Find the matching branch
         foreach (var branch in branchesEl.EnumerateArray())
         {
             if (branch.ValueKind != JsonValueKind.Object)
@@ -102,45 +119,56 @@ public class ConditionalDateFormatTransformationStrategy : ITransformationStrate
                 continue;
             }
 
-            var branchValue = branchValueEl.GetString();
-            if (!string.Equals(condValue, branchValue, StringComparison.OrdinalIgnoreCase))
+            if (!string.Equals(condValue, branchValueEl.GetString(), StringComparison.OrdinalIgnoreCase))
             {
                 continue;
             }
 
-            // Branch matched — try source paths in order
             if (!branch.TryGetProperty(TransformationConfigKeys.ConditionalDateFormat.SourcePaths, out var pathsEl)
                 || pathsEl.ValueKind != JsonValueKind.Array)
             {
                 return null;
             }
 
-            foreach (var pathEl in pathsEl.EnumerateArray())
-            {
-                var path = pathEl.GetString();
-                if (string.IsNullOrEmpty(path))
-                {
-                    continue;
-                }
-
-                var rawValue = await _jsonParser.GetValueAtPathAsync(context.SourceData, path);
-                var strValue = rawValue is JsonElement sv ? sv.GetString() : rawValue?.ToString();
-
-                if (string.IsNullOrWhiteSpace(strValue))
-                {
-                    continue;
-                }
-
-                return ConvertAndFormat(strValue, outputFormat);
-            }
-
-            return null; // Branch matched but no non-empty source value found
+            return await CoalesceAndConvertAsync(pathsEl, outputFormat, context.SourceData);
         }
 
         return null; // No branch matched
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
+    // ── Shared helpers ────────────────────────────────────────────────────────
+
+    private async Task<object?> CoalesceAndConvertAsync(
+        JsonElement pathsEl,
+        string outputFormat,
+        Dictionary<string, object> sourceData)
+    {
+        foreach (var pathEl in pathsEl.EnumerateArray())
+        {
+            var path = pathEl.GetString();
+            if (string.IsNullOrEmpty(path))
+            {
+                continue;
+            }
+
+            var rawValue = await _jsonParser.GetValueAtPathAsync(sourceData, path);
+            var strValue = rawValue is JsonElement sv ? sv.GetString() : rawValue?.ToString();
+
+            if (string.IsNullOrWhiteSpace(strValue))
+            {
+                continue;
+            }
+
+            return ConvertAndFormat(strValue, outputFormat);
+        }
+
+        return null;
+    }
+
+    private static string ResolveOutputFormat(Dictionary<string, object> config) =>
+        config.TryGetValue(TransformationConfigKeys.ConditionalDateFormat.OutputFormat, out var fmtRaw)
+            ? fmtRaw?.ToString() ?? TransformationConfigKeys.ConditionalDateFormat.DefaultOutputFormat
+            : TransformationConfigKeys.ConditionalDateFormat.DefaultOutputFormat;
 
     private static object? ConvertAndFormat(string dateStr, string outputFormat)
     {

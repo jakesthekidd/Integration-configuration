@@ -1,6 +1,8 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using Transflo.Platform.Transformer.Core.DTOs;
 using Transflo.Platform.Transformer.Core.Services.Interfaces;
+using Transflo.Platform.Transformer.TransformationService.DTOs;
 
 namespace Transflo.Platform.Transformer.WebApi.Controllers;
 
@@ -15,11 +17,16 @@ public class TemplateVersionsController : ControllerBase
 {
     private readonly ITemplatesService _service;
     private readonly IFieldMappingValidationService _validationService;
+    private readonly ITransformationCoordinator _coordinator;
 
-    public TemplateVersionsController(ITemplatesService service, IFieldMappingValidationService validationService)
+    public TemplateVersionsController(
+        ITemplatesService service,
+        IFieldMappingValidationService validationService,
+        ITransformationCoordinator coordinator)
     {
         _service = service;
         _validationService = validationService;
+        _coordinator = coordinator;
     }
 
     /// <summary>Lists all versions for the template, ordered newest-first.</summary>
@@ -136,6 +143,51 @@ public class TemplateVersionsController : ControllerBase
     }
 
     /// <summary>
+    /// Runs the full transformation pipeline for the specified template version against
+    /// the provided source document. The source can be a raw JSON object or a
+    /// JSON-encoded string — both forms are accepted.
+    /// </summary>
+    [HttpPost("{version:int}/transform")]
+    [ProducesResponseType(typeof(ApiResponse<TransformationResult>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> Transform(
+        Guid templateId,
+        int version,
+        [FromBody] VersionTransformRequest request)
+    {
+        var sourceJson = ResolveSourceJson(request.SourceDocument);
+        if (string.IsNullOrWhiteSpace(sourceJson))
+        {
+            return BadRequest(ApiResponse<object>.ErrorResponse("SourceDocument must not be empty."));
+        }
+
+        var result = await _coordinator.TransformAsync(sourceJson, templateId, version);
+        return Ok(ApiResponse<TransformationResult>.SuccessResponse(result, result.MessageSummary));
+    }
+
+    /// <summary>
+    /// Runs the transformation pipeline in preview mode (no output is persisted) for the
+    /// specified template version. Accepts the same source document forms as the transform endpoint.
+    /// </summary>
+    [HttpPost("{version:int}/transform/preview")]
+    [ProducesResponseType(typeof(ApiResponse<TransformationResult>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> PreviewTransform(
+        Guid templateId,
+        int version,
+        [FromBody] VersionTransformRequest request)
+    {
+        var sourceJson = ResolveSourceJson(request.SourceDocument);
+        if (string.IsNullOrWhiteSpace(sourceJson))
+        {
+            return BadRequest(ApiResponse<object>.ErrorResponse("SourceDocument must not be empty."));
+        }
+
+        var result = await _coordinator.PreviewTransformationAsync(sourceJson, templateId, version);
+        return Ok(ApiResponse<TransformationResult>.SuccessResponse(result, result.MessageSummary));
+    }
+
+    /// <summary>
     /// Deletes a Draft version. Returns 400 if the version is not in Draft status.
     /// </summary>
     [HttpDelete("{version:int}")]
@@ -165,4 +217,16 @@ public class TemplateVersionsController : ControllerBase
 
         return Ok(ApiResponse<object>.SuccessResponse(new object(), "Version deleted successfully."));
     }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Extracts a JSON string from a <see cref="JsonElement"/> that may be either a raw
+    /// JSON object/array or a JSON-encoded string (i.e. the document was serialized before
+    /// being placed in the body).
+    /// </summary>
+    private static string ResolveSourceJson(JsonElement element) =>
+        element.ValueKind == JsonValueKind.String
+            ? element.GetString() ?? string.Empty
+            : element.GetRawText();
 }

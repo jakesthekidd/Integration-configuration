@@ -897,7 +897,7 @@ Source: `tag1 = "urgent"`, `tag2 = ""`, `tag3 = "fragile"`
 
 ## 12. ConditionalDateFormat
 
-Selects a DateTime source field based on a **condition field value**, converts the result to UTC, and formats it with a configurable output format.
+Resolves a DateTime value from one or more source paths, converts it to UTC, and formats it with a configurable output format. Supports two operating modes:
 
 This type exists because no single existing strategy can chain conditional source selection, path coalescing, and date conversion together in one step:
 
@@ -906,6 +906,41 @@ This type exists because no single existing strategy can chain conditional sourc
 | Branch on a field value | ✓ | ✗ | ✓ |
 | Try multiple source paths (coalesce) | ✗ | ✗ | ✓ |
 | Convert to UTC + format | ✗ | ✓ | ✓ |
+
+---
+
+### Mode 1 — Coalesce (top-level `SourcePaths`)
+
+Tries each path in order; the **first non-null, non-empty value** wins and is converted to UTC. No condition field or branches needed.
+
+Use this when the logic is: *"Use field A if it has a value, otherwise fall back to field B, and convert whichever one wins to UTC."*
+
+| Key | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `SourcePaths` | `string[]` | Yes | — | Ordered source paths to try; first non-null/non-empty wins |
+| `OutputFormat` | `string` | No | `"yyyy-MM-ddTHH:mm:ss.ffffffZ"` | .NET format string applied to the UTC result |
+
+**Examples:**
+
+```json
+{ "SourcePaths": ["actualPickup", "pickUpBy"] }
+```
+- `actualPickup = "2024-03-15T10:30:00Z"` → `"2024-03-15T10:30:00.000000Z"`
+- `actualPickup = null`, `pickUpBy = "2024-03-15T08:00:00Z"` → `"2024-03-15T08:00:00.000000Z"` (fallback)
+- `actualPickup = null`, `pickUpBy = null` → `null`
+
+```json
+{ "SourcePaths": ["actualPickup"], "OutputFormat": "yyyy-MM-dd" }
+```
+- `actualPickup = "2024-03-15T12:30:00+02:00"` → `"2024-03-15"` (converted to UTC `10:30:00Z` first, then date extracted)
+
+---
+
+### Mode 2 — Condition field + branches
+
+Reads a condition field (e.g. `stopType`), matches its value against the `Branches` array, and within the matched branch tries `SourcePaths` in order.
+
+Use this when the source field itself changes depending on a context value.
 
 | Key | Type | Required | Default | Description |
 |---|---|---|---|---|
@@ -920,15 +955,20 @@ This type exists because no single existing strategy can chain conditional sourc
 | `Value` | `string` | Yes | Condition value that activates this branch (case-insensitive) |
 | `SourcePaths` | `string[]` | Yes | Ordered source paths to try; the **first non-null, non-empty value** wins |
 
-> **Behaviour notes**
-> - When no branch matches the condition value, `null` is returned.
-> - When a branch matches but all its `SourcePaths` resolve to null / empty, `null` is returned.
-> - When the resolved value cannot be parsed as a date, it is returned **unchanged** (consistent with `DateFormat`).
+---
+
+> **Shared behaviour (both modes)**
+> - The first non-null, non-empty path value wins.
+> - The resolved value is parsed and converted to UTC before formatting.
+> - When the value cannot be parsed as a date, it is returned **unchanged** (consistent with `DateFormat`).
 > - The default `OutputFormat` produces ISO 8601 UTC with microsecond precision: `2024-03-15T10:30:00.000000Z`.
+> - Mode 1 takes precedence when `SourcePaths` exists at the root level.
+> - (Mode 2) When no branch matches the condition value, `null` is returned.
+> - (Mode 2) When a branch matches but all its `SourcePaths` resolve to null/empty, `null` is returned.
 
 ### Examples
 
-**`actualArrival` — different source fields per stop type, with fallback:**
+**Mode 2 — `actualArrival`, different source fields per stop type with fallback:**
 
 ```sql
 source_path           = 'irrelevant'
@@ -955,7 +995,7 @@ transformation_type   = 'ConditionalDateFormat'
 - `stopType = "Destination"`, `actualDelivery = "2024-03-16T14:00:00Z"` → `"2024-03-16T14:00:00.000000Z"`
 - `stopType = "StopOff"` → `null` (no matching branch)
 
-**`scheduledEarlyArrival` — Destination only, with fallback:**
+**Mode 2 — `scheduledEarlyArrival`, Destination only with fallback:**
 
 ```json
 {
@@ -972,7 +1012,7 @@ transformation_type   = 'ConditionalDateFormat'
 - `stopType = "Destination"`, `deliverBy = null`, `deliverByEnd = "2024-03-16T18:00:00Z"` → `"2024-03-16T18:00:00.000000Z"` (fallback)
 - `stopType = "Origin"` → `null`
 
-**Three-way stop type switch:**
+**Mode 2 — three-way stop type switch:**
 
 ```json
 {
@@ -985,7 +1025,7 @@ transformation_type   = 'ConditionalDateFormat'
 }
 ```
 
-**With timezone offset conversion — custom format:**
+**Mode 2 — with timezone offset conversion and custom format:**
 
 ```json
 {
