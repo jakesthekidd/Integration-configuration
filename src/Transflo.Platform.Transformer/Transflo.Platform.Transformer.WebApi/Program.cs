@@ -66,6 +66,7 @@ builder.Services.AddScoped<ITemplateVersionRepository, TemplateVersionRepository
 builder.Services.AddScoped<IFieldMappingRepository, FieldMappingRepository>();
 builder.Services.AddScoped<ILookupTableRepository, LookupTableRepository>();
 builder.Services.AddScoped<ITransformationLogRepository, TransformationLogRepository>();
+builder.Services.AddScoped<IApiClientRepository, ApiClientRepository>();
 
 // Register services
 builder.Services.AddScoped<IJsonParserService, JsonParserService>();
@@ -84,6 +85,7 @@ builder.Services.AddScoped<ITransformationStrategy, SubstringTransformationStrat
 builder.Services.AddScoped<ITransformationStrategy, TemplateTransformationStrategy>();
 builder.Services.AddScoped<ITransformationStrategy, MathTransformationStrategy>();
 builder.Services.AddScoped<ITransformationStrategy, PrefixMapTransformationStrategy>();
+builder.Services.AddScoped<ITransformationStrategy, ConditionalDateFormatTransformationStrategy>();
 builder.Services.AddScoped<ITransformationStrategyFactory, TransformationStrategyFactory>();
 
 builder.Services.AddScoped<ITransformationService, TransformationService>();

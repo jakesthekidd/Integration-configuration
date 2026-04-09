@@ -214,6 +214,23 @@ public class FieldMappingValidationService : IFieldMappingValidationService
                     });
                 }
                 break;
+
+            case TransformationType.ConditionalDateFormat:
+                var hasCondDateConfig = config is not null
+                    && (config.ContainsKey("SourcePaths")
+                        || (config.ContainsKey("ConditionField") && config.ContainsKey("Branches")));
+                if (!hasCondDateConfig)
+                {
+                    issues.Add(new ValidationIssue
+                    {
+                        Severity = ValidationSeverity.Error,
+                        Code = ValidationCodes.MissingConfigFields,
+                        Message = "ConditionalDateFormat transformation requires either 'SourcePaths' (coalesce mode) or both 'ConditionField' and 'Branches' (conditional mode) in TransformationConfig.",
+                        MappingIndex = index,
+                        TargetPath = fieldMapping.TargetPath
+                    });
+                }
+                break;
         }
     }
 
@@ -545,8 +562,11 @@ public class FieldMappingValidationService : IFieldMappingValidationService
     {
         // Constant mappings derive their value from config, not from the source document.
         // PrefixMap uses SourcePath as a key prefix, not an exact field path.
+        // ConditionalDateFormat resolves its value from config-defined SourcePaths with coalesce
+        // fallback — a null primary field is expected and handled by the strategy.
         if (fieldMapping.TransformationType == TransformationType.Constant
-            || fieldMapping.TransformationType == TransformationType.PrefixMap)
+            || fieldMapping.TransformationType == TransformationType.PrefixMap
+            || fieldMapping.TransformationType == TransformationType.ConditionalDateFormat)
         {
             return;
         }

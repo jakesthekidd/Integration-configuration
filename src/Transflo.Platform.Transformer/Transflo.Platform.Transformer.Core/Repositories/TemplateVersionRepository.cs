@@ -32,6 +32,11 @@ public class TemplateVersionRepository : ITemplateVersionRepository
             .OrderByDescending(v => v.Version)
             .ToListAsync();
 
+    public async Task<bool> HasClientAccessAsync(Guid templateVersionId, Guid clientId)
+    {
+        return await _context.ApiClientTemplateVersions
+             .AnyAsync(actv => actv.TemplateVersionId == templateVersionId && actv.ApiClientId == clientId && !actv.IsDeleted);
+    }
     public async Task<TemplateVersion> CreateAsync(TemplateVersion version)
     {
         _context.TemplateVersions.Add(version);

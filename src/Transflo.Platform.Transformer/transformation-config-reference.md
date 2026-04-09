@@ -24,6 +24,7 @@ Each section shows the available fields, their types, and multiple real-world ex
 9. [Math](#9-math)
 10. [Conditional](#10-conditional)
 11. [PrefixMap](#11-prefixmap)
+12. [ConditionalDateFormat](#12-conditionaldateformat)
 
 ---
 
@@ -891,3 +892,148 @@ Source: `driver1 = "John,Doe,Jr"`
 ```
 Source: `tag1 = "urgent"`, `tag2 = ""`, `tag3 = "fragile"`
 → `[{ "value": "urgent" }, { "value": "fragile" }]`
+
+---
+
+## 12. ConditionalDateFormat
+
+Resolves a DateTime value from one or more source paths, converts it to UTC, and formats it with a configurable output format. Supports two operating modes:
+
+This type exists because no single existing strategy can chain conditional source selection, path coalescing, and date conversion together in one step:
+
+| Capability | `Conditional` | `DateFormat` | `ConditionalDateFormat` |
+|---|---|---|---|
+| Branch on a field value | ✓ | ✗ | ✓ |
+| Try multiple source paths (coalesce) | ✗ | ✗ | ✓ |
+| Convert to UTC + format | ✗ | ✓ | ✓ |
+
+---
+
+### Mode 1 — Coalesce (top-level `SourcePaths`)
+
+Tries each path in order; the **first non-null, non-empty value** wins and is converted to UTC. No condition field or branches needed.
+
+Use this when the logic is: *"Use field A if it has a value, otherwise fall back to field B, and convert whichever one wins to UTC."*
+
+| Key | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `SourcePaths` | `string[]` | Yes | — | Ordered source paths to try; first non-null/non-empty wins |
+| `OutputFormat` | `string` | No | `"yyyy-MM-ddTHH:mm:ss.ffffffZ"` | .NET format string applied to the UTC result |
+
+**Examples:**
+
+```json
+{ "SourcePaths": ["actualPickup", "pickUpBy"] }
+```
+- `actualPickup = "2024-03-15T10:30:00Z"` → `"2024-03-15T10:30:00.000000Z"`
+- `actualPickup = null`, `pickUpBy = "2024-03-15T08:00:00Z"` → `"2024-03-15T08:00:00.000000Z"` (fallback)
+- `actualPickup = null`, `pickUpBy = null` → `null`
+
+```json
+{ "SourcePaths": ["actualPickup"], "OutputFormat": "yyyy-MM-dd" }
+```
+- `actualPickup = "2024-03-15T12:30:00+02:00"` → `"2024-03-15"` (converted to UTC `10:30:00Z` first, then date extracted)
+
+---
+
+### Mode 2 — Condition field + branches
+
+Reads a condition field (e.g. `stopType`), matches its value against the `Branches` array, and within the matched branch tries `SourcePaths` in order.
+
+Use this when the source field itself changes depending on a context value.
+
+| Key | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `ConditionField` | `string` | Yes | — | Source path of the field whose value drives branch selection (e.g. `stopType`) |
+| `Branches` | `object[]` | Yes | — | Array of branch objects (see below) |
+| `OutputFormat` | `string` | No | `"yyyy-MM-ddTHH:mm:ss.ffffffZ"` | .NET format string applied to the UTC result |
+
+**Branch object fields:**
+
+| Key | Type | Required | Description |
+|---|---|---|---|
+| `Value` | `string` | Yes | Condition value that activates this branch (case-insensitive) |
+| `SourcePaths` | `string[]` | Yes | Ordered source paths to try; the **first non-null, non-empty value** wins |
+
+---
+
+> **Shared behaviour (both modes)**
+> - The first non-null, non-empty path value wins.
+> - The resolved value is parsed and converted to UTC before formatting.
+> - When the value cannot be parsed as a date, it is returned **unchanged** (consistent with `DateFormat`).
+> - The default `OutputFormat` produces ISO 8601 UTC with microsecond precision: `2024-03-15T10:30:00.000000Z`.
+> - Mode 1 takes precedence when `SourcePaths` exists at the root level.
+> - (Mode 2) When no branch matches the condition value, `null` is returned.
+> - (Mode 2) When a branch matches but all its `SourcePaths` resolve to null/empty, `null` is returned.
+
+### Examples
+
+**Mode 2 — `actualArrival`, different source fields per stop type with fallback:**
+
+```sql
+source_path           = 'irrelevant'
+target_path           = 'actualArrival'
+transformation_type   = 'ConditionalDateFormat'
+```
+```json
+{
+  "ConditionField": "stopType",
+  "Branches": [
+    {
+      "Value": "Origin",
+      "SourcePaths": ["actualPickup", "pickUpBy"]
+    },
+    {
+      "Value": "Destination",
+      "SourcePaths": ["actualDelivery"]
+    }
+  ]
+}
+```
+- `stopType = "Origin"`, `actualPickup = "2024-03-15T10:30:00Z"` → `"2024-03-15T10:30:00.000000Z"`
+- `stopType = "Origin"`, `actualPickup = null`, `pickUpBy = "2024-03-15T08:00:00Z"` → `"2024-03-15T08:00:00.000000Z"` (fallback)
+- `stopType = "Destination"`, `actualDelivery = "2024-03-16T14:00:00Z"` → `"2024-03-16T14:00:00.000000Z"`
+- `stopType = "StopOff"` → `null` (no matching branch)
+
+**Mode 2 — `scheduledEarlyArrival`, Destination only with fallback:**
+
+```json
+{
+  "ConditionField": "stopType",
+  "Branches": [
+    {
+      "Value": "Destination",
+      "SourcePaths": ["deliverBy", "deliverByEnd"]
+    }
+  ]
+}
+```
+- `stopType = "Destination"`, `deliverBy = "2024-03-16T12:00:00Z"` → `"2024-03-16T12:00:00.000000Z"`
+- `stopType = "Destination"`, `deliverBy = null`, `deliverByEnd = "2024-03-16T18:00:00Z"` → `"2024-03-16T18:00:00.000000Z"` (fallback)
+- `stopType = "Origin"` → `null`
+
+**Mode 2 — three-way stop type switch:**
+
+```json
+{
+  "ConditionField": "stopType",
+  "Branches": [
+    { "Value": "Origin",      "SourcePaths": ["actualPickup",  "pickUpBy"]     },
+    { "Value": "StopOff",     "SourcePaths": ["stopOffArrival"               ] },
+    { "Value": "Destination", "SourcePaths": ["actualDelivery"               ] }
+  ]
+}
+```
+
+**Mode 2 — with timezone offset conversion and custom format:**
+
+```json
+{
+  "ConditionField": "stopType",
+  "OutputFormat": "yyyy-MM-dd",
+  "Branches": [
+    { "Value": "Origin", "SourcePaths": ["actualPickup"] }
+  ]
+}
+```
+`actualPickup = "2024-03-15T12:30:00+02:00"` → `"2024-03-15"` (converted to UTC first: `10:30:00Z`, then date extracted)

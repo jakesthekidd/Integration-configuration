@@ -55,4 +55,6 @@ export const TransformationTypes = [
   'Substring',
   'Constant',
   'Template',
+  'PrefixMap',
+  'ConditionalDateFormat',
 ];
