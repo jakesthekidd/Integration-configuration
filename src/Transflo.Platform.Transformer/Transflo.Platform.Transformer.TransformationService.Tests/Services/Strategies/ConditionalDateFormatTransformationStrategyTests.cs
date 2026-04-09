@@ -406,6 +406,116 @@ public class ConditionalDateFormatTransformationStrategyTests
         Assert.Equal("not-a-date", result);
     }
 
+    // ── Mode 1: top-level SourcePaths coalesce ────────────────────────────────
+
+    [Fact]
+    public async Task Mode1_ReturnsFirstField_WhenItHasAValue()
+    {
+        SetupField("actualPickup", "2024-03-15T10:30:00Z");
+
+        var ctx = MakeContext("""{"SourcePaths":["actualPickup","pickUpBy"]}""");
+
+        var result = await _sut.ApplyAsync(ctx);
+
+        Assert.Equal("2024-03-15T10:30:00.000000Z", result);
+    }
+
+    [Fact]
+    public async Task Mode1_FallsBackToSecondField_WhenFirstIsNull()
+    {
+        SetupField("actualPickup", null);
+        SetupField("pickUpBy",     "2024-03-15T08:00:00Z");
+
+        var ctx = MakeContext("""{"SourcePaths":["actualPickup","pickUpBy"]}""");
+
+        var result = await _sut.ApplyAsync(ctx);
+
+        Assert.Equal("2024-03-15T08:00:00.000000Z", result);
+    }
+
+    [Fact]
+    public async Task Mode1_FallsBackToSecondField_WhenFirstIsWhitespace()
+    {
+        SetupField("actualPickup", "   ");
+        SetupField("pickUpBy",     "2024-03-15T08:00:00Z");
+
+        var ctx = MakeContext("""{"SourcePaths":["actualPickup","pickUpBy"]}""");
+
+        var result = await _sut.ApplyAsync(ctx);
+
+        Assert.Equal("2024-03-15T08:00:00.000000Z", result);
+    }
+
+    [Fact]
+    public async Task Mode1_ConvertsOffsetToUtc()
+    {
+        SetupField("actualPickup", "2024-03-15T12:30:00+02:00");
+
+        var ctx = MakeContext("""{"SourcePaths":["actualPickup"]}""");
+
+        var result = await _sut.ApplyAsync(ctx);
+
+        Assert.Equal("2024-03-15T10:30:00.000000Z", result);
+    }
+
+    [Fact]
+    public async Task Mode1_ReturnsNull_WhenAllPathsAreEmpty()
+    {
+        SetupField("actualPickup", null);
+        SetupField("pickUpBy",     null);
+
+        var ctx = MakeContext("""{"SourcePaths":["actualPickup","pickUpBy"]}""");
+
+        var result = await _sut.ApplyAsync(ctx);
+
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task Mode1_UsesCustomOutputFormat()
+    {
+        SetupField("actualPickup", "2024-03-15T10:30:00Z");
+
+        var ctx = MakeContext("""{"SourcePaths":["actualPickup"],"OutputFormat":"yyyy-MM-dd"}""");
+
+        var result = await _sut.ApplyAsync(ctx);
+
+        Assert.Equal("2024-03-15", result);
+    }
+
+    [Fact]
+    public async Task Mode1_ReturnsRawString_WhenValueIsNotAValidDate()
+    {
+        SetupField("actualPickup", "not-a-date");
+
+        var ctx = MakeContext("""{"SourcePaths":["actualPickup"]}""");
+
+        var result = await _sut.ApplyAsync(ctx);
+
+        Assert.Equal("not-a-date", result);
+    }
+
+    [Fact]
+    public async Task Mode1_TakesPrecedenceOverConditionFieldConfig_WhenBothPresent()
+    {
+        // SourcePaths at root → Mode 1 wins; ConditionField is ignored
+        SetupField("actualPickup", "2024-03-15T10:30:00Z");
+
+        var ctx = MakeContext("""
+            {
+              "SourcePaths": ["actualPickup"],
+              "ConditionField": "stopType",
+              "Branches": [
+                { "Value": "Origin", "SourcePaths": ["otherField"] }
+              ]
+            }
+            """);
+
+        var result = await _sut.ApplyAsync(ctx);
+
+        Assert.Equal("2024-03-15T10:30:00.000000Z", result);
+    }
+
     // ── Invalid / missing config ──────────────────────────────────────────────
 
     [Fact]
