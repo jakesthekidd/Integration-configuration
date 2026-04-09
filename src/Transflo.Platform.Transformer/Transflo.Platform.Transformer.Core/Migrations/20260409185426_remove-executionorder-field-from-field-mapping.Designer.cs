@@ -12,8 +12,8 @@ using Transflo.Platform.Transformer.Core.Data;
 namespace Transflo.Platform.Transformer.Core.Migrations
 {
     [DbContext(typeof(FieldMappingDbContext))]
-    [Migration("20260406174704_AddApiClientAndRemoveTemplateAssignment")]
-    partial class AddApiClientAndRemoveTemplateAssignment
+    [Migration("20260409185426_remove-executionorder-field-from-field-mapping")]
+    partial class removeexecutionorderfieldfromfieldmapping
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
