@@ -26,894 +26,900 @@ namespace Transflo.Platform.Transformer.Core.Migrations
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
             modelBuilder.Entity("Transflo.Platform.Transformer.Core.Models.Customer", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
+            {
+                b.Property<Guid>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("uuid")
+                    .HasColumnName("id");
 
-                    b.Property<string>("Code")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("code");
+                b.Property<string>("Code")
+                    .HasMaxLength(50)
+                    .HasColumnType("character varying(50)")
+                    .HasColumnName("code");
 
-                    b.Property<string>("ContactEmail")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("contact_email");
+                b.Property<string>("ContactEmail")
+                    .HasMaxLength(200)
+                    .HasColumnType("character varying(200)")
+                    .HasColumnName("contact_email");
 
-                    b.Property<string>("ContactPhone")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("contact_phone");
+                b.Property<string>("ContactPhone")
+                    .HasMaxLength(50)
+                    .HasColumnType("character varying(50)")
+                    .HasColumnName("contact_phone");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("timestamp with time zone")
+                    .HasColumnName("created_at");
 
-                    b.Property<string>("CreatedBy")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("created_by");
+                b.Property<string>("CreatedBy")
+                    .HasMaxLength(100)
+                    .HasColumnType("character varying(100)")
+                    .HasColumnName("created_by");
 
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("deleted_at");
+                b.Property<DateTime?>("DeletedAt")
+                    .HasColumnType("timestamp with time zone")
+                    .HasColumnName("deleted_at");
 
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_active");
+                b.Property<bool>("IsActive")
+                    .HasColumnType("boolean")
+                    .HasColumnName("is_active");
 
-                    b.Property<string>("Metadata")
-                        .HasColumnType("jsonb")
-                        .HasColumnName("metadata");
+                b.Property<string>("Metadata")
+                    .HasColumnType("jsonb")
+                    .HasColumnName("metadata");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("name");
+                b.Property<string>("Name")
+                    .IsRequired()
+                    .HasMaxLength(200)
+                    .HasColumnType("character varying(200)")
+                    .HasColumnName("name");
 
-                    b.Property<string>("Notes")
-                        .HasColumnType("text")
-                        .HasColumnName("notes");
+                b.Property<string>("Notes")
+                    .HasColumnType("text")
+                    .HasColumnName("notes");
 
-                    b.Property<int>("Revision")
-                        .IsConcurrencyToken()
-                        .HasColumnType("integer")
-                        .HasColumnName("revision");
+                b.Property<int>("Revision")
+                    .IsConcurrencyToken()
+                    .HasColumnType("integer")
+                    .HasColumnName("revision");
 
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("updated_at");
+                b.Property<DateTime>("UpdatedAt")
+                    .HasColumnType("timestamp with time zone")
+                    .HasColumnName("updated_at");
 
-                    b.Property<string>("UpdatedBy")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("updated_by");
+                b.Property<string>("UpdatedBy")
+                    .HasMaxLength(100)
+                    .HasColumnType("character varying(100)")
+                    .HasColumnName("updated_by");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.HasIndex("Code")
-                        .IsUnique()
-                        .HasFilter("code IS NOT NULL");
+                b.HasIndex("Code")
+                    .IsUnique()
+                    .HasFilter("code IS NOT NULL");
 
-                    b.HasIndex("IsActive");
+                b.HasIndex("IsActive");
 
-                    b.HasIndex("Name");
+                b.HasIndex("Name");
 
-                    b.ToTable("customers");
-                });
+                b.ToTable("customers");
+            });
 
             modelBuilder.Entity("Transflo.Platform.Transformer.Core.Models.FieldMapping", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
+            {
+                b.Property<Guid>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("uuid")
+                    .HasColumnName("id");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("timestamp with time zone")
+                    .HasColumnName("created_at");
 
-                    b.Property<string>("CreatedBy")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("created_by");
+                b.Property<string>("CreatedBy")
+                    .HasMaxLength(100)
+                    .HasColumnType("character varying(100)")
+                    .HasColumnName("created_by");
 
-                    b.Property<string>("DefaultValue")
-                        .HasColumnType("text")
-                        .HasColumnName("default_value");
+                b.Property<string>("DefaultValue")
+                    .HasColumnType("text")
+                    .HasColumnName("default_value");
 
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("deleted_at");
+                b.Property<DateTime?>("DeletedAt")
+                    .HasColumnType("timestamp with time zone")
+                    .HasColumnName("deleted_at");
 
-                    b.Property<bool>("IsRequired")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_required");
+                b.Property<int>("ExecutionOrder")
+                    .HasColumnType("integer")
+                    .HasColumnName("execution_order");
 
-                    b.Property<string>("Metadata")
-                        .HasColumnType("jsonb")
-                        .HasColumnName("metadata");
+                b.Property<bool>("IsRequired")
+                    .HasColumnType("boolean")
+                    .HasColumnName("is_required");
 
-                    b.Property<int>("Revision")
-                        .IsConcurrencyToken()
-                        .HasColumnType("integer")
-                        .HasColumnName("revision");
+                b.Property<string>("Metadata")
+                    .HasColumnType("jsonb")
+                    .HasColumnName("metadata");
 
-                    b.Property<string>("SourcePath")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)")
-                        .HasColumnName("source_path");
+                b.Property<int>("Revision")
+                    .IsConcurrencyToken()
+                    .HasColumnType("integer")
+                    .HasColumnName("revision");
 
-                    b.Property<string>("TargetPath")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)")
-                        .HasColumnName("target_path");
+                b.Property<string>("SourcePath")
+                    .IsRequired()
+                    .HasMaxLength(500)
+                    .HasColumnType("character varying(500)")
+                    .HasColumnName("source_path");
 
-                    b.Property<Guid>("TemplateVersionId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("template_version_id");
+                b.Property<string>("TargetPath")
+                    .IsRequired()
+                    .HasMaxLength(500)
+                    .HasColumnType("character varying(500)")
+                    .HasColumnName("target_path");
 
-                    b.Property<string>("TransformationConfig")
-                        .HasColumnType("jsonb")
-                        .HasColumnName("transformation_config");
+                b.Property<Guid>("TemplateVersionId")
+                    .HasColumnType("uuid")
+                    .HasColumnName("template_version_id");
 
-                    b.Property<string>("TransformationType")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("transformation_type");
+                b.Property<string>("TransformationConfig")
+                    .HasColumnType("jsonb")
+                    .HasColumnName("transformation_config");
 
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("updated_at");
+                b.Property<string>("TransformationType")
+                    .IsRequired()
+                    .HasMaxLength(50)
+                    .HasColumnType("character varying(50)")
+                    .HasColumnName("transformation_type");
 
-                    b.Property<string>("UpdatedBy")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("updated_by");
+                b.Property<DateTime>("UpdatedAt")
+                    .HasColumnType("timestamp with time zone")
+                    .HasColumnName("updated_at");
 
-                    b.Property<string>("ValidationRules")
-                        .HasColumnType("jsonb")
-                        .HasColumnName("validation_rules");
+                b.Property<string>("UpdatedBy")
+                    .HasMaxLength(100)
+                    .HasColumnType("character varying(100)")
+                    .HasColumnName("updated_by");
 
-                    b.HasKey("Id");
+                b.Property<string>("ValidationRules")
+                    .HasColumnType("jsonb")
+                    .HasColumnName("validation_rules");
 
-                    b.HasIndex("TemplateVersionId");
+                b.HasKey("Id");
 
-                    b.ToTable("field_mappings");
-                });
+                b.HasIndex("TemplateVersionId");
+
+                b.HasIndex("TemplateVersionId", "ExecutionOrder");
+
+                b.ToTable("field_mappings");
+            });
 
             modelBuilder.Entity("Transflo.Platform.Transformer.Core.Models.FieldMappingTemplate", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
+            {
+                b.Property<Guid>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("uuid")
+                    .HasColumnName("id");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("timestamp with time zone")
+                    .HasColumnName("created_at");
 
-                    b.Property<string>("CreatedBy")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("created_by");
+                b.Property<string>("CreatedBy")
+                    .HasMaxLength(100)
+                    .HasColumnType("character varying(100)")
+                    .HasColumnName("created_by");
 
-                    b.Property<Guid?>("CustomerId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("customer_id");
+                b.Property<Guid?>("CustomerId")
+                    .HasColumnType("uuid")
+                    .HasColumnName("customer_id");
 
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("deleted_at");
+                b.Property<DateTime?>("DeletedAt")
+                    .HasColumnType("timestamp with time zone")
+                    .HasColumnName("deleted_at");
 
-                    b.Property<string>("Description")
-                        .HasColumnType("text")
-                        .HasColumnName("description");
+                b.Property<string>("Description")
+                    .HasColumnType("text")
+                    .HasColumnName("description");
 
-                    b.Property<string>("Metadata")
-                        .HasColumnType("jsonb")
-                        .HasColumnName("metadata");
+                b.Property<string>("Metadata")
+                    .HasColumnType("jsonb")
+                    .HasColumnName("metadata");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("name");
+                b.Property<string>("Name")
+                    .IsRequired()
+                    .HasMaxLength(200)
+                    .HasColumnType("character varying(200)")
+                    .HasColumnName("name");
 
-                    b.Property<DateTime?>("PublishedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("published_at");
+                b.Property<DateTime?>("PublishedAt")
+                    .HasColumnType("timestamp with time zone")
+                    .HasColumnName("published_at");
 
-                    b.Property<string>("PublishedBy")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("published_by");
+                b.Property<string>("PublishedBy")
+                    .HasMaxLength(100)
+                    .HasColumnType("character varying(100)")
+                    .HasColumnName("published_by");
 
-                    b.Property<int>("Revision")
-                        .IsConcurrencyToken()
-                        .HasColumnType("integer")
-                        .HasColumnName("revision");
+                b.Property<int>("Revision")
+                    .IsConcurrencyToken()
+                    .HasColumnType("integer")
+                    .HasColumnName("revision");
 
-                    b.Property<string>("SampleInputJson")
-                        .HasColumnType("jsonb")
-                        .HasColumnName("sample_input_json");
+                b.Property<string>("SampleInputJson")
+                    .HasColumnType("jsonb")
+                    .HasColumnName("sample_input_json");
 
-                    b.Property<string>("SourceSchema")
-                        .HasColumnType("jsonb")
-                        .HasColumnName("source_schema");
+                b.Property<string>("SourceSchema")
+                    .HasColumnType("jsonb")
+                    .HasColumnName("source_schema");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("status");
+                b.Property<string>("Status")
+                    .IsRequired()
+                    .HasColumnType("text")
+                    .HasColumnName("status");
 
-                    b.Property<string>("TargetSchema")
-                        .HasColumnType("jsonb")
-                        .HasColumnName("target_schema");
+                b.Property<string>("TargetSchema")
+                    .HasColumnType("jsonb")
+                    .HasColumnName("target_schema");
 
-                    b.Property<Guid>("TemplateId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("template_id");
+                b.Property<Guid>("TemplateId")
+                    .HasColumnType("uuid")
+                    .HasColumnName("template_id");
 
-                    b.Property<Guid>("TmsSystemId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("tms_system_id");
+                b.Property<Guid>("TmsSystemId")
+                    .HasColumnType("uuid")
+                    .HasColumnName("tms_system_id");
 
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("updated_at");
+                b.Property<DateTime>("UpdatedAt")
+                    .HasColumnType("timestamp with time zone")
+                    .HasColumnName("updated_at");
 
-                    b.Property<string>("UpdatedBy")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("updated_by");
+                b.Property<string>("UpdatedBy")
+                    .HasMaxLength(100)
+                    .HasColumnType("character varying(100)")
+                    .HasColumnName("updated_by");
 
-                    b.Property<int>("Version")
-                        .HasColumnType("integer")
-                        .HasColumnName("version");
+                b.Property<int>("Version")
+                    .HasColumnType("integer")
+                    .HasColumnName("version");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.HasIndex("CustomerId");
+                b.HasIndex("CustomerId");
 
-                    b.HasIndex("Status");
+                b.HasIndex("Status");
 
-                    b.HasIndex("TemplateId");
+                b.HasIndex("TemplateId");
 
-                    b.HasIndex("TmsSystemId");
+                b.HasIndex("TmsSystemId");
 
-                    b.HasIndex("TemplateId", "Version")
-                        .IsUnique();
+                b.HasIndex("TemplateId", "Version")
+                    .IsUnique();
 
-                    b.ToTable("field_mapping_templates");
-                });
+                b.ToTable("field_mapping_templates");
+            });
 
             modelBuilder.Entity("Transflo.Platform.Transformer.Core.Models.LookupTable", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
+            {
+                b.Property<Guid>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("uuid")
+                    .HasColumnName("id");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("timestamp with time zone")
+                    .HasColumnName("created_at");
 
-                    b.Property<string>("CreatedBy")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("created_by");
+                b.Property<string>("CreatedBy")
+                    .HasMaxLength(100)
+                    .HasColumnType("character varying(100)")
+                    .HasColumnName("created_by");
 
-                    b.Property<string>("DefaultValue")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)")
-                        .HasColumnName("default_value");
+                b.Property<string>("DefaultValue")
+                    .HasMaxLength(500)
+                    .HasColumnType("character varying(500)")
+                    .HasColumnName("default_value");
 
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("deleted_at");
+                b.Property<DateTime?>("DeletedAt")
+                    .HasColumnType("timestamp with time zone")
+                    .HasColumnName("deleted_at");
 
-                    b.Property<string>("Description")
-                        .HasColumnType("text")
-                        .HasColumnName("description");
+                b.Property<string>("Description")
+                    .HasColumnType("text")
+                    .HasColumnName("description");
 
-                    b.Property<string>("FieldName")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("field_name");
+                b.Property<string>("FieldName")
+                    .IsRequired()
+                    .HasMaxLength(200)
+                    .HasColumnType("character varying(200)")
+                    .HasColumnName("field_name");
 
-                    b.Property<bool>("IsCaseSensitive")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_case_sensitive");
+                b.Property<bool>("IsCaseSensitive")
+                    .HasColumnType("boolean")
+                    .HasColumnName("is_case_sensitive");
 
-                    b.Property<string>("Mappings")
-                        .HasColumnType("jsonb")
-                        .HasColumnName("mappings");
+                b.Property<string>("Mappings")
+                    .HasColumnType("jsonb")
+                    .HasColumnName("mappings");
 
-                    b.Property<string>("Metadata")
-                        .HasColumnType("jsonb")
-                        .HasColumnName("metadata");
+                b.Property<string>("Metadata")
+                    .HasColumnType("jsonb")
+                    .HasColumnName("metadata");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("name");
+                b.Property<string>("Name")
+                    .IsRequired()
+                    .HasMaxLength(200)
+                    .HasColumnType("character varying(200)")
+                    .HasColumnName("name");
 
-                    b.Property<Guid?>("PartnerId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("partner_id");
+                b.Property<Guid?>("PartnerId")
+                    .HasColumnType("uuid")
+                    .HasColumnName("partner_id");
 
-                    b.Property<int>("Revision")
-                        .IsConcurrencyToken()
-                        .HasColumnType("integer")
-                        .HasColumnName("revision");
+                b.Property<int>("Revision")
+                    .IsConcurrencyToken()
+                    .HasColumnType("integer")
+                    .HasColumnName("revision");
 
-                    b.Property<Guid>("TmsSystemId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("tms_system_id");
+                b.Property<Guid>("TmsSystemId")
+                    .HasColumnType("uuid")
+                    .HasColumnName("tms_system_id");
 
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("updated_at");
+                b.Property<DateTime>("UpdatedAt")
+                    .HasColumnType("timestamp with time zone")
+                    .HasColumnName("updated_at");
 
-                    b.Property<string>("UpdatedBy")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("updated_by");
+                b.Property<string>("UpdatedBy")
+                    .HasMaxLength(100)
+                    .HasColumnType("character varying(100)")
+                    .HasColumnName("updated_by");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.HasIndex("PartnerId");
+                b.HasIndex("PartnerId");
 
-                    b.HasIndex("TmsSystemId");
+                b.HasIndex("TmsSystemId");
 
-                    b.HasIndex("TmsSystemId", "FieldName");
+                b.HasIndex("TmsSystemId", "FieldName");
 
-                    b.ToTable("lookup_tables");
-                });
+                b.ToTable("lookup_tables");
+            });
 
             modelBuilder.Entity("Transflo.Platform.Transformer.Core.Models.Partner", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
+            {
+                b.Property<Guid>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("uuid")
+                    .HasColumnName("id");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("timestamp with time zone")
+                    .HasColumnName("created_at");
 
-                    b.Property<string>("CreatedBy")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("created_by");
+                b.Property<string>("CreatedBy")
+                    .HasMaxLength(100)
+                    .HasColumnType("character varying(100)")
+                    .HasColumnName("created_by");
 
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("deleted_at");
+                b.Property<DateTime?>("DeletedAt")
+                    .HasColumnType("timestamp with time zone")
+                    .HasColumnName("deleted_at");
 
-                    b.Property<string>("Metadata")
-                        .HasColumnType("jsonb")
-                        .HasColumnName("metadata");
+                b.Property<string>("Metadata")
+                    .HasColumnType("jsonb")
+                    .HasColumnName("metadata");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("name");
+                b.Property<string>("Name")
+                    .IsRequired()
+                    .HasMaxLength(200)
+                    .HasColumnType("character varying(200)")
+                    .HasColumnName("name");
 
-                    b.Property<int>("Revision")
-                        .IsConcurrencyToken()
-                        .HasColumnType("integer")
-                        .HasColumnName("revision");
+                b.Property<int>("Revision")
+                    .IsConcurrencyToken()
+                    .HasColumnType("integer")
+                    .HasColumnName("revision");
 
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("updated_at");
+                b.Property<DateTime>("UpdatedAt")
+                    .HasColumnType("timestamp with time zone")
+                    .HasColumnName("updated_at");
 
-                    b.Property<string>("UpdatedBy")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("updated_by");
+                b.Property<string>("UpdatedBy")
+                    .HasMaxLength(100)
+                    .HasColumnType("character varying(100)")
+                    .HasColumnName("updated_by");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.HasIndex("Name");
+                b.HasIndex("Name");
 
-                    b.ToTable("partners");
-                });
+                b.ToTable("partners");
+            });
 
             modelBuilder.Entity("Transflo.Platform.Transformer.Core.Models.Template", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
+            {
+                b.Property<Guid>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("uuid")
+                    .HasColumnName("id");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("timestamp with time zone")
+                    .HasColumnName("created_at");
 
-                    b.Property<string>("CreatedBy")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("created_by");
+                b.Property<string>("CreatedBy")
+                    .HasMaxLength(100)
+                    .HasColumnType("character varying(100)")
+                    .HasColumnName("created_by");
 
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("deleted_at");
+                b.Property<DateTime?>("DeletedAt")
+                    .HasColumnType("timestamp with time zone")
+                    .HasColumnName("deleted_at");
 
-                    b.Property<string>("Description")
-                        .HasColumnType("text")
-                        .HasColumnName("description");
+                b.Property<string>("Description")
+                    .HasColumnType("text")
+                    .HasColumnName("description");
 
-                    b.Property<string>("Metadata")
-                        .HasColumnType("jsonb")
-                        .HasColumnName("metadata");
+                b.Property<string>("Metadata")
+                    .HasColumnType("jsonb")
+                    .HasColumnName("metadata");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("name");
+                b.Property<string>("Name")
+                    .IsRequired()
+                    .HasMaxLength(200)
+                    .HasColumnType("character varying(200)")
+                    .HasColumnName("name");
 
-                    b.Property<int>("Revision")
-                        .IsConcurrencyToken()
-                        .HasColumnType("integer")
-                        .HasColumnName("revision");
+                b.Property<int>("Revision")
+                    .IsConcurrencyToken()
+                    .HasColumnType("integer")
+                    .HasColumnName("revision");
 
-                    b.Property<string>("SourceSchema")
-                        .HasColumnType("jsonb")
-                        .HasColumnName("source_schema");
+                b.Property<string>("SourceSchema")
+                    .HasColumnType("jsonb")
+                    .HasColumnName("source_schema");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("status");
+                b.Property<string>("Status")
+                    .IsRequired()
+                    .HasColumnType("text")
+                    .HasColumnName("status");
 
-                    b.Property<string>("TargetSchema")
-                        .HasColumnType("jsonb")
-                        .HasColumnName("target_schema");
+                b.Property<string>("TargetSchema")
+                    .HasColumnType("jsonb")
+                    .HasColumnName("target_schema");
 
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("updated_at");
+                b.Property<DateTime>("UpdatedAt")
+                    .HasColumnType("timestamp with time zone")
+                    .HasColumnName("updated_at");
 
-                    b.Property<string>("UpdatedBy")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("updated_by");
+                b.Property<string>("UpdatedBy")
+                    .HasMaxLength(100)
+                    .HasColumnType("character varying(100)")
+                    .HasColumnName("updated_by");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.HasIndex("Name");
+                b.HasIndex("Name");
 
-                    b.ToTable("templates");
-                });
+                b.ToTable("templates");
+            });
 
             modelBuilder.Entity("Transflo.Platform.Transformer.Core.Models.TemplateAssignment", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
+            {
+                b.Property<Guid>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("uuid")
+                    .HasColumnName("id");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("timestamp with time zone")
+                    .HasColumnName("created_at");
 
-                    b.Property<string>("CreatedBy")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("created_by");
+                b.Property<string>("CreatedBy")
+                    .HasMaxLength(100)
+                    .HasColumnType("character varying(100)")
+                    .HasColumnName("created_by");
 
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("deleted_at");
+                b.Property<DateTime?>("DeletedAt")
+                    .HasColumnType("timestamp with time zone")
+                    .HasColumnName("deleted_at");
 
-                    b.Property<string>("Metadata")
-                        .HasColumnType("jsonb")
-                        .HasColumnName("metadata");
+                b.Property<string>("Metadata")
+                    .HasColumnType("jsonb")
+                    .HasColumnName("metadata");
 
-                    b.Property<int>("Revision")
-                        .IsConcurrencyToken()
-                        .HasColumnType("integer")
-                        .HasColumnName("revision");
+                b.Property<int>("Revision")
+                    .IsConcurrencyToken()
+                    .HasColumnType("integer")
+                    .HasColumnName("revision");
 
-                    b.Property<Guid>("SourcePartnerId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("source_partner_id");
+                b.Property<Guid>("SourcePartnerId")
+                    .HasColumnType("uuid")
+                    .HasColumnName("source_partner_id");
 
-                    b.Property<Guid>("TargetPartnerId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("target_partner_id");
+                b.Property<Guid>("TargetPartnerId")
+                    .HasColumnType("uuid")
+                    .HasColumnName("target_partner_id");
 
-                    b.Property<Guid>("TemplateVersionId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("template_version_id");
+                b.Property<Guid>("TemplateVersionId")
+                    .HasColumnType("uuid")
+                    .HasColumnName("template_version_id");
 
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("updated_at");
+                b.Property<DateTime>("UpdatedAt")
+                    .HasColumnType("timestamp with time zone")
+                    .HasColumnName("updated_at");
 
-                    b.Property<string>("UpdatedBy")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("updated_by");
+                b.Property<string>("UpdatedBy")
+                    .HasMaxLength(100)
+                    .HasColumnType("character varying(100)")
+                    .HasColumnName("updated_by");
 
-                    b.Property<DateTimeOffset?>("ValidFrom")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("valid_from");
+                b.Property<DateTimeOffset?>("ValidFrom")
+                    .HasColumnType("timestamp with time zone")
+                    .HasColumnName("valid_from");
 
-                    b.Property<DateTimeOffset?>("ValidTo")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("valid_to");
+                b.Property<DateTimeOffset?>("ValidTo")
+                    .HasColumnType("timestamp with time zone")
+                    .HasColumnName("valid_to");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.HasIndex("SourcePartnerId");
+                b.HasIndex("SourcePartnerId");
 
-                    b.HasIndex("TargetPartnerId");
+                b.HasIndex("TargetPartnerId");
 
-                    b.HasIndex("TemplateVersionId");
+                b.HasIndex("TemplateVersionId");
 
-                    b.ToTable("template_assignments");
-                });
+                b.ToTable("template_assignments");
+            });
 
             modelBuilder.Entity("Transflo.Platform.Transformer.Core.Models.TemplateVersion", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
+            {
+                b.Property<Guid>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("uuid")
+                    .HasColumnName("id");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("timestamp with time zone")
+                    .HasColumnName("created_at");
 
-                    b.Property<string>("CreatedBy")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("created_by");
+                b.Property<string>("CreatedBy")
+                    .HasMaxLength(100)
+                    .HasColumnType("character varying(100)")
+                    .HasColumnName("created_by");
 
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("deleted_at");
+                b.Property<DateTime?>("DeletedAt")
+                    .HasColumnType("timestamp with time zone")
+                    .HasColumnName("deleted_at");
 
-                    b.Property<string>("Metadata")
-                        .HasColumnType("jsonb")
-                        .HasColumnName("metadata");
+                b.Property<string>("Metadata")
+                    .HasColumnType("jsonb")
+                    .HasColumnName("metadata");
 
-                    b.Property<int>("Revision")
-                        .IsConcurrencyToken()
-                        .HasColumnType("integer")
-                        .HasColumnName("revision");
+                b.Property<int>("Revision")
+                    .IsConcurrencyToken()
+                    .HasColumnType("integer")
+                    .HasColumnName("revision");
 
-                    b.Property<Guid>("TemplateId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("template_id");
+                b.Property<Guid>("TemplateId")
+                    .HasColumnType("uuid")
+                    .HasColumnName("template_id");
 
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("updated_at");
+                b.Property<DateTime>("UpdatedAt")
+                    .HasColumnType("timestamp with time zone")
+                    .HasColumnName("updated_at");
 
-                    b.Property<string>("UpdatedBy")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("updated_by");
+                b.Property<string>("UpdatedBy")
+                    .HasMaxLength(100)
+                    .HasColumnType("character varying(100)")
+                    .HasColumnName("updated_by");
 
-                    b.Property<string>("ValidationRules")
-                        .HasColumnType("jsonb")
-                        .HasColumnName("validation_rules");
+                b.Property<string>("ValidationRules")
+                    .HasColumnType("jsonb")
+                    .HasColumnName("validation_rules");
 
-                    b.Property<int>("Version")
-                        .HasColumnType("integer")
-                        .HasColumnName("version");
+                b.Property<int>("Version")
+                    .HasColumnType("integer")
+                    .HasColumnName("version");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.HasIndex("TemplateId");
+                b.HasIndex("TemplateId");
 
-                    b.ToTable("template_versions");
-                });
+                b.ToTable("template_versions");
+            });
 
             modelBuilder.Entity("Transflo.Platform.Transformer.Core.Models.TmsSystem", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
+            {
+                b.Property<Guid>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("uuid")
+                    .HasColumnName("id");
 
-                    b.Property<string>("ConnectionConfig")
-                        .HasColumnType("jsonb")
-                        .HasColumnName("connection_config");
+                b.Property<string>("ConnectionConfig")
+                    .HasColumnType("jsonb")
+                    .HasColumnName("connection_config");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("timestamp with time zone")
+                    .HasColumnName("created_at");
 
-                    b.Property<string>("CreatedBy")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("created_by");
+                b.Property<string>("CreatedBy")
+                    .HasMaxLength(100)
+                    .HasColumnType("character varying(100)")
+                    .HasColumnName("created_by");
 
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("deleted_at");
+                b.Property<DateTime?>("DeletedAt")
+                    .HasColumnType("timestamp with time zone")
+                    .HasColumnName("deleted_at");
 
-                    b.Property<string>("Description")
-                        .HasColumnType("text")
-                        .HasColumnName("description");
+                b.Property<string>("Description")
+                    .HasColumnType("text")
+                    .HasColumnName("description");
 
-                    b.Property<string>("DisplayName")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("display_name");
+                b.Property<string>("DisplayName")
+                    .IsRequired()
+                    .HasMaxLength(200)
+                    .HasColumnType("character varying(200)")
+                    .HasColumnName("display_name");
 
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_active");
+                b.Property<bool>("IsActive")
+                    .HasColumnType("boolean")
+                    .HasColumnName("is_active");
 
-                    b.Property<string>("Metadata")
-                        .HasColumnType("jsonb")
-                        .HasColumnName("metadata");
+                b.Property<string>("Metadata")
+                    .HasColumnType("jsonb")
+                    .HasColumnName("metadata");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("name");
+                b.Property<string>("Name")
+                    .IsRequired()
+                    .HasMaxLength(100)
+                    .HasColumnType("character varying(100)")
+                    .HasColumnName("name");
 
-                    b.Property<int>("Revision")
-                        .IsConcurrencyToken()
-                        .HasColumnType("integer")
-                        .HasColumnName("revision");
+                b.Property<int>("Revision")
+                    .IsConcurrencyToken()
+                    .HasColumnType("integer")
+                    .HasColumnName("revision");
 
-                    b.Property<string>("SampleJsonSchema")
-                        .HasColumnType("jsonb")
-                        .HasColumnName("sample_json_schema");
+                b.Property<string>("SampleJsonSchema")
+                    .HasColumnType("jsonb")
+                    .HasColumnName("sample_json_schema");
 
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("updated_at");
+                b.Property<DateTime>("UpdatedAt")
+                    .HasColumnType("timestamp with time zone")
+                    .HasColumnName("updated_at");
 
-                    b.Property<string>("UpdatedBy")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("updated_by");
+                b.Property<string>("UpdatedBy")
+                    .HasMaxLength(100)
+                    .HasColumnType("character varying(100)")
+                    .HasColumnName("updated_by");
 
-                    b.Property<string>("Version")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("version");
+                b.Property<string>("Version")
+                    .IsRequired()
+                    .HasMaxLength(50)
+                    .HasColumnType("character varying(50)")
+                    .HasColumnName("version");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.HasIndex("IsActive");
+                b.HasIndex("IsActive");
 
-                    b.HasIndex("Name")
-                        .IsUnique();
+                b.HasIndex("Name")
+                    .IsUnique();
 
-                    b.ToTable("tms_systems");
+                b.ToTable("tms_systems");
 
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("b5f3a9c2-7d4e-4f8b-9a1c-3e6d2b0f8c47"),
-                            CreatedAt = new DateTime(2026, 3, 11, 15, 16, 10, 223, DateTimeKind.Utc).AddTicks(3190),
-                            CreatedBy = "System",
-                            Description = "TruckMate Transportation Management System",
-                            DisplayName = "TruckMate TMS",
-                            IsActive = true,
-                            Name = "TruckMate",
-                            Revision = 1,
-                            UpdatedAt = new DateTime(2026, 3, 11, 15, 16, 10, 223, DateTimeKind.Utc).AddTicks(3190),
-                            Version = "1.0"
-                        },
-                        new
-                        {
-                            Id = new Guid("a2c8e4d6-1f3b-4a7c-8e9d-5b0c2f6a4e83"),
-                            CreatedAt = new DateTime(2026, 3, 11, 15, 16, 10, 223, DateTimeKind.Utc).AddTicks(3190),
-                            CreatedBy = "System",
-                            Description = "McLeod Transportation Management System",
-                            DisplayName = "McLeod Software",
-                            IsActive = true,
-                            Name = "McLeod",
-                            Revision = 1,
-                            UpdatedAt = new DateTime(2026, 3, 11, 15, 16, 10, 223, DateTimeKind.Utc).AddTicks(3190),
-                            Version = "1.0"
-                        });
-                });
+                b.HasData(
+                    new
+                    {
+                        Id = new Guid("b5f3a9c2-7d4e-4f8b-9a1c-3e6d2b0f8c47"),
+                        CreatedAt = new DateTime(2026, 3, 11, 15, 16, 10, 223, DateTimeKind.Utc).AddTicks(3190),
+                        CreatedBy = "System",
+                        Description = "TruckMate Transportation Management System",
+                        DisplayName = "TruckMate TMS",
+                        IsActive = true,
+                        Name = "TruckMate",
+                        Revision = 1,
+                        UpdatedAt = new DateTime(2026, 3, 11, 15, 16, 10, 223, DateTimeKind.Utc).AddTicks(3190),
+                        Version = "1.0"
+                    },
+                    new
+                    {
+                        Id = new Guid("a2c8e4d6-1f3b-4a7c-8e9d-5b0c2f6a4e83"),
+                        CreatedAt = new DateTime(2026, 3, 11, 15, 16, 10, 223, DateTimeKind.Utc).AddTicks(3190),
+                        CreatedBy = "System",
+                        Description = "McLeod Transportation Management System",
+                        DisplayName = "McLeod Software",
+                        IsActive = true,
+                        Name = "McLeod",
+                        Revision = 1,
+                        UpdatedAt = new DateTime(2026, 3, 11, 15, 16, 10, 223, DateTimeKind.Utc).AddTicks(3190),
+                        Version = "1.0"
+                    });
+            });
 
             modelBuilder.Entity("Transflo.Platform.Transformer.Core.Models.TransformationLog", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
+            {
+                b.Property<Guid>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("uuid")
+                    .HasColumnName("id");
 
-                    b.Property<string>("Errors")
-                        .HasColumnType("jsonb")
-                        .HasColumnName("errors");
+                b.Property<string>("Errors")
+                    .HasColumnType("jsonb")
+                    .HasColumnName("errors");
 
-                    b.Property<long>("ExecutionTimeMs")
-                        .HasColumnType("bigint")
-                        .HasColumnName("execution_time_ms");
+                b.Property<long>("ExecutionTimeMs")
+                    .HasColumnType("bigint")
+                    .HasColumnName("execution_time_ms");
 
-                    b.Property<DateTime?>("ExpiresAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("expires_at");
+                b.Property<DateTime?>("ExpiresAt")
+                    .HasColumnType("timestamp with time zone")
+                    .HasColumnName("expires_at");
 
-                    b.Property<string>("InputData")
-                        .HasColumnType("jsonb")
-                        .HasColumnName("input_data");
+                b.Property<string>("InputData")
+                    .HasColumnType("jsonb")
+                    .HasColumnName("input_data");
 
-                    b.Property<string>("OutputData")
-                        .HasColumnType("jsonb")
-                        .HasColumnName("output_data");
+                b.Property<string>("OutputData")
+                    .HasColumnType("jsonb")
+                    .HasColumnName("output_data");
 
-                    b.Property<int>("RecordCount")
-                        .HasColumnType("integer")
-                        .HasColumnName("record_count");
+                b.Property<int>("RecordCount")
+                    .HasColumnType("integer")
+                    .HasColumnName("record_count");
 
-                    b.Property<string>("Source")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("source");
+                b.Property<string>("Source")
+                    .HasMaxLength(200)
+                    .HasColumnType("character varying(200)")
+                    .HasColumnName("source");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("status");
+                b.Property<string>("Status")
+                    .IsRequired()
+                    .HasMaxLength(50)
+                    .HasColumnType("character varying(50)")
+                    .HasColumnName("status");
 
-                    b.Property<Guid>("TemplateId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("template_id");
+                b.Property<Guid>("TemplateId")
+                    .HasColumnType("uuid")
+                    .HasColumnName("template_id");
 
-                    b.Property<DateTime>("Timestamp")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("timestamp");
+                b.Property<DateTime>("Timestamp")
+                    .HasColumnType("timestamp with time zone")
+                    .HasColumnName("timestamp");
 
-                    b.Property<Guid?>("UserId")
-                        .HasColumnType("uuid");
+                b.Property<Guid?>("UserId")
+                    .HasColumnType("uuid");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.HasIndex("ExpiresAt");
+                b.HasIndex("ExpiresAt");
 
-                    b.HasIndex("Status");
+                b.HasIndex("Status");
 
-                    b.HasIndex("TemplateId");
+                b.HasIndex("TemplateId");
 
-                    b.HasIndex("Timestamp");
+                b.HasIndex("Timestamp");
 
-                    b.ToTable("transformation_logs");
-                });
+                b.ToTable("transformation_logs");
+            });
 
             modelBuilder.Entity("Transflo.Platform.Transformer.Core.Models.FieldMapping", b =>
-                {
-                    b.HasOne("Transflo.Platform.Transformer.Core.Models.TemplateVersion", "TemplateVersion")
-                        .WithMany("FieldMappings")
-                        .HasForeignKey("TemplateVersionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+            {
+                b.HasOne("Transflo.Platform.Transformer.Core.Models.TemplateVersion", "TemplateVersion")
+                    .WithMany("FieldMappings")
+                    .HasForeignKey("TemplateVersionId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.Navigation("TemplateVersion");
-                });
+                b.Navigation("TemplateVersion");
+            });
 
             modelBuilder.Entity("Transflo.Platform.Transformer.Core.Models.FieldMappingTemplate", b =>
-                {
-                    b.HasOne("Transflo.Platform.Transformer.Core.Models.Customer", "Customer")
-                        .WithMany("FieldMappingTemplates")
-                        .HasForeignKey("CustomerId")
-                        .OnDelete(DeleteBehavior.SetNull);
+            {
+                b.HasOne("Transflo.Platform.Transformer.Core.Models.Customer", "Customer")
+                    .WithMany("FieldMappingTemplates")
+                    .HasForeignKey("CustomerId")
+                    .OnDelete(DeleteBehavior.SetNull);
 
-                    b.HasOne("Transflo.Platform.Transformer.Core.Models.TmsSystem", "TmsSystem")
-                        .WithMany("FieldMappingTemplates")
-                        .HasForeignKey("TmsSystemId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                b.HasOne("Transflo.Platform.Transformer.Core.Models.TmsSystem", "TmsSystem")
+                    .WithMany("FieldMappingTemplates")
+                    .HasForeignKey("TmsSystemId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.Navigation("Customer");
+                b.Navigation("Customer");
 
-                    b.Navigation("TmsSystem");
-                });
+                b.Navigation("TmsSystem");
+            });
 
             modelBuilder.Entity("Transflo.Platform.Transformer.Core.Models.LookupTable", b =>
-                {
-                    b.HasOne("Transflo.Platform.Transformer.Core.Models.Partner", "Partner")
-                        .WithMany("LookupTables")
-                        .HasForeignKey("PartnerId")
-                        .OnDelete(DeleteBehavior.SetNull);
+            {
+                b.HasOne("Transflo.Platform.Transformer.Core.Models.Partner", "Partner")
+                    .WithMany("LookupTables")
+                    .HasForeignKey("PartnerId")
+                    .OnDelete(DeleteBehavior.SetNull);
 
-                    b.HasOne("Transflo.Platform.Transformer.Core.Models.TmsSystem", "TmsSystem")
-                        .WithMany("LookupTables")
-                        .HasForeignKey("TmsSystemId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                b.HasOne("Transflo.Platform.Transformer.Core.Models.TmsSystem", "TmsSystem")
+                    .WithMany("LookupTables")
+                    .HasForeignKey("TmsSystemId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.Navigation("Partner");
+                b.Navigation("Partner");
 
-                    b.Navigation("TmsSystem");
-                });
+                b.Navigation("TmsSystem");
+            });
 
             modelBuilder.Entity("Transflo.Platform.Transformer.Core.Models.TemplateAssignment", b =>
-                {
-                    b.HasOne("Transflo.Platform.Transformer.Core.Models.Partner", "SourcePartner")
-                        .WithMany()
-                        .HasForeignKey("SourcePartnerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+            {
+                b.HasOne("Transflo.Platform.Transformer.Core.Models.Partner", "SourcePartner")
+                    .WithMany()
+                    .HasForeignKey("SourcePartnerId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.HasOne("Transflo.Platform.Transformer.Core.Models.Partner", "TargetPartner")
-                        .WithMany()
-                        .HasForeignKey("TargetPartnerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                b.HasOne("Transflo.Platform.Transformer.Core.Models.Partner", "TargetPartner")
+                    .WithMany()
+                    .HasForeignKey("TargetPartnerId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.HasOne("Transflo.Platform.Transformer.Core.Models.TemplateVersion", "TemplateVersion")
-                        .WithMany("TemplateAssignments")
-                        .HasForeignKey("TemplateVersionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                b.HasOne("Transflo.Platform.Transformer.Core.Models.TemplateVersion", "TemplateVersion")
+                    .WithMany("TemplateAssignments")
+                    .HasForeignKey("TemplateVersionId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.Navigation("SourcePartner");
+                b.Navigation("SourcePartner");
 
-                    b.Navigation("TargetPartner");
+                b.Navigation("TargetPartner");
 
-                    b.Navigation("TemplateVersion");
-                });
+                b.Navigation("TemplateVersion");
+            });
 
             modelBuilder.Entity("Transflo.Platform.Transformer.Core.Models.TemplateVersion", b =>
-                {
-                    b.HasOne("Transflo.Platform.Transformer.Core.Models.Template", "Template")
-                        .WithMany("TemplateVersions")
-                        .HasForeignKey("TemplateId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+            {
+                b.HasOne("Transflo.Platform.Transformer.Core.Models.Template", "Template")
+                    .WithMany("TemplateVersions")
+                    .HasForeignKey("TemplateId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.Navigation("Template");
-                });
+                b.Navigation("Template");
+            });
 
             modelBuilder.Entity("Transflo.Platform.Transformer.Core.Models.Customer", b =>
-                {
-                    b.Navigation("FieldMappingTemplates");
-                });
+            {
+                b.Navigation("FieldMappingTemplates");
+            });
 
             modelBuilder.Entity("Transflo.Platform.Transformer.Core.Models.Partner", b =>
-                {
-                    b.Navigation("LookupTables");
-                });
+            {
+                b.Navigation("LookupTables");
+            });
 
             modelBuilder.Entity("Transflo.Platform.Transformer.Core.Models.Template", b =>
-                {
-                    b.Navigation("TemplateVersions");
-                });
+            {
+                b.Navigation("TemplateVersions");
+            });
 
             modelBuilder.Entity("Transflo.Platform.Transformer.Core.Models.TemplateVersion", b =>
-                {
-                    b.Navigation("FieldMappings");
+            {
+                b.Navigation("FieldMappings");
 
-                    b.Navigation("TemplateAssignments");
-                });
+                b.Navigation("TemplateAssignments");
+            });
 
             modelBuilder.Entity("Transflo.Platform.Transformer.Core.Models.TmsSystem", b =>
-                {
-                    b.Navigation("FieldMappingTemplates");
+            {
+                b.Navigation("FieldMappingTemplates");
 
-                    b.Navigation("LookupTables");
-                });
+                b.Navigation("LookupTables");
+            });
 #pragma warning restore 612, 618
         }
     }
