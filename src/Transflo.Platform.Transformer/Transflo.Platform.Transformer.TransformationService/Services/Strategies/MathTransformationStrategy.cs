@@ -73,16 +73,16 @@ public class MathTransformationStrategy : ITransformationStrategy
 
         double result = operation switch
         {
-            MathOperations.Add      => number + (hasOperand ? operand : 0),
+            MathOperations.Add => number + (hasOperand ? operand : 0),
             MathOperations.Subtract => number - (hasOperand ? operand : 0),
             MathOperations.Multiply => hasOperand ? number * operand : number,
-            MathOperations.Divide   => hasOperand && operand != 0 ? number / operand : number,
-            MathOperations.Mod      => hasOperand && operand != 0 ? number % operand : number,
-            MathOperations.Abs      => Math.Abs(number),
-            MathOperations.Ceil     => Math.Ceiling(number),
-            MathOperations.Floor    => Math.Floor(number),
-            MathOperations.Round    => Math.Round(number, MidpointRounding.AwayFromZero),
-            _                       => number
+            MathOperations.Divide => hasOperand && operand != 0 ? number / operand : number,
+            MathOperations.Mod => hasOperand && operand != 0 ? number % operand : number,
+            MathOperations.Abs => Math.Abs(number),
+            MathOperations.Ceil => Math.Ceiling(number),
+            MathOperations.Floor => Math.Floor(number),
+            MathOperations.Round => Math.Round(number, MidpointRounding.AwayFromZero),
+            _ => number
         };
 
         if (config.TryGetValue(TransformationConfigKeys.Math.Precision, out var precRaw)

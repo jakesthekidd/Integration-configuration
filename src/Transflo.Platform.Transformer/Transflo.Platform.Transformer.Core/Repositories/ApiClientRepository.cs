@@ -79,6 +79,7 @@ public class ApiClientRepository : IApiClientRepository
             Id = a.TemplateVersion!.Id,
             TemplateId = a.TemplateVersion.TemplateId,
             TemplateName = a.TemplateVersion.Template!.Name,
+            TemplateStatus = a.TemplateVersion.Template.Status.ToString(),
             Version = a.TemplateVersion.Version,
             Status = a.TemplateVersion.Status.ToString(),
             PublishedAt = a.TemplateVersion.PublishedAt
@@ -92,10 +93,32 @@ public class ApiClientRepository : IApiClientRepository
                            !a.IsDeleted);
 
     public async Task<TemplateVersion?> GetTemplateVersionAsync(Guid templateVersionId) =>
-        await _context.TemplateVersions.FindAsync(templateVersionId);
+        await _context.TemplateVersions
+            .Include(v => v.Template)
+            .FirstOrDefaultAsync(v => v.Id == templateVersionId);
 
     public async Task AssignTemplateAsync(ApiClientTemplateVersion assignment)
     {
+        var existingAssignment = await _context.ApiClientTemplateVersions
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(a => a.ApiClientId == assignment.ApiClientId &&
+                                      a.TemplateVersionId == assignment.TemplateVersionId);
+
+        if (existingAssignment != null)
+        {
+            if (existingAssignment.IsDeleted)
+            {
+                existingAssignment.IsDeleted = false;
+                existingAssignment.DeletedAt = null;
+                existingAssignment.CreatedBy = assignment.CreatedBy;
+                await _context.SaveChangesAsync();
+                _logger.LogInformation(
+                    "Re-activated template version {TemplateVersionId} for API client {ClientId}",
+                    assignment.TemplateVersionId, assignment.ApiClientId);
+            }
+            return;
+        }
+
         _context.ApiClientTemplateVersions.Add(assignment);
         await _context.SaveChangesAsync();
         _logger.LogInformation(

@@ -45,7 +45,7 @@ public class ConditionalDateFormatTransformationStrategyTests
     [Fact]
     public async Task ApplyAsync_Origin_ReturnsActualPickup_WhenPresent()
     {
-        SetupField("stopType",     "Origin");
+        SetupField("stopType", "Origin");
         SetupField("actualPickup", "2024-03-15T10:30:00Z");
 
         var ctx = MakeContext("""
@@ -66,9 +66,9 @@ public class ConditionalDateFormatTransformationStrategyTests
     [Fact]
     public async Task ApplyAsync_Origin_FallsBackToPickUpBy_WhenActualPickupIsNull()
     {
-        SetupField("stopType",     "Origin");
+        SetupField("stopType", "Origin");
         SetupField("actualPickup", null);
-        SetupField("pickUpBy",     "2024-03-15T08:00:00Z");
+        SetupField("pickUpBy", "2024-03-15T08:00:00Z");
 
         var ctx = MakeContext("""
             {
@@ -88,7 +88,7 @@ public class ConditionalDateFormatTransformationStrategyTests
     [Fact]
     public async Task ApplyAsync_Destination_ReturnsActualDelivery()
     {
-        SetupField("stopType",       "Destination");
+        SetupField("stopType", "Destination");
         SetupField("actualDelivery", "2024-03-16T14:00:00Z");
 
         var ctx = MakeContext("""
@@ -111,7 +111,7 @@ public class ConditionalDateFormatTransformationStrategyTests
     [Fact]
     public async Task ApplyAsync_Destination_ReturnsDeliverBy_WhenPresent()
     {
-        SetupField("stopType",  "Destination");
+        SetupField("stopType", "Destination");
         SetupField("deliverBy", "2024-03-16T12:00:00Z");
 
         var ctx = MakeContext("""
@@ -131,9 +131,9 @@ public class ConditionalDateFormatTransformationStrategyTests
     [Fact]
     public async Task ApplyAsync_Destination_FallsBackToDeliverByEnd_WhenDeliverByIsNull()
     {
-        SetupField("stopType",    "Destination");
-        SetupField("deliverBy",   null);
-        SetupField("deliverByEnd","2024-03-16T18:00:00Z");
+        SetupField("stopType", "Destination");
+        SetupField("deliverBy", null);
+        SetupField("deliverByEnd", "2024-03-16T18:00:00Z");
 
         var ctx = MakeContext("""
             {
@@ -173,7 +173,7 @@ public class ConditionalDateFormatTransformationStrategyTests
     [Fact]
     public async Task ApplyAsync_ConvertsOffsetDateTimeToUtc()
     {
-        SetupField("stopType",     "Origin");
+        SetupField("stopType", "Origin");
         SetupField("actualPickup", "2024-03-15T12:30:00+02:00");
 
         var ctx = MakeContext("""
@@ -193,7 +193,7 @@ public class ConditionalDateFormatTransformationStrategyTests
     [Fact]
     public async Task ApplyAsync_ConvertsNegativeOffsetToUtc()
     {
-        SetupField("stopType",     "Origin");
+        SetupField("stopType", "Origin");
         SetupField("actualPickup", "2024-03-15T06:00:00-05:00");
 
         var ctx = MakeContext("""
@@ -215,7 +215,7 @@ public class ConditionalDateFormatTransformationStrategyTests
     [Fact]
     public async Task ApplyAsync_UsesDefaultIsoMicrosecondsFormat_WhenOutputFormatAbsent()
     {
-        SetupField("stopType",     "Origin");
+        SetupField("stopType", "Origin");
         SetupField("actualPickup", "2024-03-15T10:30:00Z");
 
         var ctx = MakeContext("""
@@ -235,7 +235,7 @@ public class ConditionalDateFormatTransformationStrategyTests
     [Fact]
     public async Task ApplyAsync_UsesCustomOutputFormat_WhenSpecified()
     {
-        SetupField("stopType",     "Origin");
+        SetupField("stopType", "Origin");
         SetupField("actualPickup", "2024-03-15T10:30:00Z");
 
         var ctx = MakeContext("""
@@ -256,7 +256,7 @@ public class ConditionalDateFormatTransformationStrategyTests
     [Fact]
     public async Task ApplyAsync_UsesIso8601RoundTrip_WhenOutputFormatIsO()
     {
-        SetupField("stopType",     "Origin");
+        SetupField("stopType", "Origin");
         SetupField("actualPickup", "2024-03-15T10:30:00Z");
 
         var ctx = MakeContext("""
@@ -280,7 +280,7 @@ public class ConditionalDateFormatTransformationStrategyTests
     [Fact]
     public async Task ApplyAsync_IsCaseInsensitive_ForBranchValueMatching()
     {
-        SetupField("stopType",     "ORIGIN");
+        SetupField("stopType", "ORIGIN");
         SetupField("actualPickup", "2024-03-15T10:30:00Z");
 
         var ctx = MakeContext("""
@@ -320,9 +320,9 @@ public class ConditionalDateFormatTransformationStrategyTests
     [Fact]
     public async Task ApplyAsync_UsesFirstMatchingBranch_WhenDuplicateValues()
     {
-        SetupField("stopType",     "Origin");
+        SetupField("stopType", "Origin");
         SetupField("actualPickup", "2024-03-15T10:00:00Z");
-        SetupField("otherField",   "2024-03-15T12:00:00Z");
+        SetupField("otherField", "2024-03-15T12:00:00Z");
 
         var ctx = MakeContext("""
             {
@@ -344,10 +344,10 @@ public class ConditionalDateFormatTransformationStrategyTests
     [Fact]
     public async Task ApplyAsync_SkipsEmptyPaths_AndUsesNextNonEmpty()
     {
-        SetupField("stopType",    "Origin");
-        SetupField("path1",       null);
-        SetupField("path2",       "   ");
-        SetupField("path3",       "2024-03-15T10:30:00Z");
+        SetupField("stopType", "Origin");
+        SetupField("path1", null);
+        SetupField("path2", "   ");
+        SetupField("path3", "2024-03-15T10:30:00Z");
 
         var ctx = MakeContext("""
             {
@@ -367,8 +367,8 @@ public class ConditionalDateFormatTransformationStrategyTests
     public async Task ApplyAsync_ReturnsNull_WhenAllSourcePathsAreEmpty()
     {
         SetupField("stopType", "Origin");
-        SetupField("path1",    null);
-        SetupField("path2",    null);
+        SetupField("path1", null);
+        SetupField("path2", null);
 
         var ctx = MakeContext("""
             {
@@ -389,7 +389,7 @@ public class ConditionalDateFormatTransformationStrategyTests
     [Fact]
     public async Task ApplyAsync_ReturnsRawString_WhenValueIsNotAValidDate()
     {
-        SetupField("stopType",     "Origin");
+        SetupField("stopType", "Origin");
         SetupField("actualPickup", "not-a-date");
 
         var ctx = MakeContext("""
@@ -424,7 +424,7 @@ public class ConditionalDateFormatTransformationStrategyTests
     public async Task Mode1_FallsBackToSecondField_WhenFirstIsNull()
     {
         SetupField("actualPickup", null);
-        SetupField("pickUpBy",     "2024-03-15T08:00:00Z");
+        SetupField("pickUpBy", "2024-03-15T08:00:00Z");
 
         var ctx = MakeContext("""{"SourcePaths":["actualPickup","pickUpBy"]}""");
 
@@ -437,7 +437,7 @@ public class ConditionalDateFormatTransformationStrategyTests
     public async Task Mode1_FallsBackToSecondField_WhenFirstIsWhitespace()
     {
         SetupField("actualPickup", "   ");
-        SetupField("pickUpBy",     "2024-03-15T08:00:00Z");
+        SetupField("pickUpBy", "2024-03-15T08:00:00Z");
 
         var ctx = MakeContext("""{"SourcePaths":["actualPickup","pickUpBy"]}""");
 
@@ -462,7 +462,7 @@ public class ConditionalDateFormatTransformationStrategyTests
     public async Task Mode1_ReturnsNull_WhenAllPathsAreEmpty()
     {
         SetupField("actualPickup", null);
-        SetupField("pickUpBy",     null);
+        SetupField("pickUpBy", null);
 
         var ctx = MakeContext("""{"SourcePaths":["actualPickup","pickUpBy"]}""");
 
@@ -604,7 +604,7 @@ public class ConditionalDateFormatTransformationStrategyTests
     [Fact]
     public async Task ApplyAsync_SupportsThreeBranches_AndSelectsCorrectOne()
     {
-        SetupField("stopType",       "StopOff");
+        SetupField("stopType", "StopOff");
         SetupField("stopOffArrival", "2024-03-15T13:00:00Z");
 
         var ctx = MakeContext("""

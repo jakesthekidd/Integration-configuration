@@ -43,7 +43,7 @@ public class ApiClientsController : ControllerBase
     public async Task<ActionResult<ApiResponse<ApiClientResponse>>> CreateApiClient(CreateApiClientRequest request)
     {
         if (await _repository.ExistsWithNameAsync(request.Name))
-            return BadRequest("An API client with this name already exists.");
+            return BadRequest(ApiResponse<object>.ErrorResponse("An API client with this name already exists."));
 
         var client = new ApiClient
         {
@@ -63,7 +63,7 @@ public class ApiClientsController : ControllerBase
     public async Task<ActionResult<ApiResponse<ApiClientResponse>>> UpdateApiClient(Guid id, UpdateApiClientRequest request)
     {
         if (await _repository.ExistsWithNameAsync(request.Name, excludeId: id))
-            return BadRequest("An API client with this name already exists.");
+            return BadRequest(ApiResponse<object>.ErrorResponse("An API client with this name already exists."));
 
         var client = await _repository.GetByIdAsync(id);
         if (client == null)
@@ -99,16 +99,21 @@ public class ApiClientsController : ControllerBase
     public async Task<IActionResult> AssignTemplate(Guid id, ApiClientTemplateAssignmentRequest request)
     {
         if (await _repository.IsTemplateAssignedAsync(id, request.TemplateVersionId))
-            return BadRequest("Template is already assigned to this client.");
+            return BadRequest(ApiResponse<object>.ErrorResponse("Template is already assigned to this client."));
 
         var templateVersion = await _repository.GetTemplateVersionAsync(request.TemplateVersionId);
         if (templateVersion == null)
-            return NotFound("Template version not found.");
+            return NotFound(ApiResponse<object>.ErrorResponse("Template version not found."));
+
+        if (templateVersion.Template?.Status == TemplateStatus.Archived)
+        {
+            return BadRequest(ApiResponse<object>.ErrorResponse("Cannot assign versions from an archived template."));
+        }
 
         if (templateVersion.Status != TemplateVersionStatus.Published &&
             templateVersion.Status != TemplateVersionStatus.Superseded)
         {
-            return BadRequest("Only Published or Superseded template versions can be assigned.");
+            return BadRequest(ApiResponse<object>.ErrorResponse("Only Published or Superseded template versions can be assigned."));
         }
 
         var assignment = new ApiClientTemplateVersion

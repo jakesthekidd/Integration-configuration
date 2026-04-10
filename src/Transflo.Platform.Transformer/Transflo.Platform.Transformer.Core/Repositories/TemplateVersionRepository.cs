@@ -18,10 +18,12 @@ public class TemplateVersionRepository : ITemplateVersionRepository
 
     public async Task<TemplateVersion?> GetByVersionAsync(Guid templateId, int version) =>
         await _context.TemplateVersions
+            .Include(v => v.Template)
             .FirstOrDefaultAsync(v => v.TemplateId == templateId && v.Version == version);
 
     public async Task<TemplateVersion?> GetPublishedVersionAsync(Guid templateId) =>
         await _context.TemplateVersions
+            .Include(v => v.Template)
             .Where(v => v.TemplateId == templateId && v.Status == TemplateVersionStatus.Published)
             .OrderByDescending(v => v.Version)
             .FirstOrDefaultAsync();

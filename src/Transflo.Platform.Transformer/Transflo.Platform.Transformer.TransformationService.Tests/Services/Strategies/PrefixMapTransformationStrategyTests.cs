@@ -52,7 +52,7 @@ public class PrefixMapTransformationStrategyTests
         Assert.Equal(2, list.Count);
 
         Assert.Equal("Ateeq", list[0]["firstName"]);
-        Assert.Equal("test",  list[0]["lastName"]);
+        Assert.Equal("test", list[0]["lastName"]);
         Assert.Equal("Ateeq", list[1]["firstName"]);
         Assert.Equal("test1", list[1]["lastName"]);
     }
@@ -75,8 +75,8 @@ public class PrefixMapTransformationStrategyTests
 
         var list = Assert.IsType<List<Dictionary<string, object?>>>(result);
         Assert.Equal(3, list.Count);
-        Assert.Equal("Alice",   list[0]["firstName"]);
-        Assert.Equal("Bob",     list[1]["firstName"]);
+        Assert.Equal("Alice", list[0]["firstName"]);
+        Assert.Equal("Bob", list[1]["firstName"]);
         Assert.Equal("Charlie", list[2]["firstName"]);
     }
 
@@ -95,7 +95,7 @@ public class PrefixMapTransformationStrategyTests
         var list = Assert.IsType<List<Dictionary<string, object?>>>(result);
         Assert.Single(list);
         Assert.Equal("John", list[0]["firstName"]);
-        Assert.Equal("Doe",  list[0]["lastName"]);
+        Assert.Equal("Doe", list[0]["lastName"]);
     }
 
     // ── Custom separator ──────────────────────────────────────────────────────
@@ -112,8 +112,8 @@ public class PrefixMapTransformationStrategyTests
 
         var list = Assert.IsType<List<Dictionary<string, object?>>>(result);
         Assert.Equal("John", list[0]["firstName"]);
-        Assert.Equal("Doe",  list[0]["lastName"]);
-        Assert.Equal("Jr",   list[0]["suffix"]);
+        Assert.Equal("Doe", list[0]["lastName"]);
+        Assert.Equal("Jr", list[0]["suffix"]);
     }
 
     [Fact]
@@ -128,7 +128,7 @@ public class PrefixMapTransformationStrategyTests
 
         var list = Assert.IsType<List<Dictionary<string, object?>>>(result);
         Assert.Equal("John", list[0]["firstName"]);
-        Assert.Equal("Doe",  list[0]["lastName"]);
+        Assert.Equal("Doe", list[0]["lastName"]);
     }
 
     // ── Partial / extra parts ─────────────────────────────────────────────────
@@ -159,7 +159,7 @@ public class PrefixMapTransformationStrategyTests
         var result = await _sut.ApplyAsync(ctx);
 
         var list = Assert.IsType<List<Dictionary<string, object?>>>(result);
-        Assert.Equal("John",   list[0]["firstName"]);
+        Assert.Equal("John", list[0]["firstName"]);
         Assert.Equal("Middle", list[0]["lastName"]);
         Assert.Equal(2, list[0].Count);
     }
@@ -217,8 +217,8 @@ public class PrefixMapTransformationStrategyTests
 
         var list = Assert.IsType<List<Dictionary<string, object?>>>(result);
         Assert.Equal(2, list.Count);
-        Assert.Equal("John",  list[0]["firstName"]);
-        Assert.Equal("Jane",  list[1]["firstName"]);
+        Assert.Equal("John", list[0]["firstName"]);
+        Assert.Equal("Jane", list[1]["firstName"]);
     }
 
     // ── Prefix matching precision ─────────────────────────────────────────────
@@ -227,7 +227,7 @@ public class PrefixMapTransformationStrategyTests
     public async Task ApplyAsync_ExcludesExactPrefixMatch_RequiresAtLeastOneExtraChar()
     {
         var source = Source(
-            ("driver",  "Exact Match"),  // same as prefix — excluded
+            ("driver", "Exact Match"),  // same as prefix — excluded
             ("driver1", "John Doe"));    // prefix + suffix — included
 
         var ctx = MakeContext("driver",
@@ -262,9 +262,9 @@ public class PrefixMapTransformationStrategyTests
     public async Task ApplyAsync_DoesNotMatchUnrelatedKeys()
     {
         var source = Source(
-            ("driver1",   "John Doe"),
+            ("driver1", "John Doe"),
             ("otherKey1", "should be ignored"),
-            ("notdriver1","also ignored"));
+            ("notdriver1", "also ignored"));
 
         var ctx = MakeContext("driver",
             """{"Fields":["firstName","lastName"]}""",
@@ -384,7 +384,7 @@ public class PrefixMapTransformationStrategyTests
 
         var list = Assert.IsType<List<Dictionary<string, object?>>>(result);
         Assert.Equal(2, list.Count);
-        Assert.Equal("urgent",  list[0]["value"]);
+        Assert.Equal("urgent", list[0]["value"]);
         Assert.Equal("fragile", list[1]["value"]);
     }
 
@@ -401,9 +401,9 @@ public class PrefixMapTransformationStrategyTests
         var result = await _sut.ApplyAsync(ctx);
 
         var list = Assert.IsType<List<Dictionary<string, object?>>>(result);
-        Assert.Equal("John",    list[0]["firstName"]);
+        Assert.Equal("John", list[0]["firstName"]);
         Assert.Equal("Michael", list[0]["middleName"]);
-        Assert.Equal("Doe",     list[0]["lastName"]);
+        Assert.Equal("Doe", list[0]["lastName"]);
     }
 
     // ── All-empty after SkipEmpty ─────────────────────────────────────────────

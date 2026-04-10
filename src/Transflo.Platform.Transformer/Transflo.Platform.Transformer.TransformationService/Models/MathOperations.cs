@@ -9,7 +9,7 @@ public static class MathOperations
     // ── Binary operations ─────────────────────────────────────────────────────
 
     /// <summary>result = value + Operand</summary>
-    public const string Add      = "add";
+    public const string Add = "add";
 
     /// <summary>result = value − Operand</summary>
     public const string Subtract = "subtract";
@@ -18,18 +18,18 @@ public static class MathOperations
     public const string Multiply = "multiply";
 
     /// <summary>result = value ÷ Operand (returns original when Operand is 0)</summary>
-    public const string Divide   = "divide";
+    public const string Divide = "divide";
 
     /// <summary>result = value % Operand (returns original when Operand is 0)</summary>
-    public const string Mod      = "mod";
+    public const string Mod = "mod";
 
     // ── Unary operations ──────────────────────────────────────────────────────
 
     /// <summary>result = |value|</summary>
-    public const string Abs   = "abs";
+    public const string Abs = "abs";
 
     /// <summary>result = ceiling of value</summary>
-    public const string Ceil  = "ceil";
+    public const string Ceil = "ceil";
 
     /// <summary>result = floor of value</summary>
     public const string Floor = "floor";
