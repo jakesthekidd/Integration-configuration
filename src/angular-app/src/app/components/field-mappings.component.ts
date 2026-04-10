@@ -106,18 +106,6 @@ import { LookupTable } from '../models/lookup-table.model';
             <small>JSON configuration for the transformation</small>
           </div>
 
-          <div class="form-group">
-            <label for="executionOrder">Execution Order: <span class="required">*</span></label>
-            <input
-              id="executionOrder"
-              type="number"
-              [(ngModel)]="newMapping.executionOrder"
-              name="executionOrder"
-              required
-              min="0"
-            />
-          </div>
-
           <div class="form-group checkbox">
             <label>
               <input type="checkbox" [(ngModel)]="newMapping.isRequired" name="isRequired" />
@@ -169,7 +157,6 @@ import { LookupTable } from '../models/lookup-table.model';
               <th>Source Path</th>
               <th>Target Path</th>
               <th>Type</th>
-              <th>Order</th>
               <th>Required</th>
               <th>Default</th>
               <th *ngIf="!isReadonly">Actions</th>
@@ -186,7 +173,6 @@ import { LookupTable } from '../models/lookup-table.model';
               <td>
                 <span class="badge">{{ mapping.transformationType }}</span>
               </td>
-              <td>{{ mapping.executionOrder }}</td>
               <td>{{ mapping.isRequired ? 'Yes' : 'No' }}</td>
               <td>{{ mapping.defaultValue || '-' }}</td>
               <td *ngIf="!isReadonly">
@@ -539,7 +525,6 @@ export class FieldMappingsComponent implements OnInit, OnChanges {
         if (response.success && response.data?.fields) {
           const parsedPaths: string[] = Object.keys(response.data.fields);
           this.targetPaths = [...new Set([...this.targetPaths, ...parsedPaths])].sort();
-          console.log(this.targetPaths);
         }
       },
       error: (err) => console.warn('Could not parse Target Schema JSON for path suggestions', err),
@@ -638,7 +623,6 @@ export class FieldMappingsComponent implements OnInit, OnChanges {
       targetPath: mapping.targetPath,
       transformationType: mapping.transformationType,
       transformationConfig: mapping.transformationConfig || '',
-      executionOrder: mapping.executionOrder,
       isRequired: mapping.isRequired,
       defaultValue: mapping.defaultValue || '',
       validationRules: mapping.validationRules || '',
@@ -697,7 +681,6 @@ export class FieldMappingsComponent implements OnInit, OnChanges {
       targetPath: '',
       transformationType: 'Direct',
       transformationConfig: '',
-      executionOrder: 0,
       isRequired: false,
       defaultValue: '',
       validationRules: '',

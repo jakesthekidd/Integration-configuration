@@ -178,7 +178,6 @@ public class TransformationCoordinator : ITransformationCoordinator
             TargetPath = ef.TargetPath,
             TransformationType = ef.TransformationType,
             TransformationConfig = ef.TransformationConfig,
-            ExecutionOrder = ef.ExecutionOrder,
             IsRequired = ef.IsRequired,
             DefaultValue = ef.DefaultValue,
             ValidationRules = ef.ValidationRules

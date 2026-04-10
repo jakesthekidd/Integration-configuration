@@ -5,7 +5,6 @@ export interface FieldMapping {
   targetPath: string;
   transformationType: string;
   transformationConfig?: string;
-  executionOrder: number;
   isRequired: boolean;
   defaultValue?: string;
   validationRules?: string;
@@ -20,7 +19,6 @@ export interface CreateFieldMappingRequest {
   targetPath: string;
   transformationType: string;
   transformationConfig?: string;
-  executionOrder: number;
   isRequired: boolean;
   defaultValue?: string;
   validationRules?: string;
@@ -32,7 +30,6 @@ export interface UpdateFieldMappingRequest {
   targetPath: string;
   transformationType: string;
   transformationConfig?: string;
-  executionOrder: number;
   isRequired: boolean;
   defaultValue?: string;
   validationRules?: string;

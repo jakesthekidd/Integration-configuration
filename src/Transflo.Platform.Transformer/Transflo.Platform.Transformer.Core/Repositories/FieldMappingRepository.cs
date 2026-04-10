@@ -32,7 +32,6 @@ public class FieldMappingRepository : IFieldMappingRepository
     {
         return await _context.FieldMappings
             .Where(m => m.TemplateVersionId == templateVersionId && !m.IsDeleted)
-            .OrderBy(m => m.ExecutionOrder)
             .ToListAsync();
     }
 
