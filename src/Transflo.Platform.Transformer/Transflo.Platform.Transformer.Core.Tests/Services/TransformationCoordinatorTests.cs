@@ -38,15 +38,15 @@ public class TransformationCoordinatorTests
 
     private static readonly List<FieldMapping> DefaultEfMappings =
     [
-        new() { SourcePath = "id",                          TargetPath = "externalId",          ExecutionOrder = 1 },
-        new() { SourcePath = "status",                      TargetPath = "status",               ExecutionOrder = 2 },
-        new() { SourcePath = "movement[0].override_pay_amt",TargetPath = "totalAmount",          ExecutionOrder = 3 },
-        new() { SourcePath = "blnum",                       TargetPath = "bolNumber",            ExecutionOrder = 4 },
-        new() { SourcePath = "customer.id",                 TargetPath = "portalCustomerId",     ExecutionOrder = 5 },
-        new() { SourcePath = "stops[0].location_name",      TargetPath = "stops[0].name",        ExecutionOrder = 6 },
-        new() { SourcePath = "stops[0].stop_type",          TargetPath = "stops[0].type",        ExecutionOrder = 7 },
-        new() { SourcePath = "stops[1].location_name",      TargetPath = "stops[1].name",        ExecutionOrder = 8 },
-        new() { SourcePath = "stops[1].stop_type",          TargetPath = "stops[1].type",        ExecutionOrder = 9 },
+        new() { SourcePath = "id",                          TargetPath = "externalId" },
+        new() { SourcePath = "status",                      TargetPath = "status" },
+        new() { SourcePath = "movement[0].override_pay_amt",TargetPath = "totalAmount" },
+        new() { SourcePath = "blnum",                       TargetPath = "bolNumber" },
+        new() { SourcePath = "customer.id",                 TargetPath = "portalCustomerId" },
+        new() { SourcePath = "stops[0].location_name",      TargetPath = "stops[0].name" },
+        new() { SourcePath = "stops[0].stop_type",          TargetPath = "stops[0].type" },
+        new() { SourcePath = "stops[1].location_name",      TargetPath = "stops[1].name" },
+        new() { SourcePath = "stops[1].stop_type",          TargetPath = "stops[1].type" },
     ];
 
     // Realistic McLeod TMS order payload (trimmed to fields relevant to the mapping above)

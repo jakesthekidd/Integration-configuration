@@ -8,7 +8,6 @@ public sealed record FieldMappingResponse
     public string TargetPath { get; set; } = string.Empty;
     public string TransformationType { get; set; } = string.Empty;
     public string? TransformationConfig { get; set; }
-    public int ExecutionOrder { get; set; }
     public bool IsRequired { get; set; }
     public string? DefaultValue { get; set; }
     public string? ValidationRules { get; set; }

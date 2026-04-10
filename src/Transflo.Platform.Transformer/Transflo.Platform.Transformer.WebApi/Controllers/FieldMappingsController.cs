@@ -48,7 +48,6 @@ public class FieldMappingsController : ControllerBase
                 TargetPath = m.TargetPath,
                 TransformationType = m.TransformationType.ToString(),
                 TransformationConfig = m.TransformationConfig,
-                ExecutionOrder = m.ExecutionOrder,
                 IsRequired = m.IsRequired,
                 DefaultValue = m.DefaultValue,
                 ValidationRules = m.ValidationRules,
@@ -80,7 +79,6 @@ public class FieldMappingsController : ControllerBase
             TargetPath = mapping.TargetPath,
             TransformationType = mapping.TransformationType.ToString(),
             TransformationConfig = mapping.TransformationConfig,
-            ExecutionOrder = mapping.ExecutionOrder,
             IsRequired = mapping.IsRequired,
             DefaultValue = mapping.DefaultValue,
             ValidationRules = mapping.ValidationRules,
@@ -116,7 +114,6 @@ public class FieldMappingsController : ControllerBase
             TargetPath = request.TargetPath,
             TransformationType = request.TransformationType,
             TransformationConfig = NullIfEmpty(request.TransformationConfig),
-            ExecutionOrder = request.ExecutionOrder,
             IsRequired = request.IsRequired,
             DefaultValue = request.DefaultValue,
             ValidationRules = NullIfEmpty(request.ValidationRules)
@@ -132,7 +129,6 @@ public class FieldMappingsController : ControllerBase
             TargetPath = created.TargetPath,
             TransformationType = created.TransformationType.ToString(),
             TransformationConfig = created.TransformationConfig,
-            ExecutionOrder = created.ExecutionOrder,
             IsRequired = created.IsRequired,
             DefaultValue = created.DefaultValue,
             ValidationRules = created.ValidationRules,
@@ -158,7 +154,6 @@ public class FieldMappingsController : ControllerBase
         existing.TargetPath = request.TargetPath;
         existing.TransformationType = request.TransformationType;
         existing.TransformationConfig = NullIfEmpty(request.TransformationConfig);
-        existing.ExecutionOrder = request.ExecutionOrder;
         existing.IsRequired = request.IsRequired;
         existing.DefaultValue = request.DefaultValue;
         existing.ValidationRules = NullIfEmpty(request.ValidationRules);
@@ -173,7 +168,6 @@ public class FieldMappingsController : ControllerBase
             TargetPath = updated.TargetPath,
             TransformationType = updated.TransformationType.ToString(),
             TransformationConfig = updated.TransformationConfig,
-            ExecutionOrder = updated.ExecutionOrder,
             IsRequired = updated.IsRequired,
             DefaultValue = updated.DefaultValue,
             ValidationRules = updated.ValidationRules,

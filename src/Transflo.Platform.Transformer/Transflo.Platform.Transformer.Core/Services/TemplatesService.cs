@@ -175,7 +175,6 @@ public class TemplatesService : ITemplatesService
                         TargetPath = m.TargetPath,
                         TransformationType = m.TransformationType,
                         TransformationConfig = m.TransformationConfig,
-                        ExecutionOrder = m.ExecutionOrder,
                         IsRequired = m.IsRequired,
                         DefaultValue = m.DefaultValue,
                         ValidationRules = m.ValidationRules
@@ -214,7 +213,6 @@ public class TemplatesService : ITemplatesService
                         TargetPath = m.TargetPath,
                         TransformationType = m.TransformationType,
                         TransformationConfig = m.TransformationConfig,
-                        ExecutionOrder = m.ExecutionOrder,
                         IsRequired = m.IsRequired,
                         DefaultValue = m.DefaultValue,
                         ValidationRules = m.ValidationRules
@@ -288,7 +286,6 @@ public class TemplatesService : ITemplatesService
                 TargetPath = m.TargetPath,
                 TransformationType = m.TransformationType,
                 TransformationConfig = m.TransformationConfig,
-                ExecutionOrder = m.ExecutionOrder,
                 IsRequired = m.IsRequired,
                 DefaultValue = m.DefaultValue,
                 ValidationRules = m.ValidationRules
