@@ -23,7 +23,6 @@ import {
 import { Customer, CustomerRequest, CustomerListResponse } from '../models/customer.model';
 import { TransformationLogDetail, TransformationLogListResponse } from '../models/transformation-log.model';
 import { environment } from '../../environments/environment';
-import { TransformRequest } from '../models/transformation-test.model';
 import {
   ApiClient,
   CreateApiClientRequest,
@@ -268,8 +267,10 @@ export class ApiService {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  transformJsonWithTemplate(request: TransformRequest): Observable<any> {
+  transformJsonWithTemplate(templateId: string, version: number, sourceDocument: unknown): Observable<any> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return this.http.post<any>(`${this.apiUrl}/transform`, request);
+    return this.http.post<any>(`${this.apiUrl}/templates/${templateId}/versions/${version}/transform`, {
+      sourceDocument,
+    });
   }
 }
