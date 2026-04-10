@@ -979,69 +979,71 @@ export class TransformationTestComponent implements OnInit {
     }
 
     // Server always returns HTTP 200 — read everything from the next callback
-    this.apiService.transformJsonWithTemplate(this.selectedTemplateId, selectedTemplate.version, parsedSource).subscribe({
-      next: (response) => {
-        const data: TransformResult = response?.data ?? {};
+    this.apiService
+      .transformJsonWithTemplate(this.selectedTemplateId, selectedTemplate.version, parsedSource)
+      .subscribe({
+        next: (response) => {
+          const data: TransformResult = response?.data ?? {};
 
-        if (data.outputJson) {
-          this.transformedJson = data.outputJson;
-        } else if (data.transformedData) {
-          this.transformedJson = JSON.stringify(data.transformedData, null, 2);
-        }
+          if (data.outputJson) {
+            this.transformedJson = data.outputJson;
+          } else if (data.transformedData) {
+            this.transformedJson = JSON.stringify(data.transformedData, null, 2);
+          }
 
-        this.transformResult = data;
+          this.transformResult = data;
 
-        // Normalise errors and warnings into a unified MappingIssue list
-        const issues: MappingIssue[] = [];
+          // Normalise errors and warnings into a unified MappingIssue list
+          const issues: MappingIssue[] = [];
 
-        for (const err of data.errors ?? []) {
-          issues.push({
-            type: 'error',
-            code: err.errorCode,
-            sourcePath: err.sourcePath ?? undefined,
-            targetPath: err.fieldPath ?? undefined,
-            message: err.message,
-          });
-        }
+          for (const err of data.errors ?? []) {
+            issues.push({
+              type: 'error',
+              code: err.errorCode,
+              sourcePath: err.sourcePath ?? undefined,
+              targetPath: err.fieldPath ?? undefined,
+              message: err.message,
+            });
+          }
 
-        for (const warn of data.warnings ?? []) {
-          issues.push({
-            type: 'warning',
-            code: warn.code,
-            sourcePath: warn.sourcePath ?? undefined,
-            targetPath: warn.targetPath ?? undefined,
-            message: warn.message,
-          });
-        }
+          for (const warn of data.warnings ?? []) {
+            issues.push({
+              type: 'warning',
+              code: warn.code,
+              sourcePath: warn.sourcePath ?? undefined,
+              targetPath: warn.targetPath ?? undefined,
+              message: warn.message,
+            });
+          }
 
-        this.mappingIssues = issues;
+          this.mappingIssues = issues;
 
-        if (data.success) {
-          this.success =
-            issues.length > 0
-              ? `Transformation completed with ${this.warningCount} warning(s).`
-              : 'Transformation completed successfully.';
-        } else {
-          const partialNote = this.transformedJson ? ' Partial output is shown below.' : '';
-          this.success = `Partial transformation: ${this.errorCount} required field(s) could not be mapped.${partialNote}`;
-        }
+          if (data.success) {
+            this.success =
+              issues.length > 0
+                ? `Transformation completed with ${this.warningCount} warning(s).`
+                : 'Transformation completed successfully.';
+          } else {
+            const partialNote = this.transformedJson ? ' Partial output is shown below.' : '';
+            this.success = `Partial transformation: ${this.errorCount} required field(s) could not be mapped.${partialNote}`;
+          }
 
-        if (this.annotatedIssueCount > 0) {
-          this.buildAnnotatedJson();
-        }
+          if (this.annotatedIssueCount > 0) {
+            this.buildAnnotatedJson();
+          }
 
-        this.isTransforming = false;
-      },
-      error: (err) => {
-        // Only reached on network errors or HTTP 5xx
-        this.error = err.error?.message || 'Failed to connect to transformation service';
-        if (err.error?.errors) {
-          this.errorDetails = JSON.stringify(err.error.errors, null, 2);
-        }
-        console.error(err);
-        this.isTransforming = false;
-      },
-    });
+          this.isTransforming = false;
+        },
+        error: (err) => {
+          // Only reached on network errors or HTTP 5xx
+          this.error = err.error?.message || 'Failed to connect to transformation service';
+          if (err.error?.errors) {
+            this.errorDetails = JSON.stringify(err.error.errors, null, 2);
+          }
+          console.error(err);
+          this.isTransforming = false;
+        },
+      });
   }
 
   toggleAnnotatedView(): void {
