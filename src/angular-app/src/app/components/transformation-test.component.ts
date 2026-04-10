@@ -837,7 +837,7 @@ export class TransformationTestComponent implements OnInit {
     this.apiService.getTemplates().subscribe({
       next: (response) => {
         if (response.success && response.data) {
-          this.templates = response.data.templates.filter((t) => t.status === 'Published');
+          this.templates = response.data.templates.filter((t) => t.status === 'Active');
         }
       },
       error: (err) => {
