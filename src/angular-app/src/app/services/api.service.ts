@@ -268,8 +268,11 @@ export class ApiService {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  transformJsonWithTemplate(request: TransformRequest): Observable<any> {
+  transformJsonWithTemplate(templateId: string, version: number, sourceDocument: unknown): Observable<any> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return this.http.post<any>(`${this.apiUrl}/transform`, request);
+    return this.http.post<any>(
+      `${this.apiUrl}/templates/${templateId}/versions/${version}/transform`,
+      { sourceDocument },
+    );
   }
 }
