@@ -23,7 +23,6 @@ import {
 import { Customer, CustomerRequest, CustomerListResponse } from '../models/customer.model';
 import { TransformationLogDetail, TransformationLogListResponse } from '../models/transformation-log.model';
 import { environment } from '../../environments/environment';
-import { TransformRequest } from '../models/transformation-test.model';
 import {
   ApiClient,
   CreateApiClientRequest,

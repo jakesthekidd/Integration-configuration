@@ -5,7 +5,7 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ApiService } from '../services/api.service';
 import { FieldMappingTemplate } from '../models/template.model';
 import { parseTree, printParseErrorCode, ParseError } from 'jsonc-parser';
-import { MappingIssue, TransformRequest, TransformResult } from '../models/transformation-test.model';
+import { MappingIssue, TransformResult } from '../models/transformation-test.model';
 
 @Component({
   selector: 'app-transformation-test',
@@ -962,8 +962,9 @@ export class TransformationTestComponent implements OnInit {
     this.showAnnotatedView = false;
     this.annotatedSourceHtml = '';
 
+    let parsedSource: unknown;
     try {
-      JSON.parse(this.sourceJson);
+      parsedSource = JSON.parse(this.sourceJson);
     } catch (e) {
       this.error = 'Invalid JSON format in source';
       this.isTransforming = false;
@@ -971,14 +972,14 @@ export class TransformationTestComponent implements OnInit {
     }
 
     const selectedTemplate = this.templates.find((t) => t.id === this.selectedTemplateId);
+    if (!selectedTemplate?.version) {
+      this.error = 'No published version found for the selected template.';
+      this.isTransforming = false;
+      return;
+    }
 
-    const request: TransformRequest = {
-      sourceJson: this.sourceJson,
-      templateId: this.selectedTemplateId,
-      version: selectedTemplate?.version,
-    };
     // Server always returns HTTP 200 — read everything from the next callback
-    this.apiService.transformJsonWithTemplate(request).subscribe({
+    this.apiService.transformJsonWithTemplate(this.selectedTemplateId, selectedTemplate.version, parsedSource).subscribe({
       next: (response) => {
         const data: TransformResult = response?.data ?? {};
 
