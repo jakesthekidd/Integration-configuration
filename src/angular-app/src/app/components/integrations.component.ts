@@ -187,11 +187,13 @@ import { environment } from '../../environments/environment';
           <div class="assignment-form">
             <select [(ngModel)]="selectedTemplateId" name="templateSelect" class="form-control">
               <option [ngValue]="null">Select a template version...</option>
-              <optgroup *ngFor="let group of availableTemplatesGrouped" [label]="group.name">
-                <option *ngFor="let version of group.versions" [value]="version.id">
-                  V{{ version.version }} ({{ version.status }})
-                </option>
-              </optgroup>
+              <ng-container *ngFor="let group of availableTemplatesGrouped">
+                <optgroup *ngIf="getFilteredVersions(group.versions).length > 0" [label]="group.name">
+                  <ng-container *ngFor="let version of getFilteredVersions(group.versions)">
+                    <option [value]="version.id">V{{ version.version }} ({{ version.status }})</option>
+                  </ng-container>
+                </optgroup>
+              </ng-container>
             </select>
             <button (click)="assignTemplate()" class="btn-primary" [disabled]="!selectedTemplateId">Assign</button>
           </div>
@@ -206,8 +208,9 @@ import { environment } from '../../environments/environment';
             <thead>
               <tr>
                 <th>Template</th>
+                <th>Template Status</th>
                 <th>Version</th>
-                <th>Status</th>
+                <th>Version Status</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -217,18 +220,30 @@ import { environment } from '../../environments/environment';
                   <strong>{{ template.templateName }}</strong>
                 </td>
                 <td>
+                  <span class="badge" [ngClass]="getTemplateStatusClass(template.templateStatus)">
+                    {{ template.templateStatus }}
+                  </span>
+                </td>
+                <td>
                   <span class="badge badge-version">v{{ template.version }}</span>
                 </td>
                 <td>
                   <span class="badge" [ngClass]="getVersionStatusClass(template.status)">{{ template.status }}</span>
                 </td>
                 <td class="actions-cell">
-                  <button (click)="selectedApiDetails = template" class="btn-small btn-info">API Access Details</button>
+                  <button
+                    (click)="selectedApiDetails = template"
+                    class="btn-small btn-info"
+                    [disabled]="template.templateStatus !== 'Active'"
+                    [title]="template.templateStatus !== 'Active' ? 'Only active templates can show API details' : ''"
+                  >
+                    API Access Details
+                  </button>
                   <button (click)="removeTemplate(template.id)" class="btn-small btn-danger">Remove</button>
                 </td>
               </tr>
               <tr *ngIf="assignedTemplates.length === 0">
-                <td colspan="4" class="no-data">No templates assigned to this client.</td>
+                <td colspan="5" class="no-data">No templates assigned to this client.</td>
               </tr>
             </tbody>
           </table>
@@ -515,8 +530,14 @@ import { environment } from '../../environments/environment';
         color: white;
       }
 
-      .btn-info:hover {
+      .btn-info:hover:not(:disabled) {
         background: #2980b9;
+      }
+
+      .btn-info:disabled {
+        background: #cbd5e1;
+        cursor: not-allowed;
+        color: #64748b;
       }
 
       .btn-danger {
@@ -890,6 +911,8 @@ export class IntegrationsComponent implements OnInit {
           this.availableTemplatesGrouped = [];
 
           templates.forEach((t) => {
+            if (t.status === 'Archived') return;
+
             this.apiService.getTemplateVersions(t.id).subscribe({
               next: (vResponse) => {
                 if (vResponse.success && vResponse.data) {
@@ -1031,7 +1054,7 @@ export class IntegrationsComponent implements OnInit {
         this.loadAssignedTemplates(this.selectedClient!.id);
       },
       error: (err) => {
-        const msg = err.error?.message || 'Failed to assign template';
+        const msg = typeof err.error === 'string' ? err.error : err.error?.message || 'Failed to assign template';
         this.generalService.error(msg);
       },
     });
@@ -1051,6 +1074,11 @@ export class IntegrationsComponent implements OnInit {
     });
   }
 
+  getFilteredVersions(versions: TemplateVersionResponse[]): TemplateVersionResponse[] {
+    if (!this.assignedTemplates || this.assignedTemplates.length === 0) return versions;
+    return versions.filter((v) => !this.assignedTemplates.some((at) => at.id === v.id));
+  }
+
   getVersionStatusClass(status: string | undefined): string {
     switch (status) {
       case 'Draft':
@@ -1059,6 +1087,19 @@ export class IntegrationsComponent implements OnInit {
         return 'badge-published';
       case 'Superseded':
         return 'badge-superseded';
+      case 'Archived':
+        return 'badge-archived';
+      default:
+        return '';
+    }
+  }
+
+  getTemplateStatusClass(status: string | undefined): string {
+    switch (status) {
+      case 'Active':
+        return 'badge-active';
+      case 'Draft':
+        return 'badge-draft';
       case 'Archived':
         return 'badge-archived';
       default:

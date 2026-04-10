@@ -42,6 +42,7 @@ export interface TemplateVersionResponse {
   id: string;
   templateId: string;
   templateName?: string;
+  templateStatus?: string;
   version: number;
   status: string;
   publishedAt?: string;

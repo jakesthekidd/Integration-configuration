@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Transflo.Platform.Transformer.Core.DTOs;
+using Transflo.Platform.Transformer.Core.Models;
 using Transflo.Platform.Transformer.Core.Repositories.Interfaces;
 using Transflo.Platform.Transformer.Core.Services.Interfaces;
 using Transflo.Platform.Transformer.TransformationService.DTOs;
@@ -104,11 +105,21 @@ public class TransformController : ControllerBase
             ? await _templateVersionRepository.GetByVersionAsync(templateId, version.Value)
             : await _templateVersionRepository.GetPublishedVersionAsync(templateId);
 
-        if (targetVersion != null && !await _templateVersionRepository.HasClientAccessAsync(targetVersion.Id, clientId))
+        if (targetVersion != null)
         {
-            return StatusCode(
-                StatusCodes.Status401Unauthorized,
-                ApiResponse<object>.ErrorResponse("Unauthorized. API client does not have access to this template version."));
+            if (targetVersion.Template?.Status == TemplateStatus.Archived)
+            {
+                return StatusCode(
+                    StatusCodes.Status401Unauthorized,
+                    ApiResponse<object>.ErrorResponse("Unauthorized. The template associated with this version has been archived."));
+            }
+
+            if (!await _templateVersionRepository.HasClientAccessAsync(targetVersion.Id, clientId))
+            {
+                return StatusCode(
+                    StatusCodes.Status401Unauthorized,
+                    ApiResponse<object>.ErrorResponse("Unauthorized. API client does not have access to this template version."));
+            }
         }
 
         return null;
