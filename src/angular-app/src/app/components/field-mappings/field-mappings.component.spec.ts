@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
-import { of, throwError } from 'rxjs';
+import { of } from 'rxjs';
 
 import { FieldMappingsComponent } from './field-mappings.component';
 import { ApiService } from '../../services/api.service';
