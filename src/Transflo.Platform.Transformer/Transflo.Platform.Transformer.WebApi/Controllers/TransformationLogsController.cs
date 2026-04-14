@@ -31,7 +31,7 @@ public class TransformationLogsController : ControllerBase
         // Npgsql requires DateTimeKind.Utc for "timestamp with time zone" columns.
         // Query-string parsing yields Kind=Unspecified; normalise here so comparisons are correct.
         var fromUtc = from.HasValue ? DateTime.SpecifyKind(from.Value, DateTimeKind.Utc) : (DateTime?)null;
-        var toUtc   = to.HasValue   ? DateTime.SpecifyKind(to.Value,   DateTimeKind.Utc) : (DateTime?)null;
+        var toUtc = to.HasValue ? DateTime.SpecifyKind(to.Value, DateTimeKind.Utc) : (DateTime?)null;
 
         var logs = templateId.HasValue
             ? await _repo.GetByTemplateIdAsync(templateId.Value, limit, fromUtc, toUtc)
