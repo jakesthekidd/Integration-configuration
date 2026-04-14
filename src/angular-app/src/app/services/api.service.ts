@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { TmsSystem, CreateTmsSystemRequest, ApiResponse, TmsSystemListResponse } from '../models/tms-system.model';
 import {
@@ -267,10 +267,18 @@ export class ApiService {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  transformJsonWithTemplate(templateId: string, version: number, sourceDocument: unknown): Observable<any> {
+  transformJsonWithTemplate(
+    templateId: string,
+    version: number,
+    sourceDocument: unknown,
+    clientId: string,
+  ): Observable<any> {
+    const headers = new HttpHeaders({ 'x-client-id': clientId });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return this.http.post<any>(`${this.apiUrl}/templates/${templateId}/versions/${version}/transform`, {
-      sourceDocument,
-    });
+    return this.http.post<any>(
+      `${this.apiUrl}/templates/${templateId}/versions/${version}/transform`,
+      { sourceDocument },
+      { headers },
+    );
   }
 }
