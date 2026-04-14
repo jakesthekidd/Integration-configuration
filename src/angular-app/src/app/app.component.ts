@@ -1,12 +1,12 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { TmsSystemsComponent } from './components/tms-systems.component';
-import { TemplatesComponent } from './components/templates.component';
-import { LookupTablesComponent } from './components/lookup-tables.component';
-import { TransformationTestComponent } from './components/transformation-test.component';
-import { TransformationLogsComponent } from './components/transformation-logs.component';
-import { CustomersComponent } from './components/customers.component';
-import { IntegrationsComponent } from './components/integrations.component';
+import { TmsSystemsComponent } from './components/tms-systems/tms-systems.component';
+import { TemplatesComponent } from './components/templates/templates.component';
+import { LookupTablesComponent } from './components/lookup-tables/lookup-tables.component';
+import { TransformationTestComponent } from './components/transformation-test/transformation-test.component';
+import { TransformationLogsComponent } from './components/transformation-logs/transformation-logs.component';
+import { CustomersComponent } from './components/customers/customers.component';
+import { IntegrationsComponent } from './components/integrations/integrations.component';
 
 @Component({
   selector: 'app-root',

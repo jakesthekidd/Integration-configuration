@@ -21,11 +21,21 @@ public class TransformationLogsController : ControllerBase
 
     [HttpGet]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetAll([FromQuery] Guid? templateId = null, [FromQuery] string? status = null, [FromQuery] int limit = 100)
+    public async Task<IActionResult> GetAll(
+        [FromQuery] Guid? templateId = null,
+        [FromQuery] string? status = null,
+        [FromQuery] int limit = 100,
+        [FromQuery] DateTime? from = null,
+        [FromQuery] DateTime? to = null)
     {
+        // Npgsql requires DateTimeKind.Utc for "timestamp with time zone" columns.
+        // Query-string parsing yields Kind=Unspecified; normalise here so comparisons are correct.
+        var fromUtc = from.HasValue ? DateTime.SpecifyKind(from.Value, DateTimeKind.Utc) : (DateTime?)null;
+        var toUtc   = to.HasValue   ? DateTime.SpecifyKind(to.Value,   DateTimeKind.Utc) : (DateTime?)null;
+
         var logs = templateId.HasValue
-            ? await _repo.GetByTemplateIdAsync(templateId.Value, limit)
-            : await _repo.GetAllAsync(limit);
+            ? await _repo.GetByTemplateIdAsync(templateId.Value, limit, fromUtc, toUtc)
+            : await _repo.GetAllAsync(limit, fromUtc, toUtc);
 
         if (status != null)
             logs = logs.Where(l => l.Status.ToString().Equals(status, StringComparison.OrdinalIgnoreCase)).ToList();
