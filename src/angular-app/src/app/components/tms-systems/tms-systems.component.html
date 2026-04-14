@@ -1,70 +1,70 @@
-    <div class="container">
-      <h2>TMS Systems</h2>
+<div class="container">
+  <h2>TMS Systems</h2>
 
-      <div class="actions">
-        <button (click)="showCreateForm = !showCreateForm" class="btn btn-primary">
-          {{ showCreateForm ? 'Cancel' : 'Create New System' }}
-        </button>
-        <label class="filter">
-          <input type="checkbox" [(ngModel)]="activeOnly" (change)="loadSystems()" />
-          Show Active Only
-        </label>
+  <div class="actions">
+    <button (click)="showCreateForm = !showCreateForm" class="btn btn-primary">
+      {{ showCreateForm ? 'Cancel' : 'Create New System' }}
+    </button>
+    <label class="filter">
+      <input type="checkbox" [(ngModel)]="activeOnly" (change)="loadSystems()" />
+      Show Active Only
+    </label>
+  </div>
+
+  <div *ngIf="showCreateForm" class="form-container">
+    <h3>Create TMS System</h3>
+    <form (ngSubmit)="createSystem()">
+      <div class="form-group">
+        <label for="systemName">Name:</label>
+        <input id="systemName" type="text" [(ngModel)]="newSystem.name" name="name" required />
       </div>
-
-      <div *ngIf="showCreateForm" class="form-container">
-        <h3>Create TMS System</h3>
-        <form (ngSubmit)="createSystem()">
-          <div class="form-group">
-            <label for="systemName">Name:</label>
-            <input id="systemName" type="text" [(ngModel)]="newSystem.name" name="name" required />
-          </div>
-          <div class="form-group">
-            <label for="displayName">Display Name:</label>
-            <input id="displayName" type="text" [(ngModel)]="newSystem.displayName" name="displayName" required />
-          </div>
-          <div class="form-group">
-            <label for="sysDescription">Description:</label>
-            <textarea id="sysDescription" [(ngModel)]="newSystem.description" name="description"></textarea>
-          </div>
-          <div class="form-group">
-            <label for="sysVersion">Version:</label>
-            <input id="sysVersion" type="text" [(ngModel)]="newSystem.version" name="version" />
-          </div>
-          <button type="submit" class="btn btn-success">Create</button>
-        </form>
+      <div class="form-group">
+        <label for="displayName">Display Name:</label>
+        <input id="displayName" type="text" [(ngModel)]="newSystem.displayName" name="displayName" required />
       </div>
+      <div class="form-group">
+        <label for="sysDescription">Description:</label>
+        <textarea id="sysDescription" [(ngModel)]="newSystem.description" name="description"></textarea>
+      </div>
+      <div class="form-group">
+        <label for="sysVersion">Version:</label>
+        <input id="sysVersion" type="text" [(ngModel)]="newSystem.version" name="version" />
+      </div>
+      <button type="submit" class="btn btn-success">Create</button>
+    </form>
+  </div>
 
-      <div *ngIf="error" class="error">{{ error }}</div>
+  <div *ngIf="error" class="error">{{ error }}</div>
 
-      <table *ngIf="systems.length > 0" class="data-table">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Display Name</th>
-            <th>Version</th>
-            <th>Status</th>
-            <th>Created</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let system of systems">
-            <td>{{ system.name }}</td>
-            <td>{{ system.displayName }}</td>
-            <td>{{ system.version }}</td>
-            <td>
-              <span [class.active]="system.isActive" [class.inactive]="!system.isActive">
-                {{ system.isActive ? 'Active' : 'Inactive' }}
-              </span>
-            </td>
-            <td>{{ system.createdAt | date: 'short' }}</td>
-            <td>
-              <button (click)="deleteSystem(system.id)" class="btn btn-danger btn-sm">Delete</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+  <table *ngIf="systems.length > 0" class="data-table">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Display Name</th>
+        <th>Version</th>
+        <th>Status</th>
+        <th>Created</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let system of systems">
+        <td>{{ system.name }}</td>
+        <td>{{ system.displayName }}</td>
+        <td>{{ system.version }}</td>
+        <td>
+          <span [class.active]="system.isActive" [class.inactive]="!system.isActive">
+            {{ system.isActive ? 'Active' : 'Inactive' }}
+          </span>
+        </td>
+        <td>{{ system.createdAt | date: 'short' }}</td>
+        <td>
+          <button (click)="deleteSystem(system.id)" class="btn btn-danger btn-sm">Delete</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
 
-      <p *ngIf="systems.length === 0 && !loading">No TMS systems found.</p>
-      <p *ngIf="loading">Loading...</p>
-    </div>
+  <p *ngIf="systems.length === 0 && !loading">No TMS systems found.</p>
+  <p *ngIf="loading">Loading...</p>
+</div>

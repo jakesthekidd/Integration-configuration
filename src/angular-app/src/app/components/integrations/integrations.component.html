@@ -1,298 +1,290 @@
-    <div class="container">
-      <div *ngIf="error" class="error">{{ error }}</div>
+<div class="container">
+  <div *ngIf="error" class="error">{{ error }}</div>
 
-      <!-- ==================== SCREEN: LIST ==================== -->
-      <ng-container *ngIf="!selectedClient">
-        <div class="page-header">
-          <div>
-            <h2>Integrations</h2>
-            <p class="page-subtitle">Manage API clients and their template assignments</p>
+  <!-- ==================== SCREEN: LIST ==================== -->
+  <ng-container *ngIf="!selectedClient">
+    <div class="page-header">
+      <div>
+        <h2>Integrations</h2>
+        <p class="page-subtitle">Manage API clients and their template assignments</p>
+      </div>
+      <button class="btn-primary" (click)="showCreateForm = !showCreateForm">
+        {{ showCreateForm ? 'Cancel' : '＋ New API Client' }}
+      </button>
+    </div>
+
+    <div *ngIf="showCreateForm" class="form-container">
+      <h3>Create API Client</h3>
+      <form (ngSubmit)="createClient()" #createForm="ngForm">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="clientName">Name <span class="required">*</span></label>
+            <input
+              id="clientName"
+              type="text"
+              [(ngModel)]="newClient.name"
+              name="name"
+              required
+              placeholder="e.g., MyApp Integration"
+            />
           </div>
-          <button class="btn-primary" (click)="showCreateForm = !showCreateForm">
-            {{ showCreateForm ? 'Cancel' : '＋ New API Client' }}
-          </button>
-        </div>
-
-        <div *ngIf="showCreateForm" class="form-container">
-          <h3>Create API Client</h3>
-          <form (ngSubmit)="createClient()" #createForm="ngForm">
-            <div class="form-row">
-              <div class="form-group">
-                <label for="clientName">Name <span class="required">*</span></label>
-                <input
-                  id="clientName"
-                  type="text"
-                  [(ngModel)]="newClient.name"
-                  name="name"
-                  required
-                  placeholder="e.g., MyApp Integration"
-                />
-              </div>
-              <div class="form-group">
-                <label for="clientDescription">Description</label>
-                <textarea
-                  id="clientDescription"
-                  [(ngModel)]="newClient.description"
-                  name="description"
-                  rows="2"
-                  placeholder="Describe this API client"
-                ></textarea>
-              </div>
-            </div>
-            <div class="form-actions">
-              <button type="submit" class="btn-primary" [disabled]="!createForm.form.valid">Create</button>
-              <button type="button" class="btn-secondary" (click)="showCreateForm = false">Cancel</button>
-            </div>
-          </form>
-        </div>
-
-        <div class="table-container">
-          <table>
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Status</th>
-                <th>Description</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let client of clients" class="clickable-row" (click)="selectClient(client)">
-                <td>
-                  <strong>{{ client.name }}</strong>
-                  <br /><small class="muted">{{ client.id }}</small>
-                </td>
-                <td>
-                  <span class="badge" [class.badge-active]="client.isActive" [class.badge-inactive]="!client.isActive">
-                    {{ client.isActive ? 'Active' : 'Inactive' }}
-                  </span>
-                </td>
-                <td class="description-cell">{{ client.description || '—' }}</td>
-                <td class="actions-cell" (click)="$event.stopPropagation()">
-                  <button class="btn-small btn-info" (click)="selectClient(client)">View</button>
-                  <button class="btn-small btn-danger" (click)="deleteClient(client.id)">Delete</button>
-                </td>
-              </tr>
-              <tr *ngIf="clients.length === 0 && !loading">
-                <td colspan="4" class="no-data">No API clients found. Click "New API Client" to get started.</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <div class="total">{{ clients.length }} client(s) shown</div>
-      </ng-container>
-
-      <!-- ==================== SCREEN: DETAIL ==================== -->
-      <ng-container *ngIf="selectedClient">
-        <div class="page-header">
-          <div class="breadcrumb">
-            <button class="btn-link" (click)="selectedClient = null">Integrations</button>
-            <span class="breadcrumb-sep">›</span>
-            <span>{{ selectedClient.name }}</span>
-          </div>
-          <div class="header-actions">
-            <button class="btn-small btn-info" (click)="startEdit()">Edit</button>
-            <button *ngIf="selectedClient.isActive" class="btn-small btn-archive" (click)="toggleClientActive(false)">
-              Deactivate
-            </button>
-            <button
-              *ngIf="!selectedClient.isActive"
-              class="btn-small btn-reactivate"
-              (click)="toggleClientActive(true)"
-            >
-              Reactivate
-            </button>
+          <div class="form-group">
+            <label for="clientDescription">Description</label>
+            <textarea
+              id="clientDescription"
+              [(ngModel)]="newClient.description"
+              name="description"
+              rows="2"
+              placeholder="Describe this API client"
+            ></textarea>
           </div>
         </div>
-
-        <!-- Edit Form -->
-        <div *ngIf="editingClient" class="form-container">
-          <h3>Edit API Client</h3>
-          <form (ngSubmit)="saveClientEdit()" #editClientForm="ngForm">
-            <div class="form-row">
-              <div class="form-group">
-                <label for="editClientName">Name <span class="required">*</span></label>
-                <input
-                  id="editClientName"
-                  type="text"
-                  [(ngModel)]="editRequest.name"
-                  name="editClientName"
-                  required
-                  placeholder="Client name"
-                />
-              </div>
-              <div class="form-group">
-                <label for="editClientDescription">Description</label>
-                <textarea
-                  id="editClientDescription"
-                  [(ngModel)]="editRequest.description"
-                  name="editClientDescription"
-                  rows="2"
-                  placeholder="Optional description"
-                ></textarea>
-              </div>
-            </div>
-            <div class="form-actions">
-              <button type="submit" class="btn-primary" [disabled]="!editClientForm.form.valid">Save Changes</button>
-              <button type="button" class="btn-secondary" (click)="cancelEdit()">Cancel</button>
-            </div>
-          </form>
+        <div class="form-actions">
+          <button type="submit" class="btn-primary" [disabled]="!createForm.form.valid">Create</button>
+          <button type="button" class="btn-secondary" (click)="showCreateForm = false">Cancel</button>
         </div>
+      </form>
+    </div>
 
-        <!-- Client Info Card -->
-        <div class="detail-card">
-          <div class="detail-grid">
-            <div class="detail-item">
-              <span class="detail-label">ID</span>
-              <span class="muted">{{ selectedClient.id }}</span>
-            </div>
-            <div class="detail-item">
-              <span class="detail-label">Status</span>
-              <span
-                class="badge"
-                style="width: fit-content"
-                [class.badge-active]="selectedClient.isActive"
-                [class.badge-inactive]="!selectedClient.isActive"
-              >
-                {{ selectedClient.isActive ? 'Active' : 'Inactive' }}
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Status</th>
+            <th>Description</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let client of clients" class="clickable-row" (click)="selectClient(client)">
+            <td>
+              <strong>{{ client.name }}</strong>
+              <br /><small class="muted">{{ client.id }}</small>
+            </td>
+            <td>
+              <span class="badge" [class.badge-active]="client.isActive" [class.badge-inactive]="!client.isActive">
+                {{ client.isActive ? 'Active' : 'Inactive' }}
               </span>
-            </div>
-            <div class="detail-item">
-              <span class="detail-label">Description</span>
-              <span>{{ selectedClient.description || '—' }}</span>
-            </div>
-            <div class="detail-item">
-              <span class="detail-label">Created</span>
-              <span>{{ formatDate(selectedClient.createdAt) }}</span>
-            </div>
+            </td>
+            <td class="description-cell">{{ client.description || '—' }}</td>
+            <td class="actions-cell" (click)="$event.stopPropagation()">
+              <button class="btn-small btn-info" (click)="selectClient(client)">View</button>
+              <button class="btn-small btn-danger" (click)="deleteClient(client.id)">Delete</button>
+            </td>
+          </tr>
+          <tr *ngIf="clients.length === 0 && !loading">
+            <td colspan="4" class="no-data">No API clients found. Click "New API Client" to get started.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="total">{{ clients.length }} client(s) shown</div>
+  </ng-container>
+
+  <!-- ==================== SCREEN: DETAIL ==================== -->
+  <ng-container *ngIf="selectedClient">
+    <div class="page-header">
+      <div class="breadcrumb">
+        <button class="btn-link" (click)="selectedClient = null">Integrations</button>
+        <span class="breadcrumb-sep">›</span>
+        <span>{{ selectedClient.name }}</span>
+      </div>
+      <div class="header-actions">
+        <button class="btn-small btn-info" (click)="startEdit()">Edit</button>
+        <button *ngIf="selectedClient.isActive" class="btn-small btn-archive" (click)="toggleClientActive(false)">
+          Deactivate
+        </button>
+        <button *ngIf="!selectedClient.isActive" class="btn-small btn-reactivate" (click)="toggleClientActive(true)">
+          Reactivate
+        </button>
+      </div>
+    </div>
+
+    <!-- Edit Form -->
+    <div *ngIf="editingClient" class="form-container">
+      <h3>Edit API Client</h3>
+      <form (ngSubmit)="saveClientEdit()" #editClientForm="ngForm">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="editClientName">Name <span class="required">*</span></label>
+            <input
+              id="editClientName"
+              type="text"
+              [(ngModel)]="editRequest.name"
+              name="editClientName"
+              required
+              placeholder="Client name"
+            />
+          </div>
+          <div class="form-group">
+            <label for="editClientDescription">Description</label>
+            <textarea
+              id="editClientDescription"
+              [(ngModel)]="editRequest.description"
+              name="editClientDescription"
+              rows="2"
+              placeholder="Optional description"
+            ></textarea>
           </div>
         </div>
+        <div class="form-actions">
+          <button type="submit" class="btn-primary" [disabled]="!editClientForm.form.valid">Save Changes</button>
+          <button type="button" class="btn-secondary" (click)="cancelEdit()">Cancel</button>
+        </div>
+      </form>
+    </div>
 
-        <div class="assignment-actions">
-          <h4>Assign Template Version</h4>
-          <div class="assignment-form">
-            <select [(ngModel)]="selectedTemplateId" name="templateSelect" class="form-control">
-              <option [ngValue]="null">Select a template version...</option>
-              <ng-container *ngFor="let group of availableTemplatesGrouped">
-                <optgroup *ngIf="getFilteredVersions(group.versions).length > 0" [label]="group.name">
-                  <ng-container *ngFor="let version of getFilteredVersions(group.versions)">
-                    <option [value]="version.id">V{{ version.version }} ({{ version.status }})</option>
-                  </ng-container>
-                </optgroup>
+    <!-- Client Info Card -->
+    <div class="detail-card">
+      <div class="detail-grid">
+        <div class="detail-item">
+          <span class="detail-label">ID</span>
+          <span class="muted">{{ selectedClient.id }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Status</span>
+          <span
+            class="badge"
+            style="width: fit-content"
+            [class.badge-active]="selectedClient.isActive"
+            [class.badge-inactive]="!selectedClient.isActive"
+          >
+            {{ selectedClient.isActive ? 'Active' : 'Inactive' }}
+          </span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Description</span>
+          <span>{{ selectedClient.description || '—' }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Created</span>
+          <span>{{ formatDate(selectedClient.createdAt) }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="assignment-actions">
+      <h4>Assign Template Version</h4>
+      <div class="assignment-form">
+        <select [(ngModel)]="selectedTemplateId" name="templateSelect" class="form-control">
+          <option [ngValue]="null">Select a template version...</option>
+          <ng-container *ngFor="let group of availableTemplatesGrouped">
+            <optgroup *ngIf="getFilteredVersions(group.versions).length > 0" [label]="group.name">
+              <ng-container *ngFor="let version of getFilteredVersions(group.versions)">
+                <option [value]="version.id">V{{ version.version }} ({{ version.status }})</option>
               </ng-container>
-            </select>
-            <button (click)="assignTemplate()" class="btn-primary" [disabled]="!selectedTemplateId">Assign</button>
+            </optgroup>
+          </ng-container>
+        </select>
+        <button (click)="assignTemplate()" class="btn-primary" [disabled]="!selectedTemplateId">Assign</button>
+      </div>
+    </div>
+
+    <div class="section-header">
+      <h3>Assigned Templates</h3>
+    </div>
+
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Template</th>
+            <th>Template Status</th>
+            <th>Version</th>
+            <th>Version Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let template of assignedTemplates">
+            <td>
+              <strong>{{ template.templateName }}</strong>
+            </td>
+            <td>
+              <span class="badge" [ngClass]="getTemplateStatusClass(template.templateStatus)">
+                {{ template.templateStatus }}
+              </span>
+            </td>
+            <td>
+              <span class="badge badge-version">v{{ template.version }}</span>
+            </td>
+            <td>
+              <span class="badge" [ngClass]="getVersionStatusClass(template.status)">{{ template.status }}</span>
+            </td>
+            <td class="actions-cell">
+              <button
+                (click)="selectedApiDetails = template"
+                class="btn-small btn-info"
+                [disabled]="template.templateStatus !== 'Active'"
+                [title]="template.templateStatus !== 'Active' ? 'Only active templates can show API details' : ''"
+              >
+                API Access Details
+              </button>
+              <button (click)="removeTemplate(template.id)" class="btn-small btn-danger">Remove</button>
+            </td>
+          </tr>
+          <tr *ngIf="assignedTemplates.length === 0">
+            <td colspan="5" class="no-data">No templates assigned to this client.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </ng-container>
+
+  <!-- API Details Modal Overlay -->
+  <div
+    class="modal-overlay"
+    *ngIf="selectedApiDetails"
+    (click)="selectedApiDetails = null"
+    tabindex="0"
+    role="button"
+    (keydown.enter)="selectedApiDetails = null"
+    aria-label="Close modal"
+  >
+    <div
+      class="modal-container"
+      (click)="$event.stopPropagation()"
+      tabindex="0"
+      role="document"
+      (keydown.enter)="$event.stopPropagation()"
+    >
+      <div class="modal-header">
+        <h4>API Details — {{ selectedApiDetails.templateName }} V{{ selectedApiDetails.version }}</h4>
+        <button class="btn-close-modal" (click)="selectedApiDetails = null" aria-label="Close API Details">
+          &times;
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="snippet-section">
+          <h5>Required Header</h5>
+          <div class="snippet-box">
+            <button class="btn-copy" (click)="copySnippet('x-client-id: ' + selectedClient!.id)">Copy</button>
+            <pre><code>x-client-id: {{ selectedClient!.id }}</code></pre>
           </div>
         </div>
 
-        <div class="section-header">
-          <h3>Assigned Templates</h3>
-        </div>
-
-        <div class="table-container">
-          <table>
-            <thead>
-              <tr>
-                <th>Template</th>
-                <th>Template Status</th>
-                <th>Version</th>
-                <th>Version Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let template of assignedTemplates">
-                <td>
-                  <strong>{{ template.templateName }}</strong>
-                </td>
-                <td>
-                  <span class="badge" [ngClass]="getTemplateStatusClass(template.templateStatus)">
-                    {{ template.templateStatus }}
-                  </span>
-                </td>
-                <td>
-                  <span class="badge badge-version">v{{ template.version }}</span>
-                </td>
-                <td>
-                  <span class="badge" [ngClass]="getVersionStatusClass(template.status)">{{ template.status }}</span>
-                </td>
-                <td class="actions-cell">
-                  <button
-                    (click)="selectedApiDetails = template"
-                    class="btn-small btn-info"
-                    [disabled]="template.templateStatus !== 'Active'"
-                    [title]="template.templateStatus !== 'Active' ? 'Only active templates can show API details' : ''"
-                  >
-                    API Access Details
-                  </button>
-                  <button (click)="removeTemplate(template.id)" class="btn-small btn-danger">Remove</button>
-                </td>
-              </tr>
-              <tr *ngIf="assignedTemplates.length === 0">
-                <td colspan="5" class="no-data">No templates assigned to this client.</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </ng-container>
-
-      <!-- API Details Modal Overlay -->
-      <div
-        class="modal-overlay"
-        *ngIf="selectedApiDetails"
-        (click)="selectedApiDetails = null"
-        tabindex="0"
-        role="button"
-        (keydown.enter)="selectedApiDetails = null"
-        aria-label="Close modal"
-      >
-        <div
-          class="modal-container"
-          (click)="$event.stopPropagation()"
-          tabindex="0"
-          role="document"
-          (keydown.enter)="$event.stopPropagation()"
-        >
-          <div class="modal-header">
-            <h4>API Details — {{ selectedApiDetails.templateName }} V{{ selectedApiDetails.version }}</h4>
-            <button class="btn-close-modal" (click)="selectedApiDetails = null" aria-label="Close API Details">
-              &times;
-            </button>
+        <div class="snippet-section">
+          <h5>Transformation API</h5>
+          <div class="http-route"><strong>POST</strong> {{ apiUrl }}/transform</div>
+          <div class="snippet-box">
+            <button class="btn-copy" (click)="copySnippet(getTransformPayload(selectedApiDetails))">Copy JSON</button>
+            <pre><code>{{ getTransformPayload(selectedApiDetails) }}</code></pre>
           </div>
+        </div>
 
-          <div class="modal-body">
-            <div class="snippet-section">
-              <h5>Required Header</h5>
-              <div class="snippet-box">
-                <button class="btn-copy" (click)="copySnippet('x-client-id: ' + selectedClient!.id)">Copy</button>
-                <pre><code>x-client-id: {{ selectedClient!.id }}</code></pre>
-              </div>
-            </div>
-
-            <div class="snippet-section">
-              <h5>Transformation API</h5>
-              <div class="http-route"><strong>POST</strong> {{ apiUrl }}/transform</div>
-              <div class="snippet-box">
-                <button class="btn-copy" (click)="copySnippet(getTransformPayload(selectedApiDetails))">
-                  Copy JSON
-                </button>
-                <pre><code>{{ getTransformPayload(selectedApiDetails) }}</code></pre>
-              </div>
-            </div>
-
-            <div class="snippet-section">
-              <h5>Preview / Validate API</h5>
-              <div class="http-route"><strong>POST</strong> {{ apiUrl }}/transform/preview</div>
-              <div class="snippet-box">
-                <button class="btn-copy" (click)="copySnippet(getTransformPayload(selectedApiDetails))">
-                  Copy JSON
-                </button>
-                <pre><code>{{ getTransformPayload(selectedApiDetails) }}</code></pre>
-              </div>
-            </div>
+        <div class="snippet-section">
+          <h5>Preview / Validate API</h5>
+          <div class="http-route"><strong>POST</strong> {{ apiUrl }}/transform/preview</div>
+          <div class="snippet-box">
+            <button class="btn-copy" (click)="copySnippet(getTransformPayload(selectedApiDetails))">Copy JSON</button>
+            <pre><code>{{ getTransformPayload(selectedApiDetails) }}</code></pre>
           </div>
         </div>
       </div>
-
-      <p *ngIf="loading">Loading...</p>
     </div>
+  </div>
+
+  <p *ngIf="loading">Loading...</p>
+</div>

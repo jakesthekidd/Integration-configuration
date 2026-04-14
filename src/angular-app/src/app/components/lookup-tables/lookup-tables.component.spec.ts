@@ -14,7 +14,16 @@ describe('LookupTablesComponent', () => {
   let generalServiceSpy: jasmine.SpyObj<GeneralService>;
 
   const mockSystems: import('../../models/tms-system.model').TmsSystem[] = [
-    { id: 'tms-1', name: 'sys1', displayName: 'System 1', description: 'desc', version: '1.0', isActive: true, createdAt: new Date('2024-01-01'), updatedAt: new Date('2024-01-01') },
+    {
+      id: 'tms-1',
+      name: 'sys1',
+      displayName: 'System 1',
+      description: 'desc',
+      version: '1.0',
+      isActive: true,
+      createdAt: new Date('2024-01-01'),
+      updatedAt: new Date('2024-01-01'),
+    },
   ];
   const mockLookupTable: LookupTable = {
     id: 'lt-1',
@@ -32,15 +41,24 @@ describe('LookupTablesComponent', () => {
 
   beforeEach(async () => {
     apiServiceSpy = jasmine.createSpyObj('ApiService', [
-      'getLookupTables', 'createLookupTable', 'deleteLookupTable', 'getTmsSystems'
+      'getLookupTables',
+      'createLookupTable',
+      'deleteLookupTable',
+      'getTmsSystems',
     ]);
     generalServiceSpy = jasmine.createSpyObj('GeneralService', ['confirm', 'success', 'error']);
 
-    apiServiceSpy.getTmsSystems.and.returnValue(of({ success: true, data: { systems: mockSystems, totalCount: 1 }, message: '' }));
-    apiServiceSpy.getLookupTables.and.returnValue(of({ success: true, data: { lookupTables: [mockLookupTable], totalCount: 1 }, message: '' }));
+    apiServiceSpy.getTmsSystems.and.returnValue(
+      of({ success: true, data: { systems: mockSystems, totalCount: 1 }, message: '' }),
+    );
+    apiServiceSpy.getLookupTables.and.returnValue(
+      of({ success: true, data: { lookupTables: [mockLookupTable], totalCount: 1 }, message: '' }),
+    );
     apiServiceSpy.createLookupTable.and.returnValue(of({ success: true, data: mockLookupTable, message: '' }));
     apiServiceSpy.deleteLookupTable.and.returnValue(of(undefined as any));
-    generalServiceSpy.confirm.and.returnValue(Promise.resolve({ isConfirmed: true, isDenied: false, isDismissed: false, value: true } as any));
+    generalServiceSpy.confirm.and.returnValue(
+      Promise.resolve({ isConfirmed: true, isDenied: false, isDismissed: false, value: true } as any),
+    );
     generalServiceSpy.success.and.returnValue(Promise.resolve(dismissedResult));
     generalServiceSpy.error.and.returnValue(Promise.resolve(dismissedResult));
 

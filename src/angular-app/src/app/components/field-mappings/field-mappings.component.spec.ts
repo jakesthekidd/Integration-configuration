@@ -31,25 +31,27 @@ describe('FieldMappingsComponent', () => {
 
   beforeEach(async () => {
     apiServiceSpy = jasmine.createSpyObj('ApiService', [
-      'getFieldMappings', 'createFieldMapping', 'updateFieldMapping', 'deleteFieldMapping',
-      'getLookupTables', 'parseJson',
+      'getFieldMappings',
+      'createFieldMapping',
+      'updateFieldMapping',
+      'deleteFieldMapping',
+      'getLookupTables',
+      'parseJson',
     ]);
     generalServiceSpy = jasmine.createSpyObj('GeneralService', ['confirm', 'success', 'error']);
 
     apiServiceSpy.getFieldMappings.and.returnValue(
-      of({ success: true, data: { mappings: [mockMapping], totalCount: 1 }, message: '' })
+      of({ success: true, data: { mappings: [mockMapping], totalCount: 1 }, message: '' }),
     );
     apiServiceSpy.getLookupTables.and.returnValue(
-      of({ success: true, data: { lookupTables: [], totalCount: 0 }, message: '' })
+      of({ success: true, data: { lookupTables: [], totalCount: 0 }, message: '' }),
     );
-    apiServiceSpy.createFieldMapping.and.returnValue(
-      of({ success: true, data: mockMapping, message: '' })
-    );
-    apiServiceSpy.updateFieldMapping.and.returnValue(
-      of({ success: true, data: mockMapping, message: '' })
-    );
+    apiServiceSpy.createFieldMapping.and.returnValue(of({ success: true, data: mockMapping, message: '' }));
+    apiServiceSpy.updateFieldMapping.and.returnValue(of({ success: true, data: mockMapping, message: '' }));
     apiServiceSpy.deleteFieldMapping.and.returnValue(of(undefined as any));
-    generalServiceSpy.confirm.and.returnValue(Promise.resolve({ isConfirmed: true, isDenied: false, isDismissed: false, value: true } as any));
+    generalServiceSpy.confirm.and.returnValue(
+      Promise.resolve({ isConfirmed: true, isDenied: false, isDismissed: false, value: true } as any),
+    );
     generalServiceSpy.success.and.returnValue(Promise.resolve(dismissedResult));
     generalServiceSpy.error.and.returnValue(Promise.resolve(dismissedResult));
 

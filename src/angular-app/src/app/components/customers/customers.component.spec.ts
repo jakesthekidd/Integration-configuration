@@ -27,16 +27,24 @@ describe('CustomersComponent', () => {
 
   beforeEach(async () => {
     apiServiceSpy = jasmine.createSpyObj('ApiService', [
-      'getCustomers', 'createCustomer', 'updateCustomer', 'deleteCustomer', 'setCustomerStatus'
+      'getCustomers',
+      'createCustomer',
+      'updateCustomer',
+      'deleteCustomer',
+      'setCustomerStatus',
     ]);
     generalServiceSpy = jasmine.createSpyObj('GeneralService', ['confirm', 'success', 'error']);
 
-    apiServiceSpy.getCustomers.and.returnValue(of({ success: true, data: { customers: [mockCustomer], totalCount: 1 }, message: '' }));
+    apiServiceSpy.getCustomers.and.returnValue(
+      of({ success: true, data: { customers: [mockCustomer], totalCount: 1 }, message: '' }),
+    );
     apiServiceSpy.createCustomer.and.returnValue(of({ success: true, data: mockCustomer, message: '' }));
     apiServiceSpy.updateCustomer.and.returnValue(of({ success: true, data: mockCustomer, message: '' }));
     apiServiceSpy.deleteCustomer.and.returnValue(of(undefined as any));
     apiServiceSpy.setCustomerStatus.and.returnValue(of({ success: true, data: mockCustomer, message: '' }));
-    generalServiceSpy.confirm.and.returnValue(Promise.resolve({ isConfirmed: true, isDenied: false, isDismissed: false, value: true } as any));
+    generalServiceSpy.confirm.and.returnValue(
+      Promise.resolve({ isConfirmed: true, isDenied: false, isDismissed: false, value: true } as any),
+    );
     generalServiceSpy.success.and.returnValue(Promise.resolve(dismissedResult));
     generalServiceSpy.error.and.returnValue(Promise.resolve(dismissedResult));
 

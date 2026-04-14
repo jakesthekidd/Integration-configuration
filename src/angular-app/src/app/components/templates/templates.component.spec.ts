@@ -27,20 +27,32 @@ describe('TemplatesComponent', () => {
 
   beforeEach(async () => {
     apiServiceSpy = jasmine.createSpyObj('ApiService', [
-      'getTemplates', 'createTemplate', 'updateTemplate', 'deleteTemplate',
-      'archiveTemplate', 'reactivateTemplate', 'getTemplateVersions',
-      'createTemplateVersion', 'publishTemplateVersion', 'deleteTemplateVersion',
-      'duplicateTemplate', 'getTemplateById',
+      'getTemplates',
+      'createTemplate',
+      'updateTemplate',
+      'deleteTemplate',
+      'archiveTemplate',
+      'reactivateTemplate',
+      'getTemplateVersions',
+      'createTemplateVersion',
+      'publishTemplateVersion',
+      'deleteTemplateVersion',
+      'duplicateTemplate',
+      'getTemplateById',
     ]);
     generalServiceSpy = jasmine.createSpyObj('GeneralService', ['confirm', 'success', 'error']);
 
-    apiServiceSpy.getTemplates.and.returnValue(of({ success: true, data: { templates: [mockTemplate], totalCount: 1 }, message: '' }));
+    apiServiceSpy.getTemplates.and.returnValue(
+      of({ success: true, data: { templates: [mockTemplate], totalCount: 1 }, message: '' }),
+    );
     apiServiceSpy.getTemplateVersions.and.returnValue(of({ success: true, data: [], message: '' }));
     apiServiceSpy.createTemplate.and.returnValue(of({ success: true, data: mockTemplate, message: '' }));
     apiServiceSpy.updateTemplate.and.returnValue(of({ success: true, data: mockTemplate, message: '' }));
     apiServiceSpy.deleteTemplate.and.returnValue(of(undefined as any));
     apiServiceSpy.getTemplateById.and.returnValue(of({ success: true, data: mockTemplate, message: '' }));
-    generalServiceSpy.confirm.and.returnValue(Promise.resolve({ isConfirmed: true, isDenied: false, isDismissed: false, value: true } as any));
+    generalServiceSpy.confirm.and.returnValue(
+      Promise.resolve({ isConfirmed: true, isDenied: false, isDismissed: false, value: true } as any),
+    );
     generalServiceSpy.success.and.returnValue(Promise.resolve(dismissedResult));
     generalServiceSpy.error.and.returnValue(Promise.resolve(dismissedResult));
 

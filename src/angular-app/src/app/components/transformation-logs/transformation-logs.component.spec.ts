@@ -45,22 +45,18 @@ describe('TransformationLogsComponent', () => {
   ];
 
   beforeEach(async () => {
-    apiServiceSpy = jasmine.createSpyObj('ApiService', [
-      'getTransformationLogs', 'getTransformationLogById'
-    ]);
+    apiServiceSpy = jasmine.createSpyObj('ApiService', ['getTransformationLogs', 'getTransformationLogById']);
 
     apiServiceSpy.getTransformationLogs.and.returnValue(
-      of({ success: true, data: { logs: mockLogs, totalCount: mockLogs.length }, message: '' })
+      of({ success: true, data: { logs: mockLogs, totalCount: mockLogs.length }, message: '' }),
     );
     apiServiceSpy.getTransformationLogById.and.returnValue(
-      of({ success: true, data: { ...mockLogs[0], inputData: '{}', outputData: '{}' }, message: '' })
+      of({ success: true, data: { ...mockLogs[0], inputData: '{}', outputData: '{}' }, message: '' }),
     );
 
     await TestBed.configureTestingModule({
       imports: [TransformationLogsComponent],
-      providers: [
-        { provide: ApiService, useValue: apiServiceSpy },
-      ],
+      providers: [{ provide: ApiService, useValue: apiServiceSpy }],
       schemas: [NO_ERRORS_SCHEMA],
     }).compileComponents();
 

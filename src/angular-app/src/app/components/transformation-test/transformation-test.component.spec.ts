@@ -40,25 +40,25 @@ describe('TransformationTestComponent', () => {
   ];
 
   beforeEach(async () => {
-    apiServiceSpy = jasmine.createSpyObj('ApiService', [
-      'getTemplates', 'getApiClients', 'transformJsonWithTemplate'
-    ]);
+    apiServiceSpy = jasmine.createSpyObj('ApiService', ['getTemplates', 'getApiClients', 'transformJsonWithTemplate']);
 
     apiServiceSpy.getTemplates.and.returnValue(
-      of({ success: true, data: { templates: mockTemplates, totalCount: mockTemplates.length }, message: '' })
+      of({ success: true, data: { templates: mockTemplates, totalCount: mockTemplates.length }, message: '' }),
     );
     apiServiceSpy.getApiClients.and.returnValue(
-      of({ success: true, data: { apiClients: mockClients, totalCount: mockClients.length }, message: '' })
+      of({ success: true, data: { apiClients: mockClients, totalCount: mockClients.length }, message: '' }),
     );
     apiServiceSpy.transformJsonWithTemplate.and.returnValue(
-      of({ success: true, data: { success: true, outputJson: '{}', errors: [], warnings: [], executionTimeMs: 10 }, message: '' })
+      of({
+        success: true,
+        data: { success: true, outputJson: '{}', errors: [], warnings: [], executionTimeMs: 10 },
+        message: '',
+      }),
     );
 
     await TestBed.configureTestingModule({
       imports: [TransformationTestComponent, BrowserModule],
-      providers: [
-        { provide: ApiService, useValue: apiServiceSpy },
-      ],
+      providers: [{ provide: ApiService, useValue: apiServiceSpy }],
       schemas: [NO_ERRORS_SCHEMA],
     }).compileComponents();
 

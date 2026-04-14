@@ -26,19 +26,32 @@ describe('IntegrationsComponent', () => {
 
   beforeEach(async () => {
     apiServiceSpy = jasmine.createSpyObj('ApiService', [
-      'getApiClients', 'createApiClient', 'updateApiClient', 'deleteApiClient',
-      'getAssignedTemplates', 'getTemplates', 'getTemplateVersions',
-      'assignTemplate', 'removeTemplate', 'toggleApiClientActive',
+      'getApiClients',
+      'createApiClient',
+      'updateApiClient',
+      'deleteApiClient',
+      'getAssignedTemplates',
+      'getTemplates',
+      'getTemplateVersions',
+      'assignTemplate',
+      'removeTemplate',
+      'toggleApiClientActive',
     ]);
     generalServiceSpy = jasmine.createSpyObj('GeneralService', ['confirm', 'success', 'error']);
 
-    apiServiceSpy.getApiClients.and.returnValue(of({ success: true, data: { apiClients: [mockClient], totalCount: 1 }, message: '' }));
-    apiServiceSpy.getTemplates.and.returnValue(of({ success: true, data: { templates: [], totalCount: 0 }, message: '' }));
+    apiServiceSpy.getApiClients.and.returnValue(
+      of({ success: true, data: { apiClients: [mockClient], totalCount: 1 }, message: '' }),
+    );
+    apiServiceSpy.getTemplates.and.returnValue(
+      of({ success: true, data: { templates: [], totalCount: 0 }, message: '' }),
+    );
     apiServiceSpy.getAssignedTemplates.and.returnValue(of({ success: true, data: [], message: '' }));
     apiServiceSpy.createApiClient.and.returnValue(of({ success: true, data: mockClient, message: '' }));
     apiServiceSpy.updateApiClient.and.returnValue(of({ success: true, data: mockClient, message: '' }));
     apiServiceSpy.deleteApiClient.and.returnValue(of(undefined as any));
-    generalServiceSpy.confirm.and.returnValue(Promise.resolve({ isConfirmed: true, isDenied: false, isDismissed: false, value: true } as any));
+    generalServiceSpy.confirm.and.returnValue(
+      Promise.resolve({ isConfirmed: true, isDenied: false, isDismissed: false, value: true } as any),
+    );
     generalServiceSpy.success.and.returnValue(Promise.resolve(dismissedResult));
     generalServiceSpy.error.and.returnValue(Promise.resolve(dismissedResult));
 
