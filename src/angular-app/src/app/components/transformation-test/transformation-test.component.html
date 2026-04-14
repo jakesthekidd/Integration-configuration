@@ -1,0 +1,257 @@
+<div class="container">
+  <h2>Test Transformation</h2>
+  <p class="description">Upload or paste your source JSON to transform it using a field mapping template.</p>
+
+  <div class="controls">
+    <div class="template-selector">
+      <label>
+        Select Template:
+        <select [(ngModel)]="selectedTemplateId" (change)="onTemplateChange()">
+          <option value="">Choose a template...</option>
+          <option *ngFor="let template of templates" [value]="template.id">
+            {{ template.name }} (v{{ template.version }})
+          </option>
+        </select>
+      </label>
+    </div>
+
+    <div class="template-selector">
+      <label>
+        API Client:
+        <select [(ngModel)]="selectedClientId">
+          <option value="">Choose a client...</option>
+          <option *ngFor="let client of apiClients" [value]="client.id">
+            {{ client.name }}
+          </option>
+        </select>
+      </label>
+    </div>
+
+    <div class="file-upload">
+      <label class="file-label">
+        <input type="file" accept=".json" (change)="onFileSelected($event)" />
+        Upload JSON File
+      </label>
+      <span *ngIf="fileName" class="file-name">{{ fileName }}</span>
+    </div>
+
+    <div class="sample-buttons">
+      <button class="btn-secondary file-label" (click)="loadSampleInput()">Load Sample Input</button>
+      <button class="btn-secondary file-label" (click)="clearAll()">Clear All</button>
+    </div>
+  </div>
+
+  <div class="panels">
+    <div class="panel">
+      <div class="panel-header">
+        <h3>Source JSON (Input)</h3>
+
+        <div class="panel-header-actions">
+          <button
+            class="btn-small"
+            (click)="formatJson('source')"
+            [disabled]="!sourceJson.trim()"
+            *ngIf="!showAnnotatedView"
+          >
+            Format JSON
+          </button>
+
+          <button
+            *ngIf="annotatedIssueCount > 0"
+            class="btn-small btn-annotate"
+            [class.active]="showAnnotatedView"
+            (click)="toggleAnnotatedView()"
+          >
+            {{ showAnnotatedView ? 'Edit JSON' : 'Highlight Issues (' + annotatedIssueCount + ')' }}
+          </button>
+        </div>
+      </div>
+
+      <div
+        class="source-body source-dropzone"
+        [class.drag-over]="isDragOver"
+        (dragover)="onDragOver($event)"
+        (dragleave)="onDragLeave($event)"
+        (drop)="onFileDrop($event)"
+      >
+        <div *ngIf="isParsing" class="spinner-overlay">
+          <div class="spinner"></div>
+          <div class="spinner-text">Parsing JSON...</div>
+        </div>
+
+        <div class="editor-container">
+          <div class="line-numbers">
+            <div class="line-numbers-inner">
+              <span *ngFor="let line of getLineNumbers(sourceJson)">
+                {{ line }}
+              </span>
+            </div>
+          </div>
+
+          <textarea
+            *ngIf="!showAnnotatedView"
+            [(ngModel)]="sourceJson"
+            (ngModelChange)="onJsonChange($event)"
+            class="json-editor with-lines"
+            placeholder="Paste JSON or drag & drop a JSON file here..."
+            spellcheck="false"
+            (scroll)="syncScroll($event)"
+          ></textarea>
+          <div
+            *ngIf="showAnnotatedView"
+            class="json-annotated-container with-lines"
+            [innerHTML]="annotatedSourceHtml"
+          ></div>
+        </div>
+        <div *ngIf="isDragOver" class="drop-overlay">Drop JSON file here</div>
+      </div>
+      <div class="panel-footer">
+        <span *ngIf="sourceJson">{{ getJsonSize(sourceJson) }}</span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <h3>Transformed JSON (Output)</h3>
+        <div class="panel-header-actions">
+          <button class="btn-small" (click)="formatJson('target')" *ngIf="transformedJson">Format JSON</button>
+          <button class="btn-small btn-success" (click)="copyToClipboard()" *ngIf="transformedJson">Copy</button>
+        </div>
+      </div>
+      <div class="source-body source-dropzone">
+        <div class="editor-container">
+          <div class="line-numbers">
+            <div class="line-numbers-inner">
+              <span *ngFor="let line of getLineNumbers(transformedJson)">
+                {{ line }}
+              </span>
+            </div>
+          </div>
+
+          <textarea
+            [(ngModel)]="transformedJson"
+            class="json-editor with-lines"
+            placeholder="Transformed JSON will appear here..."
+            readonly
+            spellcheck="false"
+            (scroll)="syncScroll($event)"
+          ></textarea>
+        </div>
+      </div>
+      <div class="panel-footer" *ngIf="transformResult">
+        <span class="stat">Fields Mapped: {{ transformResult.fieldsMapped || 0 }}</span>
+        <span class="stat">Fields Skipped: {{ transformResult.fieldsSkipped || 0 }}</span>
+        <span class="stat">Execution Time: {{ transformResult.executionTimeMs || 0 }}ms</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Action bar -->
+  <div class="action-bar">
+    <button class="btn-primary btn-large" (click)="transform()" [disabled]="!canTransform() || isTransforming">
+      <span *ngIf="!isTransforming">Transform</span>
+
+      <span *ngIf="isTransforming" class="btn-spinner-wrapper">
+        Transforming...
+        <span class="btn-spinner"></span>
+      </span>
+    </button>
+  </div>
+
+  <!-- Result stats bar -->
+  <div *ngIf="transformResult" class="result-stats-bar">
+    <div class="result-stat">
+      <span class="result-stat-value">{{ transformResult.fieldsMapped ?? 0 }}</span>
+      <span class="result-stat-label">Fields Mapped</span>
+    </div>
+    <div class="result-stat">
+      <span class="result-stat-value">{{ transformResult.fieldsSkipped ?? 0 }}</span>
+      <span class="result-stat-label">Fields Skipped</span>
+    </div>
+    <div class="result-stat result-stat-time">
+      <span class="result-stat-value">
+        {{
+          (transformResult.executionTimeMs ?? 0) < 1000
+            ? (transformResult.executionTimeMs ?? 0) + 'ms'
+            : ((transformResult.executionTimeMs ?? 0) / 1000 | number: '1.2-2') + 's'
+        }}
+      </span>
+      <span class="result-stat-label">Execution Time</span>
+    </div>
+  </div>
+
+  <!-- Status messages -->
+  <div *ngIf="error" class="alert alert-error">
+    <strong>Error:</strong> {{ error }}
+    <pre *ngIf="errorDetails">{{ errorDetails }}</pre>
+  </div>
+
+  <div *ngIf="success" class="alert" [class.alert-success]="!hasErrors" [class.alert-partial]="hasErrors">
+    <strong>{{ hasErrors ? 'Partial Success' : 'Success!' }}</strong>
+    {{ success }}
+  </div>
+
+  <!-- Issues panel -->
+  <div *ngIf="mappingIssues.length > 0" class="issues-panel">
+    <div class="issues-panel-header">
+      <h3 class="issues-title">Mapping Issues</h3>
+      <div class="issues-summary">
+        <span *ngIf="errorCount > 0" class="badge badge-error">
+          {{ errorCount }} Error{{ errorCount !== 1 ? 's' : '' }}
+        </span>
+        <span *ngIf="warningCount > 0" class="badge badge-warning">
+          {{ warningCount }} Warning{{ warningCount !== 1 ? 's' : '' }}
+        </span>
+      </div>
+    </div>
+    <div class="issues-table">
+      <div class="issues-table-header">
+        <span>Type</span>
+        <span>Source Path</span>
+        <span></span>
+        <span>Target Path</span>
+        <span>Message</span>
+        <span></span>
+      </div>
+      <div
+        *ngFor="let issue of mappingIssues"
+        class="issue-row"
+        [class.issue-error-row]="issue.type === 'error'"
+        [class.issue-warning-row]="issue.type === 'warning'"
+      >
+        <span
+          class="badge"
+          [class.badge-error]="issue.type === 'error'"
+          [class.badge-warning]="issue.type === 'warning'"
+        >
+          {{ issue.type === 'error' ? 'Error' : 'Warning' }}
+        </span>
+        <code class="path-code">{{ issue.sourcePath || '—' }}</code>
+        <span class="arrow-sep">→</span>
+        <code class="path-code">{{ issue.targetPath || '—' }}</code>
+        <span class="issue-msg">{{ issue.message }}</span>
+        <button
+          *ngIf="issue.sourcePath"
+          class="btn-small btn-locate"
+          (click)="locateInSource(issue.sourcePath!)"
+          title="Locate this field in source JSON"
+        >
+          Locate
+        </button>
+        <span *ngIf="!issue.sourcePath"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="info-section" *ngIf="!sourceJson && !transformedJson">
+    <h3>How to Use:</h3>
+    <ol>
+      <li>Select a field mapping template from the dropdown</li>
+      <li>Upload a JSON file or paste your JSON data in the Source JSON panel</li>
+      <li>Click "Transform" to apply the field mappings</li>
+      <li>Review the transformed output in the Transformed JSON panel</li>
+      <li>If issues appear, click "Locate" next to any issue to jump to it in the source JSON</li>
+    </ol>
+    <p><strong>Tip:</strong> Click "Load Sample Input" to see an example transformation.</p>
+  </div>
+</div>

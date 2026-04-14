@@ -32,20 +32,31 @@ public class TransformationLogRepository : ITransformationLogRepository
         return log;
     }
 
-    public async Task<List<TransformationLog>> GetByTemplateIdAsync(Guid templateId, int limit = 50)
+    public async Task<List<TransformationLog>> GetByTemplateIdAsync(Guid templateId, int limit = 50, DateTime? from = null, DateTime? to = null)
     {
-        return await _context.TransformationLogs
-            .Where(l => l.TemplateId == templateId)
-            .OrderByDescending(l => l.Timestamp)
-            .Take(limit)
-            .ToListAsync();
+        var query = _context.TransformationLogs.Where(l => l.TemplateId == templateId);
+        query = ApplyDateRange(query, from, to);
+        return await query.OrderByDescending(l => l.Timestamp).Take(limit).ToListAsync();
     }
 
-    public async Task<List<TransformationLog>> GetAllAsync(int limit = 100)
+    public async Task<List<TransformationLog>> GetAllAsync(int limit = 100, DateTime? from = null, DateTime? to = null)
     {
-        return await _context.TransformationLogs
-            .OrderByDescending(l => l.Timestamp)
-            .Take(limit)
-            .ToListAsync();
+        var query = ApplyDateRange(_context.TransformationLogs, from, to);
+        return await query.OrderByDescending(l => l.Timestamp).Take(limit).ToListAsync();
+    }
+
+    private static IQueryable<TransformationLog> ApplyDateRange(IQueryable<TransformationLog> query, DateTime? from, DateTime? to)
+    {
+        if (from.HasValue)
+        {
+            query = query.Where(l => l.Timestamp >= from.Value);
+        }
+
+        if (to.HasValue)
+        {
+            query = query.Where(l => l.Timestamp <= to.Value);
+        }
+
+        return query;
     }
 }

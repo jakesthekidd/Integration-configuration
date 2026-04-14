@@ -252,11 +252,15 @@ export class ApiService {
     templateId?: string,
     status?: string,
     limit: number = 100,
+    from?: string,
+    to?: string,
   ): Observable<ApiResponse<TransformationLogListResponse>> {
     const params: string[] = [];
     if (templateId) params.push(`templateId=${encodeURIComponent(templateId)}`);
     if (status) params.push(`status=${encodeURIComponent(status)}`);
     params.push(`limit=${limit}`);
+    if (from) params.push(`from=${encodeURIComponent(from)}`);
+    if (to) params.push(`to=${encodeURIComponent(to)}`);
     return this.http.get<ApiResponse<TransformationLogListResponse>>(
       `${this.apiUrl}/transform-logs?${params.join('&')}`,
     );

@@ -1,0 +1,195 @@
+<div class="container">
+  <h2>Lookup Tables Management</h2>
+
+  <div class="filters">
+    <label>
+      Filter by TMS:
+      <select [(ngModel)]="selectedTmsId" (change)="onTmsChange()">
+        <option value="">All TMS Systems</option>
+        <option *ngFor="let tms of tmsSystems" [value]="tms.id">
+          {{ tms.displayName }}
+        </option>
+      </select>
+    </label>
+    <button class="btn-primary" (click)="showCreateForm = !showCreateForm">
+      {{ showCreateForm ? 'Cancel' : 'Add New Lookup Table' }}
+    </button>
+  </div>
+
+  <div *ngIf="showCreateForm" class="form-container">
+    <h3>Create Lookup Table</h3>
+    <form (ngSubmit)="createLookupTable()" #lookupForm="ngForm">
+      <div class="form-group">
+        <label for="tmsSystemId">TMS System: <span class="required">*</span></label>
+        <select id="tmsSystemId" [(ngModel)]="newLookup.tmsSystemId" name="tmsSystemId" required>
+          <option value="">Select TMS System</option>
+          <option *ngFor="let tms of tmsSystems" [value]="tms.id">
+            {{ tms.displayName }}
+          </option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="fieldName">Field Name: <span class="required">*</span></label>
+        <input
+          id="fieldName"
+          type="text"
+          [(ngModel)]="newLookup.fieldName"
+          name="fieldName"
+          required
+          placeholder="e.g., PaymentTerms"
+        />
+        <small>The field name this lookup table applies to</small>
+      </div>
+
+      <div class="form-group">
+        <label for="lookupName">Lookup Table Name: <span class="required">*</span></label>
+        <input
+          id="lookupName"
+          type="text"
+          [(ngModel)]="newLookup.name"
+          name="name"
+          required
+          placeholder="e.g., Payment Terms Mapping"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="lookupDescription">Description:</label>
+        <textarea
+          id="lookupDescription"
+          [(ngModel)]="newLookup.description"
+          name="description"
+          rows="2"
+          placeholder="Description of what this lookup table does"
+        ></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="lookupMappings">Mappings:</label>
+        <textarea
+          id="lookupMappings"
+          [(ngModel)]="newLookup.mappings"
+          name="mappings"
+          rows="6"
+          placeholder='{"NET30": "Net 30 Days", "NET60": "Net 60 Days", "COD": "Cash on Delivery"}'
+        ></textarea>
+        <small>JSON object with key-value mappings</small>
+      </div>
+
+      <div class="form-group">
+        <label for="defaultValue">Default Value:</label>
+        <input
+          id="defaultValue"
+          type="text"
+          [(ngModel)]="newLookup.defaultValue"
+          name="defaultValue"
+          placeholder="Value to use if no mapping found"
+        />
+      </div>
+
+      <div class="form-group checkbox">
+        <label>
+          <input type="checkbox" [(ngModel)]="newLookup.isCaseSensitive" name="isCaseSensitive" />
+          Case Sensitive Matching
+        </label>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn-primary" [disabled]="!lookupForm.form.valid">Create</button>
+        <button type="button" class="btn-secondary" (click)="resetForm()">Reset</button>
+      </div>
+    </form>
+  </div>
+
+  <div *ngIf="error" class="error">{{ error }}</div>
+  <div *ngIf="success" class="success">{{ success }}</div>
+
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>TMS System</th>
+          <th>Field Name</th>
+          <th>Name</th>
+          <th>Description</th>
+          <th>Default Value</th>
+          <th>Case Sensitive</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let lookup of lookupTables">
+          <td>{{ getTmsName(lookup.tmsSystemId) }}</td>
+          <td>
+            <code>{{ lookup.fieldName }}</code>
+          </td>
+          <td>{{ lookup.name }}</td>
+          <td>{{ lookup.description || '-' }}</td>
+          <td>{{ lookup.defaultValue || '-' }}</td>
+          <td>{{ lookup.isCaseSensitive ? 'Yes' : 'No' }}</td>
+          <td>
+            <button class="btn-small btn-info" (click)="viewMappings(lookup)">View</button>
+            <button class="btn-small btn-danger" (click)="deleteLookupTable(lookup.id)">Delete</button>
+          </td>
+        </tr>
+        <tr *ngIf="lookupTables.length === 0">
+          <td colspan="7" class="no-data">No lookup tables found</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div
+    *ngIf="selectedLookup"
+    class="modal-overlay"
+    (click)="closeModal()"
+    (keydown.escape)="closeModal()"
+    tabindex="0"
+    role="dialog"
+    aria-modal="true"
+  >
+    <div
+      class="modal-content"
+      (click)="$event.stopPropagation()"
+      (keydown)="$event.stopPropagation()"
+      tabindex="-1"
+      role="document"
+    >
+      <div class="modal-header">
+        <h3>{{ selectedLookup.name }}</h3>
+        <button class="close-btn" (click)="closeModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p><strong>TMS System:</strong> {{ getTmsName(selectedLookup.tmsSystemId) }}</p>
+        <p>
+          <strong>Field Name:</strong> <code>{{ selectedLookup.fieldName }}</code>
+        </p>
+        <p *ngIf="selectedLookup.description"><strong>Description:</strong> {{ selectedLookup.description }}</p>
+        <p><strong>Default Value:</strong> {{ selectedLookup.defaultValue || 'None' }}</p>
+        <p><strong>Case Sensitive:</strong> {{ selectedLookup.isCaseSensitive ? 'Yes' : 'No' }}</p>
+
+        <h4>Mappings:</h4>
+        <div class="mappings-view" *ngIf="parsedMappings">
+          <table class="mappings-table">
+            <thead>
+              <tr>
+                <th>Source Value</th>
+                <th>Target Value</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let mapping of parsedMappings">
+                <td>
+                  <code>{{ mapping.key }}</code>
+                </td>
+                <td>{{ mapping.value }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div *ngIf="!parsedMappings" class="no-mappings">No mappings defined</div>
+      </div>
+    </div>
+  </div>
+</div>
