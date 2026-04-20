@@ -93,26 +93,31 @@
         </label>
       </div>
 
-      <div class="form-group checkbox">
-        <label>
-          <input type="checkbox" [(ngModel)]="dmsExportEnabled" name="dmsExportEnabled" />
-          DMS Export Enabled
-        </label>
-      </div>
       <p><b>Credential</b></p>
       <br />
       <div *ngIf="formData.tmsName && tmsCredentialKeys[formData.tmsName]?.length">
         <div class="form-row">
-          <div class="col" *ngFor="let key of tmsCredentialKeys[formData.tmsName]; let i = index">
+          <div class="col" *ngFor="let key of tmsCredentialKeys[formData.tmsName]">
             <div class="form-group">
-              <label [for]="'credentials-' + key">{{ key }}</label>
+              <label [for]="'credentials-' + key">
+                {{ key }} <span *ngIf="isDmsCredentialRequired(key)" class="required">*</span>
+              </label>
               <input
                 [id]="'credentials-' + key"
                 type="text"
                 [(ngModel)]="formData.credentials[key]"
                 [name]="'credentials.' + key"
                 class="form-control"
+                [required]="isDmsCredentialRequired(key)"
+                [pattern]="isDmsCredentialRequired(key) && isUrlField(key) ? urlPattern : ''"
+                #credInput="ngModel"
               />
+              <span *ngIf="credInput.invalid && credInput.touched" class="field-error">
+                <ng-container *ngIf="credInput.errors?.['required']">{{ key }} is required.</ng-container>
+                <ng-container *ngIf="credInput.errors?.['pattern']"
+                  >Must be a valid URL (starting with http:// or https://).</ng-container
+                >
+              </span>
             </div>
           </div>
         </div>

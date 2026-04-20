@@ -25,10 +25,9 @@ export class CustomersComponent implements OnInit {
   isLoading: boolean = false;
   deleting: { [id: string]: boolean } = {};
   togglingStatus: { [id: string]: boolean } = {};
-  tmsOptions: string[] = ['Legacy McLeod', 'TruckMate', 'BrokerAI'];
+  tmsOptions: string[] = ['Legacy McLeod', 'TruckMate', 'BrokerAI', 'DMS'];
 
   formData: Customer = this.emptyForm();
-  dmsExportEnabled = false;
 
   constructor(
     private apiService: ApiService,
@@ -62,7 +61,6 @@ export class CustomersComponent implements OnInit {
     this.showCreateForm = !this.showCreateForm;
     this.editingCustomer = null;
     this.formData = this.emptyForm();
-    this.dmsExportEnabled = false;
     this.clearMessages();
   }
 
@@ -76,8 +74,6 @@ export class CustomersComponent implements OnInit {
       ...customer,
       lastSyncTime: customer.lastSyncTime ?? new Date().toISOString(),
     };
-    this.dmsExportEnabled = customer.settings?.['dms-export-enabled'] === 'true';
-
     setTimeout(() => {
       document.querySelector('.form-card')?.scrollIntoView({ behavior: 'smooth' });
     }, 50);
@@ -167,7 +163,7 @@ export class CustomersComponent implements OnInit {
       updateOrInsertStatuses: this.formData.updateOrInsertStatuses || '',
       updateOnlyStatuses: this.formData.updateOnlyStatuses || null,
       credentials: credentials,
-      settings: { ...(this.formData.settings || {}), 'dms-export-enabled': this.dmsExportEnabled ? 'true' : 'false' },
+      settings: this.formData.settings || null,
       syncFrequencyMinutes: this.formData.syncFrequencyMinutes,
       orderRetentionDays: this.formData.orderRetentionDays,
       enabled: this.formData.enabled ?? true,
@@ -254,7 +250,6 @@ export class CustomersComponent implements OnInit {
     this.editingCustomer = null;
     this.showCreateForm = false;
     this.formData = this.emptyForm();
-    this.dmsExportEnabled = false;
     this.clearMessages();
   }
 
@@ -307,7 +302,27 @@ export class CustomersComponent implements OnInit {
       'wfai-integration-base-url',
       'wfai-portal-customer-id',
     ],
+    DMS: [
+      'freight-api-base-url',
+      'wfai-integration-base-url',
+      'wfai-portal-customer-id',
+      'wfai-tenant-id',
+      'dms-auth-url',
+      'dms-add-doc-url',
+      'dms-username',
+      'dms-password',
+    ],
   };
+
+  readonly urlPattern = 'https?://.+';
+
+  isDmsCredentialRequired(key: string): boolean {
+    return this.formData.tmsName === 'DMS';
+  }
+
+  isUrlField(key: string): boolean {
+    return key.toLowerCase().includes('url');
+  }
 
   allowOnlyNumbers(event: KeyboardEvent) {
     const charCode = event.which ? event.which : event.keyCode;

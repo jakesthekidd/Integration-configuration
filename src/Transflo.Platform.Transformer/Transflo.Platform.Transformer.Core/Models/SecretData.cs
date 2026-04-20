@@ -28,5 +28,24 @@ namespace Transflo.Platform.Transformer.Core.Models
         [JsonPropertyName("wfai-portal-customer-id")]
         public string WfaiPortalCustomerId { get; set; } = string.Empty;
         public string? TonuCode { get; internal set; }
+
+        // DMS integration fields
+        [JsonPropertyName("freight-api-base-url")]
+        public string? FreightApiBaseUrl { get; set; }
+
+        [JsonPropertyName("wfai-tenant-id")]
+        public string? WfaiTenantId { get; set; }
+
+        [JsonPropertyName("dms-auth-url")]
+        public string? DmsAuthUrl { get; set; }
+
+        [JsonPropertyName("dms-add-doc-url")]
+        public string? DmsAddDocUrl { get; set; }
+
+        [JsonPropertyName("dms-username")]
+        public string? DmsUsername { get; set; }
+
+        [JsonPropertyName("dms-password")]
+        public string? DmsPassword { get; set; }
     }
 }
