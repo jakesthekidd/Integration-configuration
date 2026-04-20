@@ -92,6 +92,13 @@
           Outbound Enabled
         </label>
       </div>
+
+      <div class="form-group checkbox">
+        <label>
+          <input type="checkbox" [(ngModel)]="dmsExportEnabled" name="dmsExportEnabled" />
+          DMS Export Enabled
+        </label>
+      </div>
       <p><b>Credential</b></p>
       <br />
       <div *ngIf="formData.tmsName && tmsCredentialKeys[formData.tmsName]?.length">

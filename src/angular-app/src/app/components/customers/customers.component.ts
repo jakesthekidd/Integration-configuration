@@ -28,6 +28,7 @@ export class CustomersComponent implements OnInit {
   tmsOptions: string[] = ['Legacy McLeod', 'TruckMate', 'BrokerAI'];
 
   formData: Customer = this.emptyForm();
+  dmsExportEnabled = false;
 
   constructor(
     private apiService: ApiService,
@@ -61,6 +62,7 @@ export class CustomersComponent implements OnInit {
     this.showCreateForm = !this.showCreateForm;
     this.editingCustomer = null;
     this.formData = this.emptyForm();
+    this.dmsExportEnabled = false;
     this.clearMessages();
   }
 
@@ -74,6 +76,7 @@ export class CustomersComponent implements OnInit {
       ...customer,
       lastSyncTime: customer.lastSyncTime ?? new Date().toISOString(),
     };
+    this.dmsExportEnabled = customer.settings?.['dms-export-enabled'] === 'true';
 
     setTimeout(() => {
       document.querySelector('.form-card')?.scrollIntoView({ behavior: 'smooth' });
@@ -164,7 +167,7 @@ export class CustomersComponent implements OnInit {
       updateOrInsertStatuses: this.formData.updateOrInsertStatuses || '',
       updateOnlyStatuses: this.formData.updateOnlyStatuses || null,
       credentials: credentials,
-      settings: this.formData.settings || null,
+      settings: { ...(this.formData.settings || {}), 'dms-export-enabled': this.dmsExportEnabled ? 'true' : 'false' },
       syncFrequencyMinutes: this.formData.syncFrequencyMinutes,
       orderRetentionDays: this.formData.orderRetentionDays,
       enabled: this.formData.enabled ?? true,
@@ -251,6 +254,7 @@ export class CustomersComponent implements OnInit {
     this.editingCustomer = null;
     this.showCreateForm = false;
     this.formData = this.emptyForm();
+    this.dmsExportEnabled = false;
     this.clearMessages();
   }
 
