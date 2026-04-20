@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { AppTab } from './constants/app-tabs.constants';
 import { CommonModule } from '@angular/common';
 import { TmsSystemsComponent } from './components/tms-systems/tms-systems.component';
 import { TemplatesComponent } from './components/templates/templates.component';
@@ -25,25 +26,31 @@ import { IntegrationsComponent } from './components/integrations/integrations.co
     <header>
       <h1>Field Mapping System</h1>
       <nav>
-        <button [class.active]="currentTab === 'customers'" (click)="currentTab = 'customers'">Customers</button>
-        <button [class.active]="currentTab === 'tms'" (click)="currentTab = 'tms'">TMS Systems</button>
-        <button [class.active]="currentTab === 'templates'" (click)="currentTab = 'templates'">Templates</button>
-        <button [class.active]="currentTab === 'lookups'" (click)="currentTab = 'lookups'">Lookup Tables</button>
-        <button [class.active]="currentTab === 'test'" (click)="currentTab = 'test'">Test Transform</button>
-        <button [class.active]="currentTab === 'logs'" (click)="currentTab = 'logs'">Logs</button>
-        <button [class.active]="currentTab === 'integrations'" (click)="currentTab = 'integrations'">
+        <button [class.active]="currentTab === AppTab.Customers" (click)="currentTab = AppTab.Customers">
+          Customers
+        </button>
+        <button [class.active]="currentTab === AppTab.Tms" (click)="currentTab = AppTab.Tms">TMS Systems</button>
+        <button [class.active]="currentTab === AppTab.Templates" (click)="currentTab = AppTab.Templates">
+          Templates
+        </button>
+        <button [class.active]="currentTab === AppTab.Lookups" (click)="currentTab = AppTab.Lookups">
+          Lookup Tables
+        </button>
+        <button [class.active]="currentTab === AppTab.Test" (click)="currentTab = AppTab.Test">Test Transform</button>
+        <button [class.active]="currentTab === AppTab.Logs" (click)="currentTab = AppTab.Logs">Logs</button>
+        <button [class.active]="currentTab === AppTab.Integrations" (click)="currentTab = AppTab.Integrations">
           Integrations
         </button>
       </nav>
     </header>
     <main>
-      <app-customers *ngIf="currentTab === 'customers'"></app-customers>
-      <app-tms-systems *ngIf="currentTab === 'tms'"></app-tms-systems>
-      <app-templates *ngIf="currentTab === 'templates'"></app-templates>
-      <app-lookup-tables *ngIf="currentTab === 'lookups'"></app-lookup-tables>
-      <app-transformation-test *ngIf="currentTab === 'test'"></app-transformation-test>
-      <app-transformation-logs *ngIf="currentTab === 'logs'"></app-transformation-logs>
-      <app-integrations *ngIf="currentTab === 'integrations'"></app-integrations>
+      <app-customers *ngIf="currentTab === AppTab.Customers"></app-customers>
+      <app-tms-systems *ngIf="currentTab === AppTab.Tms"></app-tms-systems>
+      <app-templates *ngIf="currentTab === AppTab.Templates"></app-templates>
+      <app-lookup-tables *ngIf="currentTab === AppTab.Lookups"></app-lookup-tables>
+      <app-transformation-test *ngIf="currentTab === AppTab.Test"></app-transformation-test>
+      <app-transformation-logs *ngIf="currentTab === AppTab.Logs"></app-transformation-logs>
+      <app-integrations *ngIf="currentTab === AppTab.Integrations"></app-integrations>
     </main>
   `,
   styles: [
@@ -92,6 +99,7 @@ import { IntegrationsComponent } from './components/integrations/integrations.co
   ],
 })
 export class AppComponent {
+  readonly AppTab = AppTab;
   title = 'Field Mapping System';
-  currentTab: string = 'tms';
+  currentTab: AppTab = AppTab.Tms;
 }

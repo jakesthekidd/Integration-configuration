@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../services/api.service';
 import { Customer } from '../../models/customer.model';
 import { GeneralService } from '../../services/general.service';
+import { TmsName, TmsCredentialKeys, URL_PATTERN } from '../../constants/tms.constants';
 
 @Component({
   selector: 'app-customers',
@@ -25,7 +26,7 @@ export class CustomersComponent implements OnInit {
   isLoading: boolean = false;
   deleting: { [id: string]: boolean } = {};
   togglingStatus: { [id: string]: boolean } = {};
-  tmsOptions: string[] = ['Legacy McLeod', 'TruckMate', 'BrokerAI', 'DMS'];
+  tmsOptions: TmsName[] = Object.values(TmsName);
 
   formData: Customer = this.emptyForm();
 
@@ -153,7 +154,7 @@ export class CustomersComponent implements OnInit {
   private CustomerPayload(): Customer {
     const credentials = { ...this.formData.credentials };
 
-    const tmsName = this.tmsOptions.includes(this.formData.tmsName) ? this.formData.tmsName : '';
+    const tmsName = (Object.values(TmsName) as string[]).includes(this.formData.tmsName) ? this.formData.tmsName : '';
 
     return {
       customerId: (this.formData.customerId || '').substring(0, 50),
@@ -274,50 +275,11 @@ export class CustomersComponent implements OnInit {
     return this.formData.tmsName ? this.tmsCredentialKeys[this.formData.tmsName] || [] : [];
   }
 
-  tmsCredentialKeys: { [tms: string]: string[] } = {
-    'Legacy McLeod': [
-      'mcleod-url',
-      'mcleod-auth-header',
-      'company-id-header',
-      'x1-url',
-      'x1-auth-header',
-      'wfai-url',
-      'wfai-integration-base-url',
-      'wfai-portal-customer-id',
-      'tonuCode',
-    ],
-    TruckMate: [
-      'truckmate-url',
-      'truckmate-auth-token',
-      'wfai-url',
-      'wfai-integration-base-url',
-      'wfai-portal-customer-id',
-    ],
-    BrokerAI: [
-      'brokerai-url',
-      'brokerai-username',
-      'brokerai-password',
-      'brokerai-divisionid',
-      'wfai-url',
-      'wfai-integration-base-url',
-      'wfai-portal-customer-id',
-    ],
-    DMS: [
-      'freight-api-base-url',
-      'wfai-integration-base-url',
-      'wfai-portal-customer-id',
-      'wfai-tenant-id',
-      'dms-auth-url',
-      'dms-add-doc-url',
-      'dms-username',
-      'dms-password',
-    ],
-  };
+  readonly tmsCredentialKeys = TmsCredentialKeys;
+  readonly urlPattern = URL_PATTERN;
 
-  readonly urlPattern = 'https?://.+';
-
-  isDmsCredentialRequired(key: string): boolean {
-    return this.formData.tmsName === 'DMS';
+  isDmsCredentialRequired(_key: string): boolean {
+    return this.formData.tmsName === TmsName.DMS;
   }
 
   isUrlField(key: string): boolean {

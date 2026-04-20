@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../services/api.service';
 import { TransformationLogSummary, TransformationLogDetail } from '../../models/transformation-log.model';
+import { TransformationStatus, StatusBadgeClass } from '../../constants/transformation-status.constants';
 
 @Pipe({ name: 'prettyJson', standalone: true })
 export class PrettyJsonPipe implements PipeTransform {
@@ -136,15 +137,10 @@ export class TransformationLogsComponent implements OnInit {
   }
 
   statusClass(status: string): Record<string, boolean> {
-    return {
-      'badge-success': status === 'Success',
-      'badge-warning': status === 'Warning',
-      'badge-partial': status === 'PartialSuccess',
-      'badge-error': status === 'Error',
-    };
+    return Object.fromEntries(Object.entries(StatusBadgeClass).map(([s, cls]) => [cls, status === s]));
   }
 
   statusLabel(status: string): string {
-    return status === 'PartialSuccess' ? 'Partial' : status;
+    return status === TransformationStatus.PartialSuccess ? 'Partial' : status;
   }
 }
