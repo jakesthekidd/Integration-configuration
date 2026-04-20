@@ -68,4 +68,5 @@ public class CustomersController : ControllerBase
         var result = await _customerService.SetCustomerStatusAsync(id, enabled);
         return result.Success ? Ok(result) : BadRequest(result);
     }
+
 }
