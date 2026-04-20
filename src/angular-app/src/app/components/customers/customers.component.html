@@ -95,9 +95,9 @@
 
       <p><b>Credential</b></p>
       <br />
-      <div *ngIf="formData.tmsName && tmsCredentialKeys[formData.tmsName]?.length">
+      <div *ngIf="getCurrentTmsKeys().length">
         <div class="form-row">
-          <div class="col" *ngFor="let key of tmsCredentialKeys[formData.tmsName]">
+          <div class="col" *ngFor="let key of getCurrentTmsKeys()">
             <div class="form-group">
               <label [for]="'credentials-' + key">
                 {{ key }} <span *ngIf="isDmsCredentialRequired(key)" class="required">*</span>

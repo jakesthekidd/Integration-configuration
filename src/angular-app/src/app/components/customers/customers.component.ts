@@ -272,7 +272,7 @@ export class CustomersComponent implements OnInit {
   }
 
   getCurrentTmsKeys(): string[] {
-    return this.formData.tmsName ? this.tmsCredentialKeys[this.formData.tmsName] || [] : [];
+    return this.tmsCredentialKeys[this.formData.tmsName as TmsName] ?? [];
   }
 
   readonly tmsCredentialKeys = TmsCredentialKeys;
