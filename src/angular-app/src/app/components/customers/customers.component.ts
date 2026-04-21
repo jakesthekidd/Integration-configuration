@@ -4,7 +4,10 @@ import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../services/api.service';
 import { Customer } from '../../models/customer.model';
 import { GeneralService } from '../../services/general.service';
-import { TmsName, TmsCredentialKeys, URL_PATTERN } from '../../constants/tms.constants';
+import { TmsName, TmsCredentialKeys, URL_PATTERN, DmsSpecialKeys } from '../../constants/tms.constants';
+import { FieldMappingTemplate } from '../../models/template.model';
+import { ApiClient } from '../../models/api-client.model';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-customers',
@@ -27,6 +30,8 @@ export class CustomersComponent implements OnInit {
   deleting: { [id: string]: boolean } = {};
   togglingStatus: { [id: string]: boolean } = {};
   tmsOptions: TmsName[] = Object.values(TmsName);
+  dmsTemplates: FieldMappingTemplate[] = [];
+  dmsApiClients: ApiClient[] = [];
 
   formData: Customer = this.emptyForm();
 
@@ -37,6 +42,16 @@ export class CustomersComponent implements OnInit {
 
   ngOnInit() {
     this.loadCustomers();
+    this.apiService.getTemplates().subscribe({
+      next: (r) => {
+        if (r.success && r.data) this.dmsTemplates = r.data.templates;
+      },
+    });
+    this.apiService.getApiClients().subscribe({
+      next: (r) => {
+        if (r.success && r.data) this.dmsApiClients = r.data.apiClients;
+      },
+    });
   }
 
   loadCustomers() {
@@ -153,6 +168,10 @@ export class CustomersComponent implements OnInit {
   }
   private CustomerPayload(): Customer {
     const credentials = { ...this.formData.credentials };
+
+    if (this.formData.tmsName === TmsName.DMS) {
+      credentials[DmsSpecialKeys.TransformerBaseUrl] = this.transformerBaseUrl;
+    }
 
     const tmsName = (Object.values(TmsName) as string[]).includes(this.formData.tmsName) ? this.formData.tmsName : '';
 
@@ -277,6 +296,9 @@ export class CustomersComponent implements OnInit {
 
   readonly tmsCredentialKeys = TmsCredentialKeys;
   readonly urlPattern = URL_PATTERN;
+  readonly transformerBaseUrl = environment.apiUrl.startsWith('http')
+    ? environment.apiUrl
+    : window.location.origin + environment.apiUrl;
 
   isDmsCredentialRequired(_key: string): boolean {
     return this.formData.tmsName === TmsName.DMS;
@@ -285,6 +307,24 @@ export class CustomersComponent implements OnInit {
   isUrlField(key: string): boolean {
     return key.toLowerCase().includes('url');
   }
+
+  isTemplateDropdown(key: string): boolean {
+    return key === DmsSpecialKeys.TemplateId;
+  }
+
+  isApiClientDropdown(key: string): boolean {
+    return key === DmsSpecialKeys.ApiClientId;
+  }
+
+  isNumericField(key: string): boolean {
+    return key === DmsSpecialKeys.TemplateVersion;
+  }
+
+  isTransformerBaseUrlField(key: string): boolean {
+    return key === DmsSpecialKeys.TransformerBaseUrl;
+  }
+
+  readonly DmsSpecialKeys = DmsSpecialKeys;
 
   allowOnlyNumbers(event: KeyboardEvent) {
     const charCode = event.which ? event.which : event.keyCode;

@@ -7,8 +7,8 @@ using Transflo.Platform.Transformer.Core.Repositories.Interfaces;
 using Transflo.Platform.Transformer.Core.Services;
 using Transflo.Platform.Transformer.TransformationService.DTOs;
 using Transflo.Platform.Transformer.TransformationService.Services.Interfaces;
-using TransformationWarning = Transflo.Platform.Transformer.TransformationService.DTOs.TransformationWarning;
 using ServiceModels = Transflo.Platform.Transformer.TransformationService.Models;
+using TransformationWarning = Transflo.Platform.Transformer.TransformationService.DTOs.TransformationWarning;
 
 namespace Transflo.Platform.Transformer.Core.Tests.Services;
 

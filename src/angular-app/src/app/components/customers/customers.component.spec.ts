@@ -32,6 +32,8 @@ describe('CustomersComponent', () => {
       'updateCustomer',
       'deleteCustomer',
       'setCustomerStatus',
+      'getTemplates',
+      'getApiClients',
     ]);
     generalServiceSpy = jasmine.createSpyObj('GeneralService', ['confirm', 'success', 'error']);
 
@@ -42,6 +44,12 @@ describe('CustomersComponent', () => {
     apiServiceSpy.updateCustomer.and.returnValue(of({ success: true, data: mockCustomer, message: '' }));
     apiServiceSpy.deleteCustomer.and.returnValue(of(undefined as any));
     apiServiceSpy.setCustomerStatus.and.returnValue(of({ success: true, data: mockCustomer, message: '' }));
+    apiServiceSpy.getTemplates.and.returnValue(
+      of({ success: true, data: { templates: [] as any[] }, message: '' } as any),
+    );
+    apiServiceSpy.getApiClients.and.returnValue(
+      of({ success: true, data: { apiClients: [] as any[] }, message: '' } as any),
+    );
     generalServiceSpy.confirm.and.returnValue(
       Promise.resolve({ isConfirmed: true, isDenied: false, isDismissed: false, value: true } as any),
     );

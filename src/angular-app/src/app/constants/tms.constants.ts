@@ -44,7 +44,18 @@ export const TmsCredentialKeys: Record<TmsName, string[]> = {
     'dms-add-doc-url',
     'dms-username',
     'dms-password',
+    'transformer-base-url',
+    'template-id',
+    'template-version',
+    'api-client-id',
   ],
 };
 
 export const URL_PATTERN = 'https?://.+';
+
+export const DmsSpecialKeys = {
+  TemplateId: 'template-id',
+  ApiClientId: 'api-client-id',
+  TemplateVersion: 'template-version',
+  TransformerBaseUrl: 'transformer-base-url',
+} as const;

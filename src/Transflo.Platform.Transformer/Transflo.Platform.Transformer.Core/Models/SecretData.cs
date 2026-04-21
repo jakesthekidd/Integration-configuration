@@ -47,5 +47,17 @@ namespace Transflo.Platform.Transformer.Core.Models
 
         [JsonPropertyName("dms-password")]
         public string? DmsPassword { get; set; }
+
+        [JsonPropertyName("transformer-base-url")]
+        public string? TransformerBaseUrl { get; set; }
+
+        [JsonPropertyName("template-id")]
+        public string? TemplateId { get; set; }
+
+        [JsonPropertyName("template-version")]
+        public string? TemplateVersion { get; set; }
+
+        [JsonPropertyName("api-client-id")]
+        public string? ApiClientId { get; set; }
     }
 }

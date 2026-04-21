@@ -102,22 +102,96 @@
               <label [for]="'credentials-' + key">
                 {{ key }} <span *ngIf="isDmsCredentialRequired(key)" class="required">*</span>
               </label>
-              <input
-                [id]="'credentials-' + key"
-                type="text"
-                [(ngModel)]="formData.credentials[key]"
-                [name]="'credentials.' + key"
-                class="form-control"
-                [required]="isDmsCredentialRequired(key)"
-                [pattern]="isDmsCredentialRequired(key) && isUrlField(key) ? urlPattern : ''"
-                #credInput="ngModel"
-              />
-              <span *ngIf="credInput.invalid && credInput.touched" class="field-error">
-                <ng-container *ngIf="credInput.errors?.['required']">{{ key }} is required.</ng-container>
-                <ng-container *ngIf="credInput.errors?.['pattern']"
-                  >Must be a valid URL (starting with http:// or https://).</ng-container
+
+              <!-- Template dropdown -->
+              <ng-container *ngIf="isTemplateDropdown(key)">
+                <select
+                  [id]="'credentials-' + key"
+                  [(ngModel)]="formData.credentials[key]"
+                  [name]="'credentials.' + key"
+                  class="form-control"
+                  required
+                  #tmplCtrl="ngModel"
                 >
-              </span>
+                  <option value="">Select template</option>
+                  <option *ngFor="let t of dmsTemplates" [value]="t.id">{{ t.name }}</option>
+                </select>
+                <span *ngIf="tmplCtrl.invalid && tmplCtrl.touched" class="field-error">{{ key }} is required.</span>
+              </ng-container>
+
+              <!-- API client dropdown -->
+              <ng-container *ngIf="isApiClientDropdown(key)">
+                <select
+                  [id]="'credentials-' + key"
+                  [(ngModel)]="formData.credentials[key]"
+                  [name]="'credentials.' + key"
+                  class="form-control"
+                  required
+                  #clientCtrl="ngModel"
+                >
+                  <option value="">Select API client</option>
+                  <option *ngFor="let c of dmsApiClients" [value]="c.id">{{ c.name }}</option>
+                </select>
+                <span *ngIf="clientCtrl.invalid && clientCtrl.touched" class="field-error">{{ key }} is required.</span>
+              </ng-container>
+
+              <!-- Numeric field (text input so value is submitted as string) -->
+              <ng-container *ngIf="isNumericField(key)">
+                <input
+                  [id]="'credentials-' + key"
+                  type="text"
+                  [(ngModel)]="formData.credentials[key]"
+                  [name]="'credentials.' + key"
+                  class="form-control"
+                  required
+                  pattern="[0-9]+"
+                  (keypress)="allowOnlyNumbers($event)"
+                  #numCtrl="ngModel"
+                />
+                <span *ngIf="numCtrl.invalid && numCtrl.touched" class="field-error">
+                  <ng-container *ngIf="numCtrl.errors?.['required']">{{ key }} is required.</ng-container>
+                  <ng-container *ngIf="numCtrl.errors?.['pattern']">Must be a numeric value.</ng-container>
+                </span>
+              </ng-container>
+
+              <!-- Transformer base URL (read-only, auto-populated) -->
+              <ng-container *ngIf="isTransformerBaseUrlField(key)">
+                <input
+                  [id]="'credentials-' + key"
+                  type="text"
+                  [value]="transformerBaseUrl"
+                  [name]="'credentials.' + key"
+                  class="form-control"
+                  disabled
+                />
+              </ng-container>
+
+              <!-- Regular text / URL field -->
+              <ng-container
+                *ngIf="
+                  !isTemplateDropdown(key) &&
+                  !isApiClientDropdown(key) &&
+                  !isNumericField(key) &&
+                  !isTransformerBaseUrlField(key)
+                "
+              >
+                <input
+                  [id]="'credentials-' + key"
+                  type="text"
+                  [(ngModel)]="formData.credentials[key]"
+                  [name]="'credentials.' + key"
+                  class="form-control"
+                  [required]="isDmsCredentialRequired(key)"
+                  [pattern]="isDmsCredentialRequired(key) && isUrlField(key) ? urlPattern : ''"
+                  #credInput="ngModel"
+                />
+                <span *ngIf="credInput.invalid && credInput.touched" class="field-error">
+                  <ng-container *ngIf="credInput.errors?.['required']">{{ key }} is required.</ng-container>
+                  <ng-container *ngIf="credInput.errors?.['pattern']"
+                    >Must be a valid URL (starting with http:// or https://).</ng-container
+                  >
+                </span>
+              </ng-container>
             </div>
           </div>
         </div>
