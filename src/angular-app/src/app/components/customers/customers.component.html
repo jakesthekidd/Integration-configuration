@@ -132,9 +132,7 @@
                   <option value="">Select API client</option>
                   <option *ngFor="let c of dmsApiClients" [value]="c.id">{{ c.name }}</option>
                 </select>
-                <span *ngIf="clientCtrl.invalid && clientCtrl.touched" class="field-error"
-                  >{{ key }} is required.</span
-                >
+                <span *ngIf="clientCtrl.invalid && clientCtrl.touched" class="field-error">{{ key }} is required.</span>
               </ng-container>
 
               <!-- Numeric field (text input so value is submitted as string) -->
