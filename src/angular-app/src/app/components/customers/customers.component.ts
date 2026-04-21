@@ -7,6 +7,7 @@ import { GeneralService } from '../../services/general.service';
 import { TmsName, TmsCredentialKeys, URL_PATTERN, DmsSpecialKeys } from '../../constants/tms.constants';
 import { FieldMappingTemplate } from '../../models/template.model';
 import { ApiClient } from '../../models/api-client.model';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-customers',
@@ -168,6 +169,10 @@ export class CustomersComponent implements OnInit {
   private CustomerPayload(): Customer {
     const credentials = { ...this.formData.credentials };
 
+    if (this.formData.tmsName === TmsName.DMS) {
+      credentials[DmsSpecialKeys.TransformerBaseUrl] = this.transformerBaseUrl;
+    }
+
     const tmsName = (Object.values(TmsName) as string[]).includes(this.formData.tmsName) ? this.formData.tmsName : '';
 
     return {
@@ -291,6 +296,9 @@ export class CustomersComponent implements OnInit {
 
   readonly tmsCredentialKeys = TmsCredentialKeys;
   readonly urlPattern = URL_PATTERN;
+  readonly transformerBaseUrl = environment.apiUrl.startsWith('http')
+    ? environment.apiUrl
+    : window.location.origin + environment.apiUrl;
 
   isDmsCredentialRequired(_key: string): boolean {
     return this.formData.tmsName === TmsName.DMS;
@@ -310,6 +318,10 @@ export class CustomersComponent implements OnInit {
 
   isNumericField(key: string): boolean {
     return key === DmsSpecialKeys.TemplateVersion;
+  }
+
+  isTransformerBaseUrlField(key: string): boolean {
+    return key === DmsSpecialKeys.TransformerBaseUrl;
   }
 
   readonly DmsSpecialKeys = DmsSpecialKeys;

@@ -57,4 +57,5 @@ export const DmsSpecialKeys = {
   TemplateId: 'template-id',
   ApiClientId: 'api-client-id',
   TemplateVersion: 'template-version',
+  TransformerBaseUrl: 'transformer-base-url',
 } as const;

@@ -154,8 +154,27 @@
                 </span>
               </ng-container>
 
+              <!-- Transformer base URL (read-only, auto-populated) -->
+              <ng-container *ngIf="isTransformerBaseUrlField(key)">
+                <input
+                  [id]="'credentials-' + key"
+                  type="text"
+                  [value]="transformerBaseUrl"
+                  [name]="'credentials.' + key"
+                  class="form-control"
+                  disabled
+                />
+              </ng-container>
+
               <!-- Regular text / URL field -->
-              <ng-container *ngIf="!isTemplateDropdown(key) && !isApiClientDropdown(key) && !isNumericField(key)">
+              <ng-container
+                *ngIf="
+                  !isTemplateDropdown(key) &&
+                  !isApiClientDropdown(key) &&
+                  !isNumericField(key) &&
+                  !isTransformerBaseUrlField(key)
+                "
+              >
                 <input
                   [id]="'credentials-' + key"
                   type="text"
