@@ -4,7 +4,9 @@ import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../services/api.service';
 import { Customer } from '../../models/customer.model';
 import { GeneralService } from '../../services/general.service';
-import { TmsName, TmsCredentialKeys, URL_PATTERN } from '../../constants/tms.constants';
+import { TmsName, TmsCredentialKeys, URL_PATTERN, DmsSpecialKeys } from '../../constants/tms.constants';
+import { FieldMappingTemplate } from '../../models/template.model';
+import { ApiClient } from '../../models/api-client.model';
 
 @Component({
   selector: 'app-customers',
@@ -27,6 +29,8 @@ export class CustomersComponent implements OnInit {
   deleting: { [id: string]: boolean } = {};
   togglingStatus: { [id: string]: boolean } = {};
   tmsOptions: TmsName[] = Object.values(TmsName);
+  dmsTemplates: FieldMappingTemplate[] = [];
+  dmsApiClients: ApiClient[] = [];
 
   formData: Customer = this.emptyForm();
 
@@ -37,6 +41,16 @@ export class CustomersComponent implements OnInit {
 
   ngOnInit() {
     this.loadCustomers();
+    this.apiService.getTemplates().subscribe({
+      next: (r) => {
+        if (r.success && r.data) this.dmsTemplates = r.data.templates;
+      },
+    });
+    this.apiService.getApiClients().subscribe({
+      next: (r) => {
+        if (r.success && r.data) this.dmsApiClients = r.data.apiClients;
+      },
+    });
   }
 
   loadCustomers() {
@@ -285,6 +299,20 @@ export class CustomersComponent implements OnInit {
   isUrlField(key: string): boolean {
     return key.toLowerCase().includes('url');
   }
+
+  isTemplateDropdown(key: string): boolean {
+    return key === DmsSpecialKeys.TemplateId;
+  }
+
+  isApiClientDropdown(key: string): boolean {
+    return key === DmsSpecialKeys.ApiClientId;
+  }
+
+  isNumericField(key: string): boolean {
+    return key === DmsSpecialKeys.TemplateVersion;
+  }
+
+  readonly DmsSpecialKeys = DmsSpecialKeys;
 
   allowOnlyNumbers(event: KeyboardEvent) {
     const charCode = event.which ? event.which : event.keyCode;
