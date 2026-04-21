@@ -1,9 +1,6 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using System.Text.Json;
 using Transflo.Platform.Transformer.Core.Data;
 using Transflo.Platform.Transformer.Core.Models;
-using Transflo.Platform.Transformer.Core.DTOs;
 using Transflo.Platform.Transformer.Core.Repositories.Interfaces;
 
 namespace Transflo.Platform.Transformer.Core.Repositories;
