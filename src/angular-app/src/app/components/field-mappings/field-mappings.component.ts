@@ -253,8 +253,11 @@ export class FieldMappingsComponent implements OnInit, OnChanges {
   }
 
   cancelEdit() {
+    if (this.editingMapping) {
+      this.showCreateForm = false;
+    }
+
     this.editingMapping = null;
-    this.showCreateForm = false;
     this.resetForm();
   }
 
