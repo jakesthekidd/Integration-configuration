@@ -27,6 +27,11 @@ export class TemplatesComponent implements OnInit {
   showCreateForm: boolean = false;
   newTemplate: CreateTemplateRequest = this.getEmptyCreateRequest();
 
+  // --- Pagination ---
+  currentPage: number = 1;
+  pageSize: number = 10;
+  totalCount: number = 0;
+
   // --- Detail Screen ---
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   templateVersions: any[] = [];
@@ -56,6 +61,7 @@ export class TemplatesComponent implements OnInit {
     this.selectedTemplate = null;
     this.selectedVersionObj = null;
     this.editingTemplate = null;
+    this.currentPage = 1;
     this.clearMessages();
     this.loadTemplates();
   }
@@ -108,10 +114,11 @@ export class TemplatesComponent implements OnInit {
 
   loadTemplates() {
     this.isInitialLoading = true;
-    this.apiService.getTemplates().subscribe({
+    this.apiService.getTemplates(undefined, this.currentPage, this.pageSize).subscribe({
       next: (response) => {
         if (response.success && response.data) {
           this.templates = response.data.templates;
+          this.totalCount = response.data.totalCount;
         }
         this.isInitialLoading = false;
       },
@@ -121,6 +128,22 @@ export class TemplatesComponent implements OnInit {
         console.error(err);
       },
     });
+  }
+
+  get totalPages(): number {
+    return Math.ceil(this.totalCount / this.pageSize);
+  }
+
+  goToPage(page: number) {
+    if (page < 1 || page > this.totalPages) return;
+    this.currentPage = page;
+    this.loadTemplates();
+  }
+
+  changePageSize(size: number) {
+    this.pageSize = size;
+    this.currentPage = 1;
+    this.loadTemplates();
   }
 
   loadTemplateVersions(templateId: string) {

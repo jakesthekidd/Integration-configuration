@@ -18,13 +18,15 @@ public class TemplatesController : ControllerBase
 
     [HttpGet]
     [ProducesResponseType(typeof(ApiResponse<TemplateListResponse>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetAll()
+    public async Task<IActionResult> GetAll([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
     {
-        var templates = await _service.GetAllAsync();
+        var (items, totalCount) = await _service.GetAllAsync(page, pageSize);
         var response = new TemplateListResponse
         {
-            Templates = templates.ToList(),
-            TotalCount = templates.Length
+            Templates = items.ToList(),
+            TotalCount = totalCount,
+            Page = page,
+            PageSize = pageSize
         };
         return Ok(ApiResponse<TemplateListResponse>.SuccessResponse(response));
     }

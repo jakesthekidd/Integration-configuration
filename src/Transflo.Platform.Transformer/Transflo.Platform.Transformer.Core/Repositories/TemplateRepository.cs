@@ -21,7 +21,6 @@ public class TemplateRepository : ITemplateRepository
         return await _context.Templates
             .FirstOrDefaultAsync(t => t.Id == id);
     }
-
     public async Task<List<Template>> GetAllAsync()
     {
         return await _context.Templates
@@ -29,6 +28,21 @@ public class TemplateRepository : ITemplateRepository
             .Where(t => !t.IsDeleted)
             .OrderByDescending(t => t.CreatedAt)
             .ToListAsync();
+    }
+    public async Task<(List<Template> Items, int TotalCount)> GetAllAsync(int page, int pageSize)
+    {
+        var query = _context.Templates
+            .Where(t => !t.IsDeleted)
+            .OrderByDescending(t => t.CreatedAt);
+
+        var totalCount = await query.CountAsync();
+        var items = await query
+            .Include(t => t.TemplateVersions)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return (items, totalCount);
     }
 
     public async Task<Template> CreateAsync(Template template)

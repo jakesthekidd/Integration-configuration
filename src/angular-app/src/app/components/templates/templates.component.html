@@ -165,7 +165,23 @@
         </tbody>
       </table>
     </div>
-    <div class="total">{{ templates.length }} template(s) shown</div>
+    <div class="pagination-bar">
+      <div class="pagination-info">
+        Showing {{ templates.length ? (currentPage - 1) * pageSize + 1 : 0 }}–{{ (currentPage - 1) * pageSize + templates.length }} of {{ totalCount }} template(s)
+      </div>
+      <div class="pagination-controls">
+        <select [ngModel]="pageSize" (ngModelChange)="changePageSize($event)" name="pageSize">
+          <option [value]="10">10 / page</option>
+          <option [value]="25">25 / page</option>
+          <option [value]="50">50 / page</option>
+        </select>
+        <button class="btn-page" [disabled]="currentPage === 1" (click)="goToPage(1)">«</button>
+        <button class="btn-page" [disabled]="currentPage === 1" (click)="goToPage(currentPage - 1)">‹</button>
+        <span class="page-indicator">Page {{ currentPage }} of {{ totalPages || 1 }}</span>
+        <button class="btn-page" [disabled]="currentPage >= totalPages" (click)="goToPage(currentPage + 1)">›</button>
+        <button class="btn-page" [disabled]="currentPage >= totalPages" (click)="goToPage(totalPages)">»</button>
+      </div>
+    </div>
   </ng-container>
 
   <!-- ==================== SCREEN: DETAIL ==================== -->
