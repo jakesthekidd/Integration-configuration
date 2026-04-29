@@ -167,7 +167,10 @@
     </div>
     <div class="pagination-bar">
       <div class="pagination-info">
-        Showing {{ templates.length ? (currentPage - 1) * pageSize + 1 : 0 }}–{{ (currentPage - 1) * pageSize + templates.length }} of {{ totalCount }} template(s)
+        Showing {{ templates.length ? (currentPage - 1) * pageSize + 1 : 0 }}–{{
+          (currentPage - 1) * pageSize + templates.length
+        }}
+        of {{ totalCount }} template(s)
       </div>
       <div class="pagination-controls">
         <select [ngModel]="pageSize" (ngModelChange)="changePageSize($event)" name="pageSize">
