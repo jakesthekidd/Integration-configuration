@@ -24,6 +24,12 @@ public class TemplatesService : ITemplatesService
         _validationService = validationService;
     }
 
+    public async Task<TemplateResponse[]> GetAllAsync()
+    {
+        var templates = await _templateRepo.GetAllAsync();
+        return templates.Select(ToResponse).ToArray();
+    }
+
     public async Task<(TemplateResponse[] Items, int TotalCount)> GetAllAsync(int page, int pageSize)
     {
         var (items, totalCount) = await _templateRepo.GetAllAsync(page, pageSize);
