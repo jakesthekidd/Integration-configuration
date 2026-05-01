@@ -30,6 +30,12 @@ public class TemplatesService : ITemplatesService
         return templates.Select(ToResponse).ToArray();
     }
 
+    public async Task<(TemplateResponse[] Items, int TotalCount)> GetAllAsync(int page, int pageSize)
+    {
+        var (items, totalCount) = await _templateRepo.GetAllAsync(page, pageSize);
+        return (items.Select(ToResponse).ToArray(), totalCount);
+    }
+
     public async Task<TemplateResponse?> GetByIdAsync(Guid templateId)
     {
         var template = await _templateRepo.GetByIdAsync(templateId);

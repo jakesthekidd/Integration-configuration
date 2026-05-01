@@ -4,7 +4,7 @@ namespace Transflo.Platform.Transformer.Core.Services.Interfaces;
 
 public interface ITemplatesService
 {
-    Task<TemplateResponse[]> GetAllAsync();
+    Task<(TemplateResponse[] Items, int TotalCount)> GetAllAsync(int page, int pageSize);
     Task<TemplateResponse?> GetByIdAsync(Guid templateId);
     Task<TemplateResponse> CreateAsync(CreateTemplateRequest request);
     Task<TemplateResponse?> UpdateAsync(Guid templateId, UpdateTemplateRequest request);

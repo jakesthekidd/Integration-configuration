@@ -48,6 +48,34 @@ public class TemplatesServiceTests
         Assert.Equal(SampleTemplate.Id, result[0].Id);
     }
 
+    [Fact]
+    public async Task GetAllAsync_WithPageAndPageSize_CallsPagedRepo_AndReturnsMappedItems()
+    {
+        _templateRepoMock
+            .Setup(r => r.GetAllAsync(2, 10))
+            .ReturnsAsync((new List<Template> { SampleTemplate }, 25));
+
+        var (items, totalCount) = await _sut.GetAllAsync(2, 10);
+
+        _templateRepoMock.Verify(r => r.GetAllAsync(2, 10), Times.Once);
+        Assert.Single(items);
+        Assert.Equal(SampleTemplate.Id, items[0].Id);
+        Assert.Equal(25, totalCount);
+    }
+
+    [Fact]
+    public async Task GetAllAsync_WithPageAndPageSize_ReturnsEmptyItems_WhenPageExceedsTotal()
+    {
+        _templateRepoMock
+            .Setup(r => r.GetAllAsync(99, 20))
+            .ReturnsAsync((new List<Template>(), 1));
+
+        var (items, totalCount) = await _sut.GetAllAsync(99, 20);
+
+        Assert.Empty(items);
+        Assert.Equal(1, totalCount);
+    }
+
     // ── GetByIdAsync ─────────────────────────────────────────────────────────
 
     [Fact]
