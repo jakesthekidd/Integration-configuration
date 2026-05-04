@@ -20,20 +20,17 @@ public class TemplateVersionsController : ControllerBase
     private readonly IFieldMappingValidationService _validationService;
     private readonly ITransformationCoordinator _coordinator;
     private readonly ITemplateVersionRepository _templateVersionRepository;
-    private readonly IApiClientRepository _apiClientRepository;
 
     public TemplateVersionsController(
         ITemplatesService service,
         IFieldMappingValidationService validationService,
         ITransformationCoordinator coordinator,
-        ITemplateVersionRepository templateVersionRepository,
-        IApiClientRepository apiClientRepository)
+        ITemplateVersionRepository templateVersionRepository)
     {
         _service = service;
         _validationService = validationService;
         _coordinator = coordinator;
         _templateVersionRepository = templateVersionRepository;
-        _apiClientRepository = apiClientRepository;
     }
 
     /// <summary>Lists all versions for the template, ordered newest-first.</summary>
@@ -158,7 +155,6 @@ public class TemplateVersionsController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<TransformationResult>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Transform(
-        [FromHeader(Name = "x-client-id")] Guid clientId,
         Guid templateId,
         int version,
         [FromBody] VersionTransformRequest request)
@@ -169,7 +165,7 @@ public class TemplateVersionsController : ControllerBase
             return BadRequest(ApiResponse<object>.ErrorResponse("SourceDocument must not be empty."));
         }
 
-        if (await ValidateClientAccessAsync(clientId, templateId, version) is { } unauthorized)
+        if (await ValidateClientAccessAsync(templateId, version) is { } unauthorized)
         {
             return unauthorized;
         }
@@ -247,33 +243,12 @@ public class TemplateVersionsController : ControllerBase
     /// Resolves the target template version and checks whether the given API client has access to it.
     /// Returns a 401 <see cref="IActionResult"/> if access is denied, or <c>null</c> if access is granted.
     /// </summary>
-    private async Task<IActionResult?> ValidateClientAccessAsync(Guid clientId, Guid templateId, int? version)
+    private async Task<IActionResult?> ValidateClientAccessAsync(Guid templateId, int? version)
     {
-        var apiClient = await _apiClientRepository.GetByIdAsync(clientId);
-        if (apiClient == null)
-        {
-            return StatusCode(
-                StatusCodes.Status401Unauthorized,
-                ApiResponse<object>.ErrorResponse("Unauthorized. API client not found."));
-        }
-
-        if (!apiClient.IsActive)
-        {
-            return StatusCode(
-                StatusCodes.Status401Unauthorized,
-                ApiResponse<object>.ErrorResponse("Unauthorized. API client is inactive."));
-        }
 
         var targetVersion = version.HasValue
             ? await _templateVersionRepository.GetByVersionAsync(templateId, version.Value)
             : await _templateVersionRepository.GetPublishedVersionAsync(templateId);
-
-        if (targetVersion != null && !await _templateVersionRepository.HasClientAccessAsync(targetVersion.Id, clientId))
-        {
-            return StatusCode(
-                StatusCodes.Status401Unauthorized,
-                ApiResponse<object>.ErrorResponse("Unauthorized. API client does not have access to this template version."));
-        }
 
         return null;
     }

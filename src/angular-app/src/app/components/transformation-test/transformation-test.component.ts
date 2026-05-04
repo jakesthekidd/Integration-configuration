@@ -6,8 +6,6 @@ import { ApiService } from '../../services/api.service';
 import { FieldMappingTemplate } from '../../models/template.model';
 import { parseTree, printParseErrorCode, ParseError } from 'jsonc-parser';
 import { MappingIssue, TransformResult } from '../../models/transformation-test.model';
-import { ApiClient } from '../../models/api-client.model';
-
 @Component({
   selector: 'app-transformation-test',
   standalone: true,
@@ -18,8 +16,6 @@ import { ApiClient } from '../../models/api-client.model';
 export class TransformationTestComponent implements OnInit {
   templates: FieldMappingTemplate[] = [];
   selectedTemplateId: string = '';
-  apiClients: ApiClient[] = [];
-  selectedClientId: string = '';
   sourceJson: string = '';
   transformedJson: string = '';
   fileName: string = '';
@@ -60,18 +56,6 @@ export class TransformationTestComponent implements OnInit {
 
   ngOnInit() {
     this.loadTemplates();
-    this.loadApiClients();
-  }
-
-  loadApiClients() {
-    this.apiService.getApiClients().subscribe({
-      next: (response) => {
-        if (response.success && response.data) {
-          this.apiClients = response.data.apiClients.filter((c) => c.isActive);
-        }
-      },
-      error: (err) => console.error('Failed to load API clients', err),
-    });
   }
 
   loadTemplates() {
@@ -187,7 +171,7 @@ export class TransformationTestComponent implements OnInit {
   }
 
   canTransform(): boolean {
-    return !!(this.selectedTemplateId && this.selectedClientId && this.sourceJson);
+    return !!(this.selectedTemplateId && this.sourceJson);
   }
 
   transform() {
@@ -223,7 +207,7 @@ export class TransformationTestComponent implements OnInit {
 
     // Server always returns HTTP 200 — read everything from the next callback
     this.apiService
-      .transformJsonWithTemplate(this.selectedTemplateId, selectedTemplate.version, parsedSource, this.selectedClientId)
+      .transformJsonWithTemplate(this.selectedTemplateId, selectedTemplate.version, parsedSource)
       .subscribe({
         next: (response) => {
           const data: TransformResult = response?.data ?? {};
