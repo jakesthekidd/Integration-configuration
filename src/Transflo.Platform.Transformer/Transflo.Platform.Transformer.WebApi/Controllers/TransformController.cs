@@ -81,7 +81,7 @@ public class TransformController : ControllerBase
     /// Resolves the target template version and checks whether the given API client has access to it.
     /// Returns a 401 <see cref="IActionResult"/> if access is denied, or <c>null</c> if access is granted.
     /// </summary>
-    private async Task<IActionResult?> ValidateClientAccessAsync( Guid templateId, int? version)
+    private async Task<IActionResult?> ValidateClientAccessAsync(Guid templateId, int? version)
     {
         var targetVersion = version.HasValue
             ? await _templateVersionRepository.GetByVersionAsync(templateId, version.Value)
