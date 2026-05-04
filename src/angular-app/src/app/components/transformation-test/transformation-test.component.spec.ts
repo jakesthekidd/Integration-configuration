@@ -6,6 +6,7 @@ import { BrowserModule } from '@angular/platform-browser';
 import { TransformationTestComponent } from './transformation-test.component';
 import { ApiService } from '../../services/api.service';
 import { FieldMappingTemplate } from '../../models/template.model';
+import { ApiClient } from '../../models/api-client.model';
 
 describe('TransformationTestComponent', () => {
   let component: TransformationTestComponent;
@@ -33,11 +34,19 @@ describe('TransformationTestComponent', () => {
     },
   ];
 
+  const mockClients: ApiClient[] = [
+    { id: 'client-1', name: 'Active Client', isActive: true, createdAt: '2024-01-01', updatedAt: '2024-01-01' },
+    { id: 'client-2', name: 'Inactive Client', isActive: false, createdAt: '2024-01-01', updatedAt: '2024-01-01' },
+  ];
+
   beforeEach(async () => {
-    apiServiceSpy = jasmine.createSpyObj('ApiService', ['getTemplates', 'transformJsonWithTemplate']);
+    apiServiceSpy = jasmine.createSpyObj('ApiService', ['getTemplates', 'getApiClients', 'transformJsonWithTemplate']);
 
     apiServiceSpy.getTemplates.and.returnValue(
       of({ success: true, data: { templates: mockTemplates, totalCount: mockTemplates.length }, message: '' }),
+    );
+    apiServiceSpy.getApiClients.and.returnValue(
+      of({ success: true, data: { apiClients: mockClients, totalCount: mockClients.length }, message: '' }),
     );
     apiServiceSpy.transformJsonWithTemplate.and.returnValue(
       of({
@@ -62,9 +71,10 @@ describe('TransformationTestComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('ngOnInit calls loadTemplates()', () => {
+  it('ngOnInit calls loadTemplates() and loadApiClients()', () => {
     fixture.detectChanges();
     expect(apiServiceSpy.getTemplates).toHaveBeenCalled();
+    expect(apiServiceSpy.getApiClients).toHaveBeenCalled();
   });
 
   it('loadTemplates() filters for Active templates only', () => {
@@ -73,9 +83,16 @@ describe('TransformationTestComponent', () => {
     expect(component.templates[0].status).toBe('Active');
   });
 
-  it('canTransform() returns false when no template or sourceJson selected', () => {
+  it('loadApiClients() filters for active clients only', () => {
+    fixture.detectChanges();
+    expect(component.apiClients.length).toBe(1);
+    expect(component.apiClients[0].isActive).toBeTrue();
+  });
+
+  it('canTransform() returns false when no template/client/sourceJson selected', () => {
     fixture.detectChanges();
     component.selectedTemplateId = '';
+    component.selectedClientId = '';
     component.sourceJson = '';
     expect(component.canTransform()).toBeFalse();
   });
@@ -83,13 +100,15 @@ describe('TransformationTestComponent', () => {
   it('canTransform() returns false when only template is set', () => {
     fixture.detectChanges();
     component.selectedTemplateId = 'tmpl-1';
+    component.selectedClientId = '';
     component.sourceJson = '';
     expect(component.canTransform()).toBeFalse();
   });
 
-  it('canTransform() returns true when template and sourceJson are present', () => {
+  it('canTransform() returns true when all three are present', () => {
     fixture.detectChanges();
     component.selectedTemplateId = 'tmpl-1';
+    component.selectedClientId = 'client-1';
     component.sourceJson = '{"key":"value"}';
     expect(component.canTransform()).toBeTrue();
   });
