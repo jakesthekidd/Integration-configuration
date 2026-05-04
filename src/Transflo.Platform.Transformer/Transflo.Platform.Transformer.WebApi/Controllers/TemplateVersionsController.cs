@@ -4,6 +4,8 @@ using Transflo.Platform.Transformer.Core.DTOs;
 using Transflo.Platform.Transformer.Core.Repositories.Interfaces;
 using Transflo.Platform.Transformer.Core.Services.Interfaces;
 using Transflo.Platform.Transformer.TransformationService.DTOs;
+using Microsoft.Extensions.Options;
+using Transflo.Platform.Transformer.Core.Configurations;
 
 namespace Transflo.Platform.Transformer.WebApi.Controllers;
 
@@ -21,19 +23,22 @@ public class TemplateVersionsController : ControllerBase
     private readonly ITransformationCoordinator _coordinator;
     private readonly ITemplateVersionRepository _templateVersionRepository;
     private readonly IApiClientRepository _apiClientRepository;
+    private readonly ApplicationConfiguration _config;
 
     public TemplateVersionsController(
         ITemplatesService service,
         IFieldMappingValidationService validationService,
         ITransformationCoordinator coordinator,
         ITemplateVersionRepository templateVersionRepository,
-        IApiClientRepository apiClientRepository)
+        IApiClientRepository apiClientRepository,
+        IOptions<ApplicationConfiguration> config)
     {
         _service = service;
         _validationService = validationService;
         _coordinator = coordinator;
         _templateVersionRepository = templateVersionRepository;
         _apiClientRepository = apiClientRepository;
+        _config = config.Value;
     }
 
     /// <summary>Lists all versions for the template, ordered newest-first.</summary>
@@ -158,7 +163,7 @@ public class TemplateVersionsController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<TransformationResult>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Transform(
-        [FromHeader(Name = "x-client-id")] Guid clientId,
+        [FromHeader(Name = "x-client-id")] Guid? clientId,
         Guid templateId,
         int version,
         [FromBody] VersionTransformRequest request)
@@ -247,9 +252,25 @@ public class TemplateVersionsController : ControllerBase
     /// Resolves the target template version and checks whether the given API client has access to it.
     /// Returns a 401 <see cref="IActionResult"/> if access is denied, or <c>null</c> if access is granted.
     /// </summary>
-    private async Task<IActionResult?> ValidateClientAccessAsync(Guid clientId, Guid templateId, int? version)
+    private async Task<IActionResult?> ValidateClientAccessAsync(Guid? clientId, Guid templateId, int? version)
     {
-        var apiClient = await _apiClientRepository.GetByIdAsync(clientId);
+        if (!clientId.HasValue)
+        {
+            var origin = Request.Headers["Origin"].ToString();
+            var isTrustedOrigin = _config.Cors.AllowedOrigins.Any(o =>
+                o.Equals(origin, StringComparison.OrdinalIgnoreCase));
+
+            if (isTrustedOrigin)
+            {
+                return null;
+            }
+
+            return StatusCode(
+                StatusCodes.Status401Unauthorized,
+                ApiResponse<object>.ErrorResponse("Unauthorized. Missing API client ID for external call."));
+        }
+
+        var apiClient = await _apiClientRepository.GetByIdAsync(clientId.Value);
         if (apiClient == null)
         {
             return StatusCode(
@@ -268,7 +289,7 @@ public class TemplateVersionsController : ControllerBase
             ? await _templateVersionRepository.GetByVersionAsync(templateId, version.Value)
             : await _templateVersionRepository.GetPublishedVersionAsync(templateId);
 
-        if (targetVersion != null && !await _templateVersionRepository.HasClientAccessAsync(targetVersion.Id, clientId))
+        if (targetVersion != null && !await _templateVersionRepository.HasClientAccessAsync(targetVersion.Id, clientId.Value))
         {
             return StatusCode(
                 StatusCodes.Status401Unauthorized,

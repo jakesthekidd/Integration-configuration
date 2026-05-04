@@ -15,18 +15,6 @@
       </label>
     </div>
 
-    <div class="template-selector">
-      <label>
-        API Client:
-        <select [(ngModel)]="selectedClientId">
-          <option value="">Choose a client...</option>
-          <option *ngFor="let client of apiClients" [value]="client.id">
-            {{ client.name }}
-          </option>
-        </select>
-      </label>
-    </div>
-
     <div class="file-upload">
       <label class="file-label">
         <input type="file" accept=".json" (change)="onFileSelected($event)" />

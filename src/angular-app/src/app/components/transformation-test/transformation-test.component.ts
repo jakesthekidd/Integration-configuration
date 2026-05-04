@@ -187,7 +187,7 @@ export class TransformationTestComponent implements OnInit {
   }
 
   canTransform(): boolean {
-    return !!(this.selectedTemplateId && this.selectedClientId && this.sourceJson);
+    return !!(this.selectedTemplateId && this.sourceJson);
   }
 
   transform() {

@@ -4,6 +4,8 @@ using Transflo.Platform.Transformer.Core.Models;
 using Transflo.Platform.Transformer.Core.Repositories.Interfaces;
 using Transflo.Platform.Transformer.Core.Services.Interfaces;
 using Transflo.Platform.Transformer.TransformationService.DTOs;
+using Microsoft.Extensions.Options;
+using Transflo.Platform.Transformer.Core.Configurations;
 
 namespace Transflo.Platform.Transformer.WebApi.Controllers;
 
@@ -15,21 +17,24 @@ public class TransformController : ControllerBase
     private readonly ITransformationCoordinator _coordinator;
     private readonly ITemplateVersionRepository _templateVersionRepository;
     private readonly IApiClientRepository _apiClientRepository;
+    private readonly ApplicationConfiguration _config;
 
     public TransformController(
         ITransformationCoordinator coordinator,
         ITemplateVersionRepository templateVersionRepository,
-        IApiClientRepository apiClientRepository)
+        IApiClientRepository apiClientRepository,
+        IOptions<ApplicationConfiguration> config)
     {
         _coordinator = coordinator;
         _templateVersionRepository = templateVersionRepository;
         _apiClientRepository = apiClientRepository;
+        _config = config.Value;
     }
 
     [HttpPost]
     [ProducesResponseType(typeof(ApiResponse<TransformationResult>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<TransformationResult>), StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> Transform([FromHeader(Name = "x-client-id")] Guid clientId, [FromBody] TransformRequest request)
+    public async Task<IActionResult> Transform([FromHeader(Name = "x-client-id")] Guid? clientId, [FromBody] TransformRequest request)
     {
         if (await ValidateClientAccessAsync(clientId, request.TemplateId, request.Version) is { } unauthorized)
         {
@@ -44,7 +49,7 @@ public class TransformController : ControllerBase
     [HttpPost("preview")]
     [ProducesResponseType(typeof(ApiResponse<TransformationResult>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<TransformationResult>), StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> Preview([FromHeader(Name = "x-client-id")] Guid clientId, [FromBody] TransformRequest request)
+    public async Task<IActionResult> Preview([FromHeader(Name = "x-client-id")] Guid? clientId, [FromBody] TransformRequest request)
     {
         if (await ValidateClientAccessAsync(clientId, request.TemplateId, request.Version) is { } unauthorized)
         {
@@ -59,7 +64,7 @@ public class TransformController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<BatchTransformResult>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> Batch([FromHeader(Name = "x-client-id")] Guid clientId, [FromBody] BatchTransformRequest request)
+    public async Task<IActionResult> Batch([FromHeader(Name = "x-client-id")] Guid? clientId, [FromBody] BatchTransformRequest request)
     {
         if (request.Records == null || request.Records.Count == 0)
         {
@@ -84,9 +89,25 @@ public class TransformController : ControllerBase
     /// Resolves the target template version and checks whether the given API client has access to it.
     /// Returns a 401 <see cref="IActionResult"/> if access is denied, or <c>null</c> if access is granted.
     /// </summary>
-    private async Task<IActionResult?> ValidateClientAccessAsync(Guid clientId, Guid templateId, int? version)
+    private async Task<IActionResult?> ValidateClientAccessAsync(Guid? clientId, Guid templateId, int? version)
     {
-        var apiClient = await _apiClientRepository.GetByIdAsync(clientId);
+        if (!clientId.HasValue)
+        {
+            var origin = Request.Headers["Origin"].ToString();
+            var isTrustedOrigin = _config.Cors.AllowedOrigins.Any(o =>
+                o.Equals(origin, StringComparison.OrdinalIgnoreCase));
+
+            if (isTrustedOrigin)
+            {
+                return null;
+            }
+
+            return StatusCode(
+                StatusCodes.Status401Unauthorized,
+                ApiResponse<object>.ErrorResponse("Unauthorized. Missing API client ID for external call."));
+        }
+
+        var apiClient = await _apiClientRepository.GetByIdAsync(clientId.Value);
         if (apiClient == null)
         {
             return StatusCode(
@@ -114,7 +135,7 @@ public class TransformController : ControllerBase
                     ApiResponse<object>.ErrorResponse("Unauthorized. The template associated with this version has been archived."));
             }
 
-            if (!await _templateVersionRepository.HasClientAccessAsync(targetVersion.Id, clientId))
+            if (!await _templateVersionRepository.HasClientAccessAsync(targetVersion.Id, clientId.Value))
             {
                 return StatusCode(
                     StatusCodes.Status401Unauthorized,
