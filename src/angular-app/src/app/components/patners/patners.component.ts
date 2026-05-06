@@ -3,7 +3,9 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../services/api.service';
 import { GeneralService } from '../../services/general.service';
-import { Partner, CreatePartnerRequest } from '../../models/patners.model';
+import { CreatePartnerRequest, Partner } from '../../models/partner.model';
+import { catchError, finalize, tap } from 'rxjs/operators';
+import { of } from 'rxjs';
 
 @Component({
   selector: 'app-patners',
@@ -20,7 +22,7 @@ export class PatnersComponent implements OnInit {
   showCreateForm = false;
   deleting: { [id: string]: boolean } = {};
 
-  newPartner: CreatePartnerRequest = { name: '' };
+  newPartner: CreatePartnerRequest = { name: '', description: '' };
 
   constructor(
     private apiService: ApiService,
@@ -48,30 +50,34 @@ export class PatnersComponent implements OnInit {
       },
     });
   }
-
   createPartner() {
     if (!this.newPartner.name.trim()) return;
-
+  
     this.creating = true;
     this.error = null;
-
-    this.apiService.createPartner(this.newPartner).subscribe({
-      next: (response) => {
-        if (response.success) {
-          this.showCreateForm = false;
-          this.newPartner = { name: '' };
-          this.loadPartners();
-          this.generalService.success('Partner created successfully.');
-        }
-        this.creating = false;
-      },
-      error: (err) => {
-        this.creating = false;
-        const message = err?.error?.message || 'Failed to create partner.';
-        // this.error = message;
-        this.generalService.error(message);
-      },
-    });
+  
+    this.apiService.createPartner(this.newPartner)
+      .pipe(
+        tap((response) => {
+          if (response.success) {
+            this.showCreateForm = false;
+            this.newPartner = { name: '', description: '' };
+            this.loadPartners();
+            this.generalService.success('Partner created successfully.');
+          }
+        }),
+  
+        catchError((err) => {
+          const message = err?.error?.message || 'Failed to create partner.';
+          this.generalService.error(message);
+          return of(null); 
+        }),
+  
+        finalize(() => {
+          this.creating = false;
+        })
+      )
+      .subscribe();
   }
 
   deletePartner(id: string, name: string) {
@@ -103,7 +109,7 @@ export class PatnersComponent implements OnInit {
 
   cancelCreate() {
     this.showCreateForm = false;
-    this.newPartner = { name: '' };
+    this.newPartner = { name: '', description: '' };
     this.error = null;
   }
 }

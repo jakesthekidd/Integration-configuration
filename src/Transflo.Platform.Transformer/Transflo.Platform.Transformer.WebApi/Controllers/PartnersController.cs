@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Transflo.Platform.Transformer.Core.DTOs;
+using Transflo.Platform.Transformer.Core.Repositories.Interfaces;
 using Transflo.Platform.Transformer.Core.Services.Interfaces;
 
 namespace Transflo.Platform.Transformer.WebApi.Controllers;
@@ -10,10 +11,12 @@ namespace Transflo.Platform.Transformer.WebApi.Controllers;
 public class PartnersController : ControllerBase
 {
     private readonly IPartnersService _service;
+    private readonly IPartnerRepository _repository;
 
-    public PartnersController(IPartnersService service)
+    public PartnersController(IPartnersService service, IPartnerRepository repository)
     {
         _service = service;
+        _repository = repository;
     }
 
     [HttpGet]
@@ -47,6 +50,20 @@ public class PartnersController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<PartnerResponse>), StatusCodes.Status201Created)]
     public async Task<IActionResult> Create([FromBody] CreatePartnerRequest request)
     {
+        if (request == null || string.IsNullOrWhiteSpace(request.Name))
+        {
+            return BadRequest(ApiResponse<object>.ErrorResponse("Partner name is required."));
+        }
+
+        var duplicate = await _repository.ExistsByNameAsync(request.Name);
+
+        if (duplicate)
+        {
+            return Conflict(ApiResponse<object>.ErrorResponse(
+                $"Partner with name '{request.Name}' already exists."
+            ));
+        }
+
         var response = await _service.CreateAsync(request);
         return Created($"/api/v1/partners/{response.Id}",
             ApiResponse<PartnerResponse>.SuccessResponse(response));

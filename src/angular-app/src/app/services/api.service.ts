@@ -21,9 +21,8 @@ import {
   LookupTableListResponse,
 } from '../models/lookup-table.model';
 import { Customer, CustomerRequest, CustomerListResponse } from '../models/customer.model';
-import { Partner, CreatePartnerRequest, PartnerListResponse } from '../models/patners.model';
 import { TransformationLogDetail, TransformationLogListResponse } from '../models/transformation-log.model';
-import { PartnerListResponse } from '../models/partner.model';
+import { CreatePartnerRequest, Partner, PartnerListResponse } from '../models/partner.model';
 import { environment } from '../../environments/environment';
 import {
   ApiClient,
@@ -136,7 +135,7 @@ export class ApiService {
   }
 
   // Partners
-  getPartners(): Observable<ApiResponse<PartnerListResponse>> {
+  getPagedPartners(): Observable<ApiResponse<PartnerListResponse>> {
     return this.http.get<ApiResponse<PartnerListResponse>>(`${this.apiUrl}/partners?page=1&pageSize=1000`);
   }
 
