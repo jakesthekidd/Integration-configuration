@@ -19,12 +19,17 @@ public class TemplateRepository : ITemplateRepository
     public async Task<Template?> GetByIdAsync(Guid id)
     {
         return await _context.Templates
+            .Include(t => t.TemplateVersions)
+            .Include(t => t.SourcePartner)
+            .Include(t => t.TargetPartner)
             .FirstOrDefaultAsync(t => t.Id == id);
     }
     public async Task<List<Template>> GetAllAsync()
     {
         return await _context.Templates
             .Include(t => t.TemplateVersions)
+            .Include(t => t.SourcePartner)
+            .Include(t => t.TargetPartner)
             .Where(t => !t.IsDeleted)
             .OrderByDescending(t => t.CreatedAt)
             .ToListAsync();
@@ -38,6 +43,8 @@ public class TemplateRepository : ITemplateRepository
         var totalCount = await query.CountAsync();
         var items = await query
             .Include(t => t.TemplateVersions)
+            .Include(t => t.SourcePartner)
+            .Include(t => t.TargetPartner)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();

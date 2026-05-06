@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../services/api.service';
 import { GeneralService } from '../../services/general.service';
 import { FieldMappingTemplate, CreateTemplateRequest, UpdateTemplateRequest } from '../../models/template.model';
+import { Partner } from '../../models/partner.model';
 import { FieldMappingsComponent } from '../field-mappings/field-mappings.component';
 
 type Screen = 'list' | 'detail' | 'version';
@@ -24,6 +25,7 @@ export class TemplatesComponent implements OnInit {
 
   // --- List Screen ---
   templates: FieldMappingTemplate[] = [];
+  partners: Partner[] = [];
   showCreateForm: boolean = false;
   newTemplate: CreateTemplateRequest = this.getEmptyCreateRequest();
 
@@ -52,6 +54,7 @@ export class TemplatesComponent implements OnInit {
 
   ngOnInit() {
     this.loadTemplates();
+    this.loadPartners();
   }
 
   // ===== Navigation =====
@@ -111,6 +114,17 @@ export class TemplatesComponent implements OnInit {
   }
 
   // ===== Data Loading =====
+
+  loadPartners() {
+    this.apiService.getPartners().subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.partners = response.data.partners;
+        }
+      },
+      error: (err) => console.error('Failed to load partners', err),
+    });
+  }
 
   loadTemplates() {
     this.isInitialLoading = true;
@@ -185,6 +199,8 @@ export class TemplatesComponent implements OnInit {
       description: template.description,
       sourceSchema: template.sourceSchema ?? '',
       targetSchema: template.targetSchema ?? '',
+      sourcePartnerId: template.sourcePartnerId,
+      targetPartnerId: template.targetPartnerId,
     };
     this.clearMessages();
   }

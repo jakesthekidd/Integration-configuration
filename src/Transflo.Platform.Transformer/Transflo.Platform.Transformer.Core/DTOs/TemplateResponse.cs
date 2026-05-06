@@ -8,6 +8,10 @@ public sealed record TemplateResponse
     public string Status { get; set; } = string.Empty;
     public string? SourceSchema { get; set; }
     public string? TargetSchema { get; set; }
+    public Guid? SourcePartnerId { get; set; }
+    public string? SourcePartnerName { get; set; }
+    public Guid? TargetPartnerId { get; set; }
+    public string? TargetPartnerName { get; set; }
     public int Version { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }

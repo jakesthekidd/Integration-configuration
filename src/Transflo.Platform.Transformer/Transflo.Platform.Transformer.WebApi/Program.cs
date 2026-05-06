@@ -67,6 +67,7 @@ builder.Services.AddScoped<IFieldMappingRepository, FieldMappingRepository>();
 builder.Services.AddScoped<ILookupTableRepository, LookupTableRepository>();
 builder.Services.AddScoped<ITransformationLogRepository, TransformationLogRepository>();
 builder.Services.AddScoped<IApiClientRepository, ApiClientRepository>();
+builder.Services.AddScoped<IPartnerRepository, PartnerRepository>();
 
 // Register services
 builder.Services.AddScoped<IJsonParserService, JsonParserService>();
@@ -92,6 +93,7 @@ builder.Services.AddScoped<ITransformationService, TransformationService>();
 builder.Services.AddScoped<ITransformationCoordinator, TransformationCoordinator>();
 builder.Services.AddScoped<IFieldMappingValidationService, FieldMappingValidationService>();
 builder.Services.AddScoped<ITemplatesService, TemplatesService>();
+builder.Services.AddScoped<IPartnersService, PartnersService>();
 
 var app = builder.Build();
 

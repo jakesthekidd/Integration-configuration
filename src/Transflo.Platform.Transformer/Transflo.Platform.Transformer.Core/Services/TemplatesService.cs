@@ -51,7 +51,9 @@ public class TemplatesService : ITemplatesService
             Description = request.Description,
             Status = TemplateStatus.Active,
             SourceSchema = NullIfEmpty(request.SourceSchema),
-            TargetSchema = NullIfEmpty(request.TargetSchema)
+            TargetSchema = NullIfEmpty(request.TargetSchema),
+            SourcePartnerId = request.SourcePartnerId,
+            TargetPartnerId = request.TargetPartnerId
         };
 
         var created = await _templateRepo.CreateAsync(template);
@@ -81,6 +83,8 @@ public class TemplatesService : ITemplatesService
         existing.Status = request.Status ?? existing.Status;
         existing.SourceSchema = NullIfEmpty(request.SourceSchema) ?? existing.SourceSchema;
         existing.TargetSchema = NullIfEmpty(request.TargetSchema) ?? existing.TargetSchema;
+        existing.SourcePartnerId = request.SourcePartnerId ?? existing.SourcePartnerId;
+        existing.TargetPartnerId = request.TargetPartnerId ?? existing.TargetPartnerId;
 
         var updated = await _templateRepo.UpdateAsync(existing);
         return ToResponse(updated);
@@ -362,6 +366,10 @@ public class TemplatesService : ITemplatesService
         LatestVersionStatus = t.TemplateVersions?.OrderByDescending(v => v.Version).FirstOrDefault()?.Status.ToString() ?? "Draft",
         SourceSchema = t.SourceSchema,
         TargetSchema = t.TargetSchema,
+        SourcePartnerId = t.SourcePartnerId,
+        SourcePartnerName = t.SourcePartner?.Name,
+        TargetPartnerId = t.TargetPartnerId,
+        TargetPartnerName = t.TargetPartner?.Name,
         Version = t.TemplateVersions?.OrderByDescending(v => v.Version).FirstOrDefault()?.Version ?? 1,
         CreatedAt = t.CreatedAt,
         UpdatedAt = t.UpdatedAt,

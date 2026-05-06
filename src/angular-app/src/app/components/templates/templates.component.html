@@ -7,7 +7,7 @@
         <p class="page-subtitle">Manage transformation templates and their versions</p>
       </div>
       <button class="btn-primary" (click)="showCreateForm = !showCreateForm">
-        {{ showCreateForm ? 'Cancel' : '＋ New Template' }}
+        {{ showCreateForm ? 'Back' : '＋ New Template' }}
       </button>
     </div>
 
@@ -49,6 +49,22 @@
               rows="2"
               placeholder="Describe what this template transforms"
             ></textarea>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="newSourcePartner">Source Partner</label>
+            <select id="newSourcePartner" [(ngModel)]="newTemplate.sourcePartnerId" name="sourcePartnerId">
+              <option [ngValue]="undefined">— None —</option>
+              <option *ngFor="let p of partners" [ngValue]="p.id">{{ p.name }}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="newTargetPartner">Target Partner</label>
+            <select id="newTargetPartner" [(ngModel)]="newTemplate.targetPartnerId" name="targetPartnerId">
+              <option [ngValue]="undefined">— None —</option>
+              <option *ngFor="let p of partners" [ngValue]="p.id">{{ p.name }}</option>
+            </select>
           </div>
         </div>
         <div class="form-row">
@@ -271,6 +287,22 @@
         </div>
         <div class="form-row">
           <div class="form-group">
+            <label for="editSourcePartner">Source Partner</label>
+            <select id="editSourcePartner" [(ngModel)]="editRequest.sourcePartnerId" name="editSourcePartnerId">
+              <option [ngValue]="undefined">— None —</option>
+              <option *ngFor="let p of partners" [ngValue]="p.id">{{ p.name }}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="editTargetPartner">Target Partner</label>
+            <select id="editTargetPartner" [(ngModel)]="editRequest.targetPartnerId" name="editTargetPartnerId">
+              <option [ngValue]="undefined">— None —</option>
+              <option *ngFor="let p of partners" [ngValue]="p.id">{{ p.name }}</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
             <label for="editSourceSchema">Source Schema (JSON)</label>
             <textarea
               id="editSourceSchema"
@@ -351,6 +383,14 @@
         <div class="detail-item">
           <span class="detail-label">Description</span>
           <span>{{ selectedTemplate.description || '—' }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Source Partner</span>
+          <span>{{ selectedTemplate.sourcePartnerName || '—' }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Target Partner</span>
+          <span>{{ selectedTemplate.targetPartnerName || '—' }}</span>
         </div>
         <div class="detail-item">
           <span class="detail-label">Created</span>

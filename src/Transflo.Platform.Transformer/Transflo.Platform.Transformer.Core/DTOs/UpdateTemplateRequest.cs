@@ -9,4 +9,6 @@ public sealed record UpdateTemplateRequest
     public TemplateStatus? Status { get; set; }
     public string? SourceSchema { get; set; }
     public string? TargetSchema { get; set; }
+    public Guid? SourcePartnerId { get; set; }
+    public Guid? TargetPartnerId { get; set; }
 }

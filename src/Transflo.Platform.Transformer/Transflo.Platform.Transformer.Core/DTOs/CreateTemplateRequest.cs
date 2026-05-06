@@ -6,4 +6,6 @@ public sealed record CreateTemplateRequest
     public string? Description { get; set; }
     public string? SourceSchema { get; set; }
     public string? TargetSchema { get; set; }
+    public Guid? SourcePartnerId { get; set; }
+    public Guid? TargetPartnerId { get; set; }
 }
