@@ -22,6 +22,11 @@ public class PartnerRepository : IPartnerRepository
             .FirstOrDefaultAsync(p => p.Id == id && !p.IsDeleted);
     }
 
+    public async Task<bool> ExistsByNameAsync(string name)
+    {
+        return await _context.Partners
+            .AnyAsync(p => p.Name == name && !p.IsDeleted);
+    }
     public async Task<List<Partner>> GetAllAsync()
     {
         return await _context.Partners

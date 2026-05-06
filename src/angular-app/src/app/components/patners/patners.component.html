@@ -1,0 +1,89 @@
+<div class="container">
+  <h2>Partners</h2>
+
+  <div class="actions">
+    <button (click)="showCreateForm = !showCreateForm; error = null" class="btn btn-primary">
+      {{ showCreateForm ? 'Cancel' : '+ Add Partner' }}
+    </button>
+  </div>
+
+  <div *ngIf="showCreateForm" class="form-container">
+    <h3>Create Partner</h3>
+
+    <form (ngSubmit)="createPartner()" #partnerForm="ngForm">
+      <div class="form-row">
+        <div class="form-group col-6">
+          <label for="partnerName"> Partner Name <span class="required">*</span> </label>
+
+          <input
+            id="partnerName"
+            type="text"
+            [(ngModel)]="newPartner.name"
+            name="name"
+            required
+            placeholder="Enter partner name"
+            [disabled]="creating"
+          />
+        </div>
+
+        <div class="form-group col-6">
+          <label for="description">Description</label>
+
+          <textarea
+            id="description"
+            [(ngModel)]="newPartner.description"
+            name="description"
+            rows="3"
+            [disabled]="creating"
+          ></textarea>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn btn-success" [disabled]="!partnerForm.form.valid || creating">
+          <span *ngIf="creating" class="spinner"></span>
+          {{ creating ? 'Creating...' : 'Create Partner' }}
+        </button>
+
+        <button type="button" class="btn btn-secondary" (click)="cancelCreate()" [disabled]="creating">Cancel</button>
+      </div>
+    </form>
+  </div>
+
+  <div *ngIf="error" class="error">{{ error }}</div>
+
+  <div class="table-wrapper">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Partner Name</th>
+          <th>Description</th>
+          <th>Created</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr *ngFor="let partner of partners">
+          <td>{{ partner.name }}</td>
+          <td>{{ partner.description }}</td>
+          <td>{{ partner.createdAt | date: 'short' }}</td>
+          <td class="actions-cell">
+            <button
+              class="btn btn-danger btn-sm"
+              (click)="deletePartner(partner.id, partner.name)"
+              [disabled]="deleting[partner.id]"
+            >
+              <span *ngIf="deleting[partner.id]" class="spinner spinner-sm"></span>
+              {{ deleting[partner.id] ? 'Deleting...' : 'Delete' }}
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div *ngIf="partners.length === 0 && !loading" class="table-state">No partners found.</div>
+
+    <div *ngIf="loading" class="table-state">Loading...</div>
+  </div>
+</div>

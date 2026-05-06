@@ -27,8 +27,22 @@ describe('TemplatesComponent', () => {
   };
 
   const mockPartners: Partner[] = [
-    { id: 'partner-1', name: 'Partner A', createdAt: new Date('2024-01-01'), updatedAt: new Date('2024-01-01') },
-    { id: 'partner-2', name: 'Partner B', createdAt: new Date('2024-01-01'), updatedAt: new Date('2024-01-01') },
+    {
+      id: 'partner-1',
+      name: 'Partner A',
+      createdAt: new Date('2024-01-01'),
+      updatedAt: new Date('2024-01-01'),
+      isDeleted: false,
+      revision: 1,
+    },
+    {
+      id: 'partner-2',
+      name: 'Partner B',
+      createdAt: new Date('2024-01-01'),
+      updatedAt: new Date('2024-01-01'),
+      isDeleted: false,
+      revision: 1,
+    },
   ];
 
   const dismissedResult = { isConfirmed: false, isDenied: false, isDismissed: true } as any;

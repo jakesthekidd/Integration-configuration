@@ -5,6 +5,7 @@ namespace Transflo.Platform.Transformer.Core.Repositories.Interfaces;
 public interface IPartnerRepository
 {
     Task<Partner?> GetByIdAsync(Guid id);
+    Task<bool> ExistsByNameAsync(string name);
     Task<List<Partner>> GetAllAsync();
     Task<(List<Partner> Items, int TotalCount)> GetAllAsync(int page, int pageSize);
     Task<Partner> CreateAsync(Partner partner);
