@@ -8,6 +8,8 @@ import { Partner } from '../../models/partner.model';
 import { FieldMappingsComponent } from '../field-mappings/field-mappings.component';
 
 type Screen = 'list' | 'detail' | 'version';
+export type TemplateStatusFilter = 'All' | 'Active' | 'Archived';
+const TEMPLATE_STATUS_FILTERS: readonly TemplateStatusFilter[] = ['All', 'Active', 'Archived'];
 
 @Component({
   selector: 'app-templates',
@@ -28,6 +30,10 @@ export class TemplatesComponent implements OnInit {
   partners: Partner[] = [];
   showCreateForm: boolean = false;
   newTemplate: CreateTemplateRequest = this.getEmptyCreateRequest();
+
+  // --- Filters ---
+  readonly statusFilterOptions = TEMPLATE_STATUS_FILTERS;
+  statusFilter: TemplateStatusFilter = 'Active';
 
   // --- Pagination ---
   currentPage: number = 1;
@@ -128,7 +134,10 @@ export class TemplatesComponent implements OnInit {
 
   loadTemplates() {
     this.isInitialLoading = true;
-    this.apiService.getTemplates(undefined, this.currentPage, this.pageSize).subscribe({
+    // 'All' is sent as undefined so the backend returns every (non-deleted) template;
+    // 'Active' / 'Archived' are passed straight through and parsed server-side.
+    const statusParam = this.statusFilter === 'All' ? undefined : this.statusFilter;
+    this.apiService.getTemplates(undefined, this.currentPage, this.pageSize, statusParam).subscribe({
       next: (response) => {
         if (response.success && response.data) {
           this.templates = response.data.templates;
@@ -142,6 +151,17 @@ export class TemplatesComponent implements OnInit {
         console.error(err);
       },
     });
+  }
+
+  setStatusFilter(filter: TemplateStatusFilter) {
+    if (this.statusFilter === filter) return;
+    this.statusFilter = filter;
+    this.currentPage = 1;
+    this.loadTemplates();
+  }
+
+  isArchived(template: FieldMappingTemplate): boolean {
+    return template.status?.toLowerCase() === 'archived';
   }
 
   get totalPages(): number {

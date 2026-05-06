@@ -52,12 +52,12 @@ public class TemplatesServiceTests
     public async Task GetAllAsync_WithPageAndPageSize_CallsPagedRepo_AndReturnsMappedItems()
     {
         _templateRepoMock
-            .Setup(r => r.GetAllAsync(2, 10))
+            .Setup(r => r.GetAllAsync(2, 10, null))
             .ReturnsAsync((new List<Template> { SampleTemplate }, 25));
 
         var (items, totalCount) = await _sut.GetAllAsync(2, 10);
 
-        _templateRepoMock.Verify(r => r.GetAllAsync(2, 10), Times.Once);
+        _templateRepoMock.Verify(r => r.GetAllAsync(2, 10, null), Times.Once);
         Assert.Single(items);
         Assert.Equal(SampleTemplate.Id, items[0].Id);
         Assert.Equal(25, totalCount);
@@ -67,12 +67,50 @@ public class TemplatesServiceTests
     public async Task GetAllAsync_WithPageAndPageSize_ReturnsEmptyItems_WhenPageExceedsTotal()
     {
         _templateRepoMock
-            .Setup(r => r.GetAllAsync(99, 20))
+            .Setup(r => r.GetAllAsync(99, 20, null))
             .ReturnsAsync((new List<Template>(), 1));
 
         var (items, totalCount) = await _sut.GetAllAsync(99, 20);
 
         Assert.Empty(items);
+        Assert.Equal(1, totalCount);
+    }
+
+    [Theory]
+    [InlineData("Active", TemplateStatus.Active)]
+    [InlineData("active", TemplateStatus.Active)]
+    [InlineData("Archived", TemplateStatus.Archived)]
+    [InlineData("ARCHIVED", TemplateStatus.Archived)]
+    public async Task GetAllAsync_WithStatusFilter_PassesParsedEnumToRepo(string status, TemplateStatus expected)
+    {
+        _templateRepoMock
+            .Setup(r => r.GetAllAsync(1, 10, expected))
+            .ReturnsAsync((new List<Template> { SampleTemplate }, 1));
+
+        var (items, totalCount) = await _sut.GetAllAsync(1, 10, status);
+
+        _templateRepoMock.Verify(r => r.GetAllAsync(1, 10, expected), Times.Once);
+        Assert.Single(items);
+        Assert.Equal(1, totalCount);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    [InlineData("All")]
+    [InlineData("all")]
+    [InlineData("garbage")]
+    public async Task GetAllAsync_WithNullEmptyOrAllStatus_PassesNullFilterToRepo(string? status)
+    {
+        _templateRepoMock
+            .Setup(r => r.GetAllAsync(1, 10, null))
+            .ReturnsAsync((new List<Template> { SampleTemplate }, 1));
+
+        var (items, totalCount) = await _sut.GetAllAsync(1, 10, status);
+
+        _templateRepoMock.Verify(r => r.GetAllAsync(1, 10, null), Times.Once);
+        Assert.Single(items);
         Assert.Equal(1, totalCount);
     }
 

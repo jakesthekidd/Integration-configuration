@@ -160,4 +160,50 @@ describe('TemplatesComponent', () => {
     expect(component.getStatusClass('Draft')).toBe('badge-draft');
     expect(component.getStatusClass('Unknown')).toBe('badge-draft');
   });
+
+  describe('status filter', () => {
+    it('defaults to Active and passes "Active" to the API on initial load', () => {
+      fixture.detectChanges();
+      expect(component.statusFilter).toBe('Active');
+      expect(apiServiceSpy.getTemplates).toHaveBeenCalledWith(undefined, 1, 10, 'Active');
+    });
+
+    it('setStatusFilter("Archived") reloads with the new filter and resets to page 1', () => {
+      fixture.detectChanges();
+      apiServiceSpy.getTemplates.calls.reset();
+      component.currentPage = 4;
+
+      component.setStatusFilter('Archived');
+
+      expect(component.statusFilter).toBe('Archived');
+      expect(component.currentPage).toBe(1);
+      expect(apiServiceSpy.getTemplates).toHaveBeenCalledWith(undefined, 1, 10, 'Archived');
+    });
+
+    it('setStatusFilter("All") sends undefined status so the API returns every template', () => {
+      fixture.detectChanges();
+      apiServiceSpy.getTemplates.calls.reset();
+
+      component.setStatusFilter('All');
+
+      expect(component.statusFilter).toBe('All');
+      expect(apiServiceSpy.getTemplates).toHaveBeenCalledWith(undefined, 1, 10, undefined);
+    });
+
+    it('setStatusFilter() does nothing when the filter has not changed', () => {
+      fixture.detectChanges();
+      apiServiceSpy.getTemplates.calls.reset();
+
+      component.setStatusFilter('Active');
+
+      expect(apiServiceSpy.getTemplates).not.toHaveBeenCalled();
+    });
+
+    it('isArchived() identifies archived templates regardless of casing', () => {
+      fixture.detectChanges();
+      expect(component.isArchived({ ...mockTemplate, status: 'Archived' })).toBeTrue();
+      expect(component.isArchived({ ...mockTemplate, status: 'ARCHIVED' })).toBeTrue();
+      expect(component.isArchived({ ...mockTemplate, status: 'Active' })).toBeFalse();
+    });
+  });
 });
