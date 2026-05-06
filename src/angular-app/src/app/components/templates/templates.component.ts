@@ -523,6 +523,19 @@ export class TemplatesComponent implements OnInit {
     return isNaN(d.getTime()) ? String(dateValue) : d.toLocaleDateString();
   }
 
+  /**
+   * MM/DD/YYYY HH:MM in 24-hour time, zero-padded, locale-independent.
+   * Used for the Versions table where users need the exact moment a draft
+   * was created — toLocaleString would shift format under non-en-US locales.
+   */
+  formatDateTime(dateValue: Date | string | null | undefined): string {
+    if (!dateValue) return '—';
+    const d = new Date(dateValue);
+    if (isNaN(d.getTime())) return String(dateValue);
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    return `${pad(d.getMonth() + 1)}/${pad(d.getDate())}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+
   private clearMessages() {
     this.error = '';
     this.success = '';
