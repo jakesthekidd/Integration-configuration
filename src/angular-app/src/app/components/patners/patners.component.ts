@@ -52,11 +52,12 @@ export class PatnersComponent implements OnInit {
   }
   createPartner() {
     if (!this.newPartner.name.trim()) return;
-  
+
     this.creating = true;
     this.error = null;
-  
-    this.apiService.createPartner(this.newPartner)
+
+    this.apiService
+      .createPartner(this.newPartner)
       .pipe(
         tap((response) => {
           if (response.success) {
@@ -66,16 +67,16 @@ export class PatnersComponent implements OnInit {
             this.generalService.success('Partner created successfully.');
           }
         }),
-  
+
         catchError((err) => {
           const message = err?.error?.message || 'Failed to create partner.';
           this.generalService.error(message);
-          return of(null); 
+          return of(null);
         }),
-  
+
         finalize(() => {
           this.creating = false;
-        })
+        }),
       )
       .subscribe();
   }

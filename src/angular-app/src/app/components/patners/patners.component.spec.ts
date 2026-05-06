@@ -53,18 +53,15 @@ describe('PatnersComponent', () => {
     component = fixture.componentInstance;
   });
 
-
   it('should create the component', () => {
     fixture.detectChanges();
     expect(component).toBeTruthy();
   });
 
-
   it('ngOnInit should call loadPartners', () => {
     fixture.detectChanges();
     expect(apiServiceSpy.getPartners).toHaveBeenCalled();
   });
-
 
   it('loadPartners() populates partners on success', () => {
     fixture.detectChanges();
@@ -80,7 +77,6 @@ describe('PatnersComponent', () => {
     expect(component.loading).toBeFalse();
     expect(component.partners).toEqual([]);
   });
-
 
   it('createPartner() does nothing when name is blank', () => {
     fixture.detectChanges();
@@ -129,7 +125,6 @@ describe('PatnersComponent', () => {
     expect(generalServiceSpy.error).toHaveBeenCalledWith('Failed to create partner.');
   }));
 
-
   it('deletePartner() calls deletePartner API and reloads on confirm', fakeAsync(() => {
     fixture.detectChanges();
     component.deletePartner('partner-1', 'Test Partner');
@@ -155,7 +150,6 @@ describe('PatnersComponent', () => {
     expect(component.error).toBe('Failed to delete partner.');
     expect(component.deleting['partner-1']).toBeUndefined();
   }));
-
 
   it('cancelCreate() hides form and resets newPartner', () => {
     fixture.detectChanges();
