@@ -127,11 +127,17 @@ export class ApiService {
   }
 
   // Templates
-  getTemplates(tmsSystemId?: string, page?: number, pageSize?: number): Observable<ApiResponse<TemplateListResponse>> {
+  getTemplates(
+    tmsSystemId?: string,
+    page?: number,
+    pageSize?: number,
+    status?: string,
+  ): Observable<ApiResponse<TemplateListResponse>> {
     const params: string[] = [];
     if (tmsSystemId) params.push(`tmsSystemId=${tmsSystemId}`);
     if (page !== undefined) params.push(`page=${page}`);
     if (pageSize !== undefined) params.push(`pageSize=${pageSize}`);
+    if (status) params.push(`status=${encodeURIComponent(status)}`);
     const url = params.length ? `${this.apiUrl}/templates?${params.join('&')}` : `${this.apiUrl}/templates`;
     return this.http.get<ApiResponse<TemplateListResponse>>(url);
   }

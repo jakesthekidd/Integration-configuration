@@ -30,10 +30,26 @@ public class TemplatesService : ITemplatesService
         return templates.Select(ToResponse).ToArray();
     }
 
-    public async Task<(TemplateResponse[] Items, int TotalCount)> GetAllAsync(int page, int pageSize)
+    public async Task<(TemplateResponse[] Items, int TotalCount)> GetAllAsync(int page, int pageSize, string? status = null)
     {
-        var (items, totalCount) = await _templateRepo.GetAllAsync(page, pageSize);
+        var statusFilter = ParseStatusFilter(status);
+        var (items, totalCount) = await _templateRepo.GetAllAsync(page, pageSize, statusFilter);
         return (items.Select(ToResponse).ToArray(), totalCount);
+    }
+
+    /// <summary>
+    /// Parses the user-facing status filter into a <see cref="TemplateStatus"/> for the repository.
+    /// Null/empty/"All" mean "do not filter". Unrecognized values fall through to no filter
+    /// rather than throwing, so a malformed query string never breaks the list view.
+    /// </summary>
+    private static TemplateStatus? ParseStatusFilter(string? status)
+    {
+        if (string.IsNullOrWhiteSpace(status) || string.Equals(status, "all", StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        return Enum.TryParse<TemplateStatus>(status, ignoreCase: true, out var parsed) ? parsed : null;
     }
 
     public async Task<TemplateResponse?> GetByIdAsync(Guid templateId)

@@ -34,14 +34,18 @@ public class TemplateRepository : ITemplateRepository
             .OrderByDescending(t => t.CreatedAt)
             .ToListAsync();
     }
-    public async Task<(List<Template> Items, int TotalCount)> GetAllAsync(int page, int pageSize)
+    public async Task<(List<Template> Items, int TotalCount)> GetAllAsync(int page, int pageSize, TemplateStatus? statusFilter = null)
     {
-        var query = _context.Templates
-            .Where(t => !t.IsDeleted)
-            .OrderByDescending(t => t.CreatedAt);
+        var filtered = _context.Templates.Where(t => !t.IsDeleted);
+        if (statusFilter.HasValue)
+        {
+            filtered = filtered.Where(t => t.Status == statusFilter.Value);
+        }
 
-        var totalCount = await query.CountAsync();
-        var items = await query
+        var ordered = filtered.OrderByDescending(t => t.CreatedAt);
+
+        var totalCount = await ordered.CountAsync();
+        var items = await ordered
             .Include(t => t.TemplateVersions)
             .Include(t => t.SourcePartner)
             .Include(t => t.TargetPartner)

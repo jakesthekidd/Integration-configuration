@@ -134,6 +134,21 @@
       </form>
     </div>
 
+    <!-- Status Filter -->
+    <div class="filter-bar" role="group" aria-label="Filter templates by status">
+      <span class="filter-label">Status:</span>
+      <button
+        *ngFor="let option of statusFilterOptions"
+        type="button"
+        class="filter-chip"
+        [class.active]="statusFilter === option"
+        [attr.aria-pressed]="statusFilter === option"
+        (click)="setStatusFilter(option)"
+      >
+        {{ option }}
+      </button>
+    </div>
+
     <!-- Templates Table -->
     <div class="table-container">
       <table>
@@ -148,7 +163,12 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let template of templates" class="clickable-row" (click)="openDetail(template)">
+          <tr
+            *ngFor="let template of templates"
+            class="clickable-row"
+            [class.row-archived]="isArchived(template)"
+            (click)="openDetail(template)"
+          >
             <td>
               <strong>{{ template.name }}</strong>
               <br /><small class="muted">{{ template.id }}</small>
@@ -176,7 +196,14 @@
             <td colspan="6" class="no-data">Loading templates...</td>
           </tr>
           <tr *ngIf="templates.length === 0 && !isInitialLoading">
-            <td colspan="6" class="no-data">No templates found. Click "New Template" to get started.</td>
+            <td colspan="6" class="no-data">
+              <ng-container *ngIf="statusFilter === 'All'">
+                No templates found. Click "New Template" to get started.
+              </ng-container>
+              <ng-container *ngIf="statusFilter !== 'All'">
+                No {{ statusFilter.toLowerCase() }} templates found.
+              </ng-container>
+            </td>
           </tr>
         </tbody>
       </table>
