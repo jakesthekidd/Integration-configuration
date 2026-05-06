@@ -23,6 +23,18 @@ public class Template : BaseEntity
     [Column("target_schema", TypeName = "jsonb")]
     public string? TargetSchema { get; set; }
 
+    [Column("source_partner_id")]
+    public Guid? SourcePartnerId { get; set; }
+
+    [Column("target_partner_id")]
+    public Guid? TargetPartnerId { get; set; }
+
     // Navigation properties
     public virtual ICollection<TemplateVersion> TemplateVersions { get; set; } = new List<TemplateVersion>();
+
+    [ForeignKey(nameof(SourcePartnerId))]
+    public virtual Partner? SourcePartner { get; set; }
+
+    [ForeignKey(nameof(TargetPartnerId))]
+    public virtual Partner? TargetPartner { get; set; }
 }

@@ -22,6 +22,7 @@ import {
 } from '../models/lookup-table.model';
 import { Customer, CustomerRequest, CustomerListResponse } from '../models/customer.model';
 import { TransformationLogDetail, TransformationLogListResponse } from '../models/transformation-log.model';
+import { PartnerListResponse } from '../models/partner.model';
 import { environment } from '../../environments/environment';
 import {
   ApiClient,
@@ -118,6 +119,11 @@ export class ApiService {
 
   deleteTmsSystem(id: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/tms-systems/${id}`);
+  }
+
+  // Partners
+  getPartners(): Observable<ApiResponse<PartnerListResponse>> {
+    return this.http.get<ApiResponse<PartnerListResponse>>(`${this.apiUrl}/partners?page=1&pageSize=1000`);
   }
 
   // Templates

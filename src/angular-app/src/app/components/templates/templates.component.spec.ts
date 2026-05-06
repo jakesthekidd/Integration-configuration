@@ -6,6 +6,7 @@ import { TemplatesComponent } from './templates.component';
 import { ApiService } from '../../services/api.service';
 import { GeneralService } from '../../services/general.service';
 import { FieldMappingTemplate } from '../../models/template.model';
+import { Partner } from '../../models/partner.model';
 
 describe('TemplatesComponent', () => {
   let component: TemplatesComponent;
@@ -21,13 +22,21 @@ describe('TemplatesComponent', () => {
     status: 'Active',
     createdAt: new Date('2024-01-01'),
     updatedAt: new Date('2024-01-01'),
+    sourcePartnerId: 'partner-1',
+    targetPartnerId: 'partner-2',
   };
+
+  const mockPartners: Partner[] = [
+    { id: 'partner-1', name: 'Partner A', createdAt: new Date('2024-01-01'), updatedAt: new Date('2024-01-01') },
+    { id: 'partner-2', name: 'Partner B', createdAt: new Date('2024-01-01'), updatedAt: new Date('2024-01-01') },
+  ];
 
   const dismissedResult = { isConfirmed: false, isDenied: false, isDismissed: true } as any;
 
   beforeEach(async () => {
     apiServiceSpy = jasmine.createSpyObj('ApiService', [
       'getTemplates',
+      'getPartners',
       'createTemplate',
       'updateTemplate',
       'deleteTemplate',
@@ -44,6 +53,9 @@ describe('TemplatesComponent', () => {
 
     apiServiceSpy.getTemplates.and.returnValue(
       of({ success: true, data: { templates: [mockTemplate], totalCount: 1 }, message: '' }),
+    );
+    apiServiceSpy.getPartners.and.returnValue(
+      of({ success: true, data: { partners: mockPartners, totalCount: 2, page: 1, pageSize: 1000 }, message: '' }),
     );
     apiServiceSpy.getTemplateVersions.and.returnValue(of({ success: true, data: [], message: '' }));
     apiServiceSpy.createTemplate.and.returnValue(of({ success: true, data: mockTemplate, message: '' }));
@@ -79,9 +91,20 @@ describe('TemplatesComponent', () => {
     expect(apiServiceSpy.getTemplates).toHaveBeenCalled();
   });
 
+  it('ngOnInit calls loadPartners()', () => {
+    fixture.detectChanges();
+    expect(apiServiceSpy.getPartners).toHaveBeenCalled();
+  });
+
   it('loadTemplates() populates templates', () => {
     fixture.detectChanges();
     expect(component.templates).toEqual([mockTemplate]);
+  });
+
+  it('loadPartners() populates partners list', () => {
+    fixture.detectChanges();
+    expect(component.partners).toEqual(mockPartners);
+    expect(component.partners.length).toBe(2);
   });
 
   it('openDetail(template) sets selectedTemplate and changes currentScreen to detail', () => {
@@ -102,6 +125,25 @@ describe('TemplatesComponent', () => {
     fixture.detectChanges();
     component.startEdit(mockTemplate);
     expect(component.editingTemplate).toEqual(mockTemplate);
+  });
+
+  it('startEdit(template) copies sourcePartnerId and targetPartnerId into editRequest', () => {
+    fixture.detectChanges();
+    component.startEdit(mockTemplate);
+    expect(component.editRequest.sourcePartnerId).toBe('partner-1');
+    expect(component.editRequest.targetPartnerId).toBe('partner-2');
+  });
+
+  it('startEdit(template) sets undefined partner IDs when template has none', () => {
+    fixture.detectChanges();
+    const templateWithNoPartners: FieldMappingTemplate = {
+      ...mockTemplate,
+      sourcePartnerId: undefined,
+      targetPartnerId: undefined,
+    };
+    component.startEdit(templateWithNoPartners);
+    expect(component.editRequest.sourcePartnerId).toBeUndefined();
+    expect(component.editRequest.targetPartnerId).toBeUndefined();
   });
 
   it('cancelEdit() clears editingTemplate', () => {

@@ -42,6 +42,16 @@ public class FieldMappingDbContext : DbContext
         {
             entity.HasIndex(e => e.Name);
             entity.Property(e => e.Status).HasConversion<string>();
+
+            entity.HasOne(e => e.SourcePartner)
+                .WithMany()
+                .HasForeignKey(e => e.SourcePartnerId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(e => e.TargetPartner)
+                .WithMany()
+                .HasForeignKey(e => e.TargetPartnerId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
 
         // TemplateVersion configuration
