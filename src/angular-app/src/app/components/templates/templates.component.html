@@ -427,7 +427,7 @@
             <td>
               <span class="badge" [ngClass]="getVersionStatusClass(v.status)">{{ v.status }}</span>
             </td>
-            <td>{{ formatDate(v.createdAt) }}</td>
+            <td>{{ formatDateTime(v.createdAt) }}</td>
             <td class="actions-cell" (click)="$event.stopPropagation()">
               <!-- Draft Actions -->
               <ng-container *ngIf="v.status === 'Draft' && selectedTemplate?.status !== 'Archived'">

@@ -160,4 +160,34 @@ describe('TemplatesComponent', () => {
     expect(component.getStatusClass('Draft')).toBe('badge-draft');
     expect(component.getStatusClass('Unknown')).toBe('badge-draft');
   });
+
+  describe('formatDateTime()', () => {
+    beforeEach(() => fixture.detectChanges());
+
+    it('renders MM/DD/YYYY HH:MM with zero-padding for single-digit components', () => {
+      // Local-time constructor avoids the test depending on the runner's TZ.
+      const d = new Date(2024, 2, 5, 7, 9); // Mar 5, 2024 07:09 local
+      expect(component.formatDateTime(d)).toBe('03/05/2024 07:09');
+    });
+
+    it('renders 24-hour time without AM/PM for afternoon timestamps', () => {
+      const d = new Date(2024, 11, 31, 23, 5); // Dec 31, 2024 23:05 local
+      expect(component.formatDateTime(d)).toBe('12/31/2024 23:05');
+    });
+
+    it('parses ISO strings just like the JSON the API returns', () => {
+      const iso = new Date(2025, 0, 2, 14, 7).toISOString();
+      expect(component.formatDateTime(iso)).toBe('01/02/2025 14:07');
+    });
+
+    it('returns the em-dash placeholder for null, undefined, and empty strings', () => {
+      expect(component.formatDateTime(null)).toBe('—');
+      expect(component.formatDateTime(undefined)).toBe('—');
+      expect(component.formatDateTime('')).toBe('—');
+    });
+
+    it('echoes the original string when the input is not a parseable date', () => {
+      expect(component.formatDateTime('not-a-date')).toBe('not-a-date');
+    });
+  });
 });
