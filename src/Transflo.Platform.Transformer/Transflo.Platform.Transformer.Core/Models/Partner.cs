@@ -11,6 +11,9 @@ public class Partner : BaseEntity
     [MaxLength(200)]
     public string Name { get; set; } = string.Empty;
 
+    [Column("description")]
+    public string? Description { get; set; }
+
     // Navigation properties
     public virtual ICollection<LookupTable> LookupTables { get; set; } = new List<LookupTable>();
 }

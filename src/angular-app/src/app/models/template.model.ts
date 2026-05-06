@@ -12,6 +12,10 @@ export interface FieldMappingTemplate {
   sourceSchema?: string;
   targetSchema?: string;
   metadata?: string;
+  sourcePartnerId?: string;
+  sourcePartnerName?: string;
+  targetPartnerId?: string;
+  targetPartnerName?: string;
 }
 
 export interface CreateTemplateRequest {
@@ -21,6 +25,8 @@ export interface CreateTemplateRequest {
   sourceSchema?: string;
   targetSchema?: string;
   metadata?: string;
+  sourcePartnerId?: string;
+  targetPartnerId?: string;
 }
 
 export interface UpdateTemplateRequest {
@@ -31,6 +37,8 @@ export interface UpdateTemplateRequest {
   sourceSchema?: string;
   targetSchema?: string;
   metadata?: string;
+  sourcePartnerId?: string;
+  targetPartnerId?: string;
 }
 
 export interface TemplateListResponse {
