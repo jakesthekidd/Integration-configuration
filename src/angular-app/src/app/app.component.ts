@@ -8,6 +8,7 @@ import { TransformationTestComponent } from './components/transformation-test/tr
 import { TransformationLogsComponent } from './components/transformation-logs/transformation-logs.component';
 import { CustomersComponent } from './components/customers/customers.component';
 import { IntegrationsComponent } from './components/integrations/integrations.component';
+import { PatnersComponent } from './components/patners/patners.component';
 
 @Component({
   selector: 'app-root',
@@ -21,6 +22,7 @@ import { IntegrationsComponent } from './components/integrations/integrations.co
     TransformationTestComponent,
     TransformationLogsComponent,
     IntegrationsComponent,
+    PatnersComponent,
   ],
   template: `
     <header>
@@ -30,6 +32,7 @@ import { IntegrationsComponent } from './components/integrations/integrations.co
           Customers
         </button>
         <button [class.active]="currentTab === AppTab.Tms" (click)="currentTab = AppTab.Tms">TMS Systems</button>
+        <button [class.active]="currentTab === AppTab.Patners" (click)="currentTab = AppTab.Patners">Patners</button>
         <button [class.active]="currentTab === AppTab.Templates" (click)="currentTab = AppTab.Templates">
           Templates
         </button>
@@ -46,6 +49,7 @@ import { IntegrationsComponent } from './components/integrations/integrations.co
     <main>
       <app-customers *ngIf="currentTab === AppTab.Customers"></app-customers>
       <app-tms-systems *ngIf="currentTab === AppTab.Tms"></app-tms-systems>
+      <app-patners *ngIf="currentTab === AppTab.Patners"></app-patners>
       <app-templates *ngIf="currentTab === AppTab.Templates"></app-templates>
       <app-lookup-tables *ngIf="currentTab === AppTab.Lookups"></app-lookup-tables>
       <app-transformation-test *ngIf="currentTab === AppTab.Test"></app-transformation-test>

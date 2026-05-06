@@ -21,6 +21,7 @@ import {
   LookupTableListResponse,
 } from '../models/lookup-table.model';
 import { Customer, CustomerRequest, CustomerListResponse } from '../models/customer.model';
+import { Partner, CreatePartnerRequest, PartnerListResponse } from '../models/patners.model';
 import { TransformationLogDetail, TransformationLogListResponse } from '../models/transformation-log.model';
 import { environment } from '../../environments/environment';
 import {
@@ -70,6 +71,19 @@ export class ApiService {
 
   removeTemplate(id: string, templateVersionId: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/apiclients/${id}/templates/${templateVersionId}`);
+  }
+
+  // Partners
+  getPartners(): Observable<ApiResponse<PartnerListResponse>> {
+    return this.http.get<ApiResponse<PartnerListResponse>>(`${this.apiUrl}/partners`);
+  }
+
+  createPartner(request: CreatePartnerRequest): Observable<ApiResponse<Partner>> {
+    return this.http.post<ApiResponse<Partner>>(`${this.apiUrl}/partners`, request);
+  }
+
+  deletePartner(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/partners/${id}`);
   }
 
   // Customers
