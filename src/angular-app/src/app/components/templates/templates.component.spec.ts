@@ -136,7 +136,11 @@ describe('TemplatesComponent', () => {
 
   it('startEdit(template) sets undefined partner IDs when template has none', () => {
     fixture.detectChanges();
-    const templateWithNoPartners: FieldMappingTemplate = { ...mockTemplate, sourcePartnerId: undefined, targetPartnerId: undefined };
+    const templateWithNoPartners: FieldMappingTemplate = {
+      ...mockTemplate,
+      sourcePartnerId: undefined,
+      targetPartnerId: undefined,
+    };
     component.startEdit(templateWithNoPartners);
     expect(component.editRequest.sourcePartnerId).toBeUndefined();
     expect(component.editRequest.targetPartnerId).toBeUndefined();
