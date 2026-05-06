@@ -6,7 +6,7 @@ export const AppTab = {
   Test: 'test',
   Logs: 'logs',
   Integrations: 'integrations',
-  Patners: 'patners',
+  Partners: 'partners',
 } as const;
 
 export type AppTab = (typeof AppTab)[keyof typeof AppTab];
