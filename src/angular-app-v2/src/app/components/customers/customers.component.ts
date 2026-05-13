@@ -1,0 +1,370 @@
+import { Component, OnInit, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
+import { TableModule } from 'primeng/table';
+import { ButtonModule } from 'primeng/button';
+import { TagModule } from 'primeng/tag';
+import { MenuModule } from 'primeng/menu';
+import { MenuItem } from 'primeng/api';
+import { ApiService } from '../../services/api.service';
+import { Customer } from '../../models/customer.model';
+import { GeneralService } from '../../services/general.service';
+import { TmsName, TmsCredentialKeys, URL_PATTERN, DmsSpecialKeys } from '../../constants/tms.constants';
+import { FieldMappingTemplate } from '../../models/template.model';
+import { ApiClient } from '../../models/api-client.model';
+import { environment } from '../../../environments/environment';
+
+@Component({
+    selector: 'app-customers',
+    imports: [CommonModule, FormsModule, TableModule, ButtonModule, TagModule, MenuModule],
+    templateUrl: './customers.component.html',
+    styleUrl: './customers.component.scss'
+})
+export class CustomersComponent implements OnInit {
+  customers: Customer[] = [];
+  filterActive: boolean | null = null;
+  showCreateForm = false;
+  editingCustomer: Customer | null = null;
+  error = '';
+  success = '';
+  creating: boolean = false;
+  updating: boolean = false;
+  isInitialLoading: boolean = true;
+  isLoading: boolean = false;
+  deleting: { [id: string]: boolean } = {};
+  togglingStatus: { [id: string]: boolean } = {};
+  tmsOptions: TmsName[] = Object.values(TmsName);
+  dmsTemplates: FieldMappingTemplate[] = [];
+  dmsApiClients: ApiClient[] = [];
+
+  activeRow: Customer | null = null;
+
+  private router = inject(Router);
+
+  /** Customer name is a link — clicking it opens the customer detail (tree view). */
+  openCustomer(c: Customer) {
+    this.router.navigate(['/customers', c.customerId]);
+  }
+
+  /** Row action menu — re-built lazily based on the currently-targeted row. */
+  get rowMenuItems(): MenuItem[] {
+    const c = this.activeRow;
+    if (!c) return [];
+    return [
+      { label: 'Edit', icon: 'pi pi-pencil', command: () => this.startEdit(c) },
+      {
+        label: c.enabled ? 'Deactivate' : 'Activate',
+        icon: c.enabled ? 'pi pi-pause' : 'pi pi-play',
+        command: () => this.toggleStatus(c),
+      },
+      { separator: true },
+      {
+        label: 'Delete',
+        icon: 'pi pi-trash',
+        styleClass: 'menu-item-danger',
+        command: () => this.deleteCustomer(c.customerId),
+      },
+    ];
+  }
+
+  formData: Customer = this.emptyForm();
+
+  constructor(
+    private apiService: ApiService,
+    private generalService: GeneralService,
+  ) {}
+
+  ngOnInit() {
+    this.loadCustomers();
+    this.apiService.getTemplates().subscribe({
+      next: (r) => {
+        if (r.success && r.data) this.dmsTemplates = r.data.templates;
+      },
+    });
+    this.apiService.getApiClients().subscribe({
+      next: (r) => {
+        if (r.success && r.data) this.dmsApiClients = r.data.apiClients;
+      },
+    });
+  }
+
+  loadCustomers() {
+    this.isInitialLoading = true;
+    this.apiService.getCustomers(this.filterActive ?? undefined).subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.customers = response.data.customers;
+        } else {
+          this.customers = [];
+        }
+        this.isInitialLoading = false;
+      },
+      error: (err) => {
+        this.error = 'Failed to load customers';
+        console.error(err);
+        this.isInitialLoading = false;
+      },
+    });
+  }
+
+  toggleCreateForm() {
+    this.showCreateForm = !this.showCreateForm;
+    this.editingCustomer = null;
+    this.formData = this.emptyForm();
+    this.clearMessages();
+  }
+
+  startEdit(customer: Customer) {
+    this.editingCustomer = customer;
+    this.showCreateForm = true;
+    this.clearMessages();
+
+    this.formData = {
+      ...this.emptyForm(),
+      ...customer,
+      lastSyncTime: customer.lastSyncTime ?? new Date().toISOString(),
+    };
+    setTimeout(() => {
+      document.querySelector('.form-card')?.scrollIntoView({ behavior: 'smooth' });
+    }, 50);
+  }
+  saveCustomer() {
+    this.clearMessages();
+    const payload = this.CustomerPayload();
+    const isUpdate = !!this.editingCustomer;
+
+    if (isUpdate) {
+      this.updating = true;
+
+      this.apiService.updateCustomer(this.editingCustomer!.customerId, payload).subscribe({
+        next: async (response) => {
+          if (response.success) {
+            // Wait until the success Swal is closed
+            await this.generalService.success('Customer updated successfully');
+            this.cancelEditAndReload();
+          } else {
+            const msg = response.errors?.join(', ') || response.message || 'Failed to update customer';
+            this.generalService.error(msg);
+          }
+        },
+        error: (err) => {
+          const msg = err.error?.message || err.message || 'Network error while updating customer';
+          this.generalService.error(msg);
+          this.updating = false;
+        },
+        complete: () => {
+          this.updating = false;
+        },
+      });
+    } else {
+      this.creating = true;
+
+      this.apiService.createCustomer(payload).subscribe({
+        next: async (response) => {
+          if (response.success) {
+            await this.generalService.success('Customer created successfully');
+            this.cancelEditAndReload();
+          } else {
+            const msg = response.errors?.join(', ') || response.message || 'Failed to create customer';
+            this.generalService.error(msg);
+          }
+        },
+        error: (err) => {
+          const msg = err.error?.message || err.message || 'Network error while creating customer';
+          this.generalService.error(msg);
+          this.creating = false;
+        },
+        complete: () => {
+          this.creating = false;
+        },
+      });
+    }
+  }
+
+  private cancelEditAndReload() {
+    this.cancelEdit();
+    this.loadCustomers();
+  }
+
+  private getFormattedTime(date?: string): string {
+    const d = date ? new Date(date) : new Date();
+    const pad = (n: number) => n.toString().padStart(2, '0');
+
+    return (
+      d.getFullYear().toString() +
+      pad(d.getMonth() + 1) +
+      pad(d.getDate()) +
+      pad(d.getHours()) +
+      pad(d.getMinutes()) +
+      pad(d.getSeconds()) +
+      '-0000'
+    );
+  }
+  private CustomerPayload(): Customer {
+    const credentials = { ...this.formData.credentials };
+
+    if (this.formData.tmsName === TmsName.DMS) {
+      credentials[DmsSpecialKeys.TransformerBaseUrl] = this.transformerBaseUrl;
+    }
+
+    const tmsName = (Object.values(TmsName) as string[]).includes(this.formData.tmsName) ? this.formData.tmsName : '';
+
+    return {
+      customerId: (this.formData.customerId || '').substring(0, 50),
+      customerName: this.formData.customerName || '',
+      tmsName: tmsName,
+      lastSyncTime: this.formData.lastSyncTime || this.getFormattedTime(),
+      updateOrInsertStatuses: this.formData.updateOrInsertStatuses || '',
+      updateOnlyStatuses: this.formData.updateOnlyStatuses || null,
+      credentials: credentials,
+      settings: this.formData.settings || null,
+      syncFrequencyMinutes: this.formData.syncFrequencyMinutes,
+      orderRetentionDays: this.formData.orderRetentionDays,
+      enabled: this.formData.enabled ?? true,
+      outboundEnabled: this.formData.outboundEnabled ?? true,
+      tonuCode: this.formData.tonuCode || null,
+      whiteListedOrders: this.formData.whiteListedOrders || null,
+      syncBatchSize: this.formData.syncBatchSize ?? null,
+    };
+  }
+
+  toggleStatus(customer: Customer) {
+    const newStatus = !customer.enabled;
+    const actionText = newStatus ? 'activate' : 'deactivate';
+
+    this.generalService
+      .confirm({
+        title: `${newStatus ? 'Activate' : 'Deactivate'} Customer`,
+        text: `Are you sure you want to ${actionText} this customer?`,
+        confirmText: newStatus ? 'Yes, Activate' : 'Yes, Deactivate',
+        confirmColor: newStatus ? '#28a745' : '#28a745',
+        icon: 'question',
+      })
+      .then((result) => {
+        if (!result.isConfirmed) return;
+
+        this.togglingStatus[customer.customerId] = true;
+        console.log('customer.customerId', customer.customerId);
+
+        this.apiService.setCustomerStatus(customer.customerId, newStatus).subscribe({
+          next: (response) => {
+            if (response.success) {
+              customer.enabled = newStatus;
+              this.generalService.success(`Customer ${actionText}d successfully`);
+            } else {
+              const msg = response.errors?.join(', ') || `Failed to ${actionText} customer`;
+              this.generalService.error(msg);
+            }
+          },
+          error: (err) => {
+            this.generalService.error(`Failed to ${actionText} customer: ${err.message || err}`);
+            this.togglingStatus[customer.customerId] = false;
+          },
+          complete: () => {
+            this.togglingStatus[customer.customerId] = false;
+          },
+        });
+      });
+  }
+
+  deleteCustomer(customerId: string) {
+    this.generalService
+      .confirm({
+        title: 'Delete Customer',
+        text: 'Are you sure you want to delete this customer?',
+        confirmText: 'Yes, Delete',
+        confirmColor: '#e74c3c',
+        icon: 'warning',
+      })
+      .then((result) => {
+        if (!result.isConfirmed) return;
+
+        this.deleting[customerId] = true;
+
+        this.apiService.deleteCustomer(customerId).subscribe({
+          next: () => {
+            this.generalService.success('Customer has been deleted.').then(() => {
+              this.loadCustomers();
+            });
+          },
+          error: (err) => {
+            this.generalService.error('Failed to delete customer: ' + (err.message || err));
+            this.deleting[customerId] = false;
+          },
+          complete: () => {
+            this.deleting[customerId] = false;
+          },
+        });
+      });
+  }
+
+  cancelEdit() {
+    this.creating = false;
+    this.updating = false;
+    this.editingCustomer = null;
+    this.showCreateForm = false;
+    this.formData = this.emptyForm();
+    this.clearMessages();
+  }
+
+  private clearMessages() {
+    this.error = '';
+    this.success = '';
+  }
+
+  private emptyForm(): Customer {
+    return {
+      customerId: '',
+      customerName: '',
+      tmsName: '',
+      lastSyncTime: new Date().toISOString(),
+      enabled: true,
+      outboundEnabled: false,
+      credentials: {},
+    };
+  }
+
+  getCurrentTmsKeys(): string[] {
+    return this.tmsCredentialKeys[this.formData.tmsName as TmsName] ?? [];
+  }
+
+  readonly tmsCredentialKeys = TmsCredentialKeys;
+  readonly urlPattern = URL_PATTERN;
+  readonly transformerBaseUrl = environment.apiUrl.startsWith('http')
+    ? environment.apiUrl
+    : window.location.origin + environment.apiUrl;
+
+  isDmsCredentialRequired(_key: string): boolean {
+    return this.formData.tmsName === TmsName.DMS;
+  }
+
+  isUrlField(key: string): boolean {
+    return key.toLowerCase().includes('url');
+  }
+
+  isTemplateDropdown(key: string): boolean {
+    return key === DmsSpecialKeys.TemplateId;
+  }
+
+  isApiClientDropdown(key: string): boolean {
+    return key === DmsSpecialKeys.ApiClientId;
+  }
+
+  isNumericField(key: string): boolean {
+    return key === DmsSpecialKeys.TemplateVersion;
+  }
+
+  isTransformerBaseUrlField(key: string): boolean {
+    return key === DmsSpecialKeys.TransformerBaseUrl;
+  }
+
+  readonly DmsSpecialKeys = DmsSpecialKeys;
+
+  allowOnlyNumbers(event: KeyboardEvent) {
+    const charCode = event.which ? event.which : event.keyCode;
+    if (charCode < 48 || charCode > 57) {
+      event.preventDefault();
+    }
+  }
+}

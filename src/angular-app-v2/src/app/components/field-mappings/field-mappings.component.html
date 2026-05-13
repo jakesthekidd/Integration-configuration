@@ -1,0 +1,196 @@
+<div class="container mappings-subcontainer">
+  <div class="filters" style="justify-content: space-between">
+    <h3>Field Mappings for {{ templateName }}</h3>
+    @if (!isReadonly) {
+      <button class="btn-primary" (click)="showCreateForm = !showCreateForm">
+        {{ showCreateForm ? 'Cancel' : 'Add New Mapping' }}
+      </button>
+    }
+  </div>
+
+  @if (showCreateForm || editingMapping) {
+    <div class="form-container">
+      <h3>{{ editingMapping ? 'Edit Field Mapping' : 'Create Field Mapping' }}</h3>
+      <form (ngSubmit)="editingMapping ? updateMapping() : createMapping()" #mappingForm="ngForm">
+        <div class="form-group">
+          <label for="mappingTemplate">Template:</label>
+          <input id="mappingTemplate" type="text" [value]="templateName" readonly class="readonly-input" />
+        </div>
+        <div class="form-group">
+          <label for="sourcePath">Source Path: <span class="required">*</span></label>
+          <input
+            id="sourcePath"
+            type="text"
+            [(ngModel)]="newMapping.sourcePath"
+            name="sourcePath"
+            required
+            list="sourcePathList"
+            placeholder="e.g., customer.name"
+            autocomplete="off"
+          />
+          <datalist id="sourcePathList">
+            @for (p of sourcePaths; track p) {
+              <option [value]="p"></option>
+            }
+          </datalist>
+        </div>
+        <div class="form-group">
+          <label for="targetPath">Target Path: <span class="required">*</span></label>
+          <input
+            id="targetPath"
+            type="text"
+            [(ngModel)]="newMapping.targetPath"
+            name="targetPath"
+            required
+            list="targetPathList"
+            placeholder="e.g., CustomerName"
+            autocomplete="off"
+          />
+          <datalist id="targetPathList">
+            @for (p of targetPaths; track p) {
+              <option [value]="p"></option>
+            }
+          </datalist>
+        </div>
+        <div class="form-group">
+          <label for="transformationType">Transformation Type: <span class="required">*</span></label>
+          <select
+            id="transformationType"
+            [(ngModel)]="newMapping.transformationType"
+            name="transformationType"
+            (change)="onTransformationTypeChange()"
+            required
+          >
+            @for (type of transformationTypes; track type) {
+              <option [value]="type">
+                {{ type }}
+              </option>
+            }
+          </select>
+        </div>
+        @if (newMapping.transformationType === 'Lookup') {
+          <div class="form-group">
+            <label for="lookupTable"> Lookup Table: <span class="required">*</span> </label>
+            <select
+              id="lookupTable"
+              [(ngModel)]="newMapping.lookupTableId"
+              name="lookupTableId"
+              [required]="newMapping.transformationType === 'Lookup'"
+              #lookupTable="ngModel"
+            >
+              <option value="">-- Select Lookup Table --</option>
+              @for (table of lookupTables; track table) {
+                <option [value]="table.id">
+                  {{ table.fieldName }}
+                </option>
+              }
+            </select>
+            @if (lookupTable.invalid && lookupTable.touched) {
+              <div class="error">Lookup Table is required for Lookup transformation</div>
+            }
+          </div>
+        }
+        @if (newMapping.transformationType !== 'Lookup') {
+          <div class="form-group">
+            <label for="transformationConfig">Transformation Config:</label>
+            <textarea
+              id="transformationConfig"
+              [(ngModel)]="newMapping.transformationConfig"
+              name="transformationConfig"
+              rows="3"
+              placeholder='{"separator": ", ", "fields": ["field1", "field2"]}'
+            ></textarea>
+            <small>JSON configuration for the transformation</small>
+          </div>
+        }
+        <div class="form-group checkbox">
+          <label>
+            <input type="checkbox" [(ngModel)]="newMapping.isRequired" name="isRequired" />
+            Required Field
+          </label>
+        </div>
+        <div class="form-group">
+          <label for="defaultValue">Default Value:</label>
+          <input
+            id="defaultValue"
+            type="text"
+            [(ngModel)]="newMapping.defaultValue"
+            name="defaultValue"
+            placeholder="Value to use if source is empty"
+          />
+        </div>
+        <div class="form-group">
+          <label for="validationRules">Validation Rules:</label>
+          <textarea
+            id="validationRules"
+            [(ngModel)]="newMapping.validationRules"
+            name="validationRules"
+            rows="2"
+            placeholder='{"pattern": "^[A-Z0-9]+$", "maxLength": 50}'
+          ></textarea>
+          <small>JSON validation rules for the field</small>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn-primary" [disabled]="!mappingForm.form.valid">
+            {{ editingMapping ? 'Update' : 'Create' }}
+          </button>
+          <button type="button" class="btn-secondary" (click)="cancelEdit()">
+            {{ editingMapping ? 'Cancel' : 'Reset' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  }
+
+  @if (error) {
+    <div class="error">{{ error }}</div>
+  }
+  @if (success) {
+    <div class="success">{{ success }}</div>
+  }
+
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Source Path</th>
+          <th>Target Path</th>
+          <th>Type</th>
+          <th>Required</th>
+          <th>Default</th>
+          @if (!isReadonly) {
+            <th>Actions</th>
+          }
+        </tr>
+      </thead>
+      <tbody>
+        @for (mapping of mappings; track mapping) {
+          <tr>
+            <td>
+              <code>{{ mapping.sourcePath }}</code>
+            </td>
+            <td>
+              <code>{{ mapping.targetPath }}</code>
+            </td>
+            <td>
+              <span class="badge">{{ mapping.transformationType }}</span>
+            </td>
+            <td>{{ mapping.isRequired ? 'Yes' : 'No' }}</td>
+            <td>{{ mapping.defaultValue || '-' }}</td>
+            @if (!isReadonly) {
+              <td>
+                <button class="btn-small btn-info" (click)="startEdit(mapping)">Edit</button>
+                <button class="btn-small btn-danger" (click)="deleteMapping(mapping.id)">Delete</button>
+              </td>
+            }
+          </tr>
+        }
+        @if (mappings.length === 0) {
+          <tr>
+            <td colspan="8" class="no-data">No field mappings found</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>

@@ -1,0 +1,551 @@
+<div class="container">
+  <!-- ==================== SCREEN: LIST ==================== -->
+  @if (currentScreen === 'list') {
+    <div class="page-header">
+      <div>
+        <h2>Templates</h2>
+        <p class="page-subtitle">Manage transformation templates and their versions</p>
+      </div>
+      <button class="btn-primary" (click)="showCreateForm = !showCreateForm">
+        {{ showCreateForm ? 'Back' : '＋ New Template' }}
+      </button>
+    </div>
+    @if (error) {
+      <div class="error">{{ error }}</div>
+    }
+    @if (success) {
+      <div class="success">
+        {{ success }}
+        @if (duplicatedTemplateId) {
+          <button
+            class="btn-link"
+            style="color: white; text-decoration: underline; margin-left: 10px"
+            (click)="viewDuplicated()"
+          >
+            View it
+          </button>
+        }
+      </div>
+    }
+    <!-- Create Form -->
+    @if (showCreateForm) {
+      <div class="form-container">
+        <h3>Create Template</h3>
+        <form (ngSubmit)="createTemplate()" #createForm="ngForm">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="newTemplateName">Name <span class="required">*</span></label>
+              <input
+                id="newTemplateName"
+                type="text"
+                [(ngModel)]="newTemplate.name"
+                name="name"
+                required
+                placeholder="e.g., McLeod to WFAI Transformation"
+              />
+            </div>
+            <div class="form-group">
+              <label for="newTemplateDescription">Description</label>
+              <textarea
+                id="newTemplateDescription"
+                [(ngModel)]="newTemplate.description"
+                name="description"
+                rows="2"
+                placeholder="Describe what this template transforms"
+              ></textarea>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="newSourcePartner">Source Partner</label>
+              <select id="newSourcePartner" [(ngModel)]="newTemplate.sourcePartnerId" name="sourcePartnerId">
+                <option [ngValue]="undefined">— None —</option>
+                @for (p of partners; track p) {
+                  <option [ngValue]="p.id">{{ p.name }}</option>
+                }
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="newTargetPartner">Target Partner</label>
+              <select id="newTargetPartner" [(ngModel)]="newTemplate.targetPartnerId" name="targetPartnerId">
+                <option [ngValue]="undefined">— None —</option>
+                @for (p of partners; track p) {
+                  <option [ngValue]="p.id">{{ p.name }}</option>
+                }
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="newSourceSchema">Source Schema (JSON)</label>
+              <textarea
+                id="newSourceSchema"
+                [(ngModel)]="newTemplate.sourceSchema"
+                name="sourceSchema"
+                rows="5"
+                class="json-textarea"
+                placeholder='{ "field": "value", ... }'
+              ></textarea>
+              <div
+                class="drop-zone"
+                (click)="fileInputCreateSource.click()"
+                (keydown.enter)="fileInputCreateSource.click()"
+                (dragover)="$event.preventDefault()"
+                (drop)="onFileDropSourceSchema($event, false)"
+                tabindex="0"
+                role="button"
+              >
+                <p>Drag &amp; Drop JSON file or <strong>Click to Upload</strong></p>
+                <input
+                  type="file"
+                  #fileInputCreateSource
+                  (change)="handleFileUploadSourceSchema($event, false)"
+                  accept=".json"
+                  style="display: none"
+                />
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="newTargetSchema">Target Schema (JSON)</label>
+              <textarea
+                id="newTargetSchema"
+                [(ngModel)]="newTemplate.targetSchema"
+                name="targetSchema"
+                rows="5"
+                class="json-textarea"
+                placeholder='{ "field": "value", ... }'
+              ></textarea>
+              <div
+                class="drop-zone"
+                (click)="fileInputCreateTarget.click()"
+                (keydown.enter)="fileInputCreateTarget.click()"
+                (dragover)="$event.preventDefault()"
+                (drop)="onFileDropTargetSchema($event, false)"
+                tabindex="0"
+                role="button"
+              >
+                <p>Drag &amp; Drop JSON file or <strong>Click to Upload</strong></p>
+                <input
+                  type="file"
+                  #fileInputCreateTarget
+                  (change)="handleFileUploadTargetSchema($event, false)"
+                  accept=".json"
+                  style="display: none"
+                />
+              </div>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn-primary" [disabled]="!createForm.form.valid">Create</button>
+            <button type="button" class="btn-secondary" (click)="showCreateForm = false">Cancel</button>
+          </div>
+        </form>
+      </div>
+    }
+    <!-- Status Filter -->
+    <div class="filter-bar" role="group" aria-label="Filter templates by status">
+      <span class="filter-label">Status:</span>
+      @for (option of statusFilterOptions; track option) {
+        <button
+          type="button"
+          class="filter-chip"
+          [class.active]="statusFilter === option"
+          [attr.aria-pressed]="statusFilter === option"
+          (click)="setStatusFilter(option)"
+        >
+          {{ option }}
+        </button>
+      }
+    </div>
+    <!-- Templates Table -->
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Status</th>
+            <th>Latest Version</th>
+            <th>Description</th>
+            <th>Created</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (template of templates; track template) {
+            <tr class="clickable-row" [class.row-archived]="isArchived(template)" (click)="openDetail(template)">
+              <td>
+                <strong>{{ template.name }}</strong>
+                <br /><small class="muted">{{ template.id }}</small>
+              </td>
+              <td>
+                <span class="badge" [ngClass]="getStatusClass(template.status)">{{ template.status }}</span>
+              </td>
+              <td>
+                <span class="badge badge-version">v{{ template.version }}</span>
+                &nbsp;
+                <span class="badge" [ngClass]="getVersionStatusClass(template.latestVersionStatus)">
+                  {{ template.latestVersionStatus || 'Draft' }}
+                </span>
+              </td>
+              <td class="description-cell">{{ template.description || '—' }}</td>
+              <td>{{ formatDate(template.createdAt) }}</td>
+              <td class="actions-cell" (click)="$event.stopPropagation()">
+                <button class="btn-small btn-info" (click)="openDetail(template)" title="View Template Details">
+                  View
+                </button>
+                <button class="btn-small btn-danger" (click)="deleteTemplate(template)" title="Delete">Delete</button>
+              </td>
+            </tr>
+          }
+          @if (isInitialLoading) {
+            <tr>
+              <td colspan="6" class="no-data">Loading templates...</td>
+            </tr>
+          }
+          @if (templates.length === 0 && !isInitialLoading) {
+            <tr>
+              <td colspan="6" class="no-data">
+                @if (statusFilter === 'All') {
+                  No templates found. Click "New Template" to get started.
+                }
+                @if (statusFilter !== 'All') {
+                  No {{ statusFilter.toLowerCase() }} templates found.
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <div class="pagination-bar">
+      <div class="pagination-info">
+        Showing {{ templates.length ? (currentPage - 1) * pageSize + 1 : 0 }}–{{
+          (currentPage - 1) * pageSize + templates.length
+        }}
+        of {{ totalCount }} template(s)
+      </div>
+      <div class="pagination-controls">
+        <select [ngModel]="pageSize" (ngModelChange)="changePageSize($event)" name="pageSize">
+          <option [value]="10">10 / page</option>
+          <option [value]="25">25 / page</option>
+          <option [value]="50">50 / page</option>
+        </select>
+        <button class="btn-page" [disabled]="currentPage === 1" (click)="goToPage(1)">«</button>
+        <button class="btn-page" [disabled]="currentPage === 1" (click)="goToPage(currentPage - 1)">‹</button>
+        <span class="page-indicator">Page {{ currentPage }} of {{ totalPages || 1 }}</span>
+        <button class="btn-page" [disabled]="currentPage >= totalPages" (click)="goToPage(currentPage + 1)">›</button>
+        <button class="btn-page" [disabled]="currentPage >= totalPages" (click)="goToPage(totalPages)">»</button>
+      </div>
+    </div>
+  }
+
+  <!-- ==================== SCREEN: DETAIL ==================== -->
+  @if (currentScreen === 'detail' && selectedTemplate) {
+    <div class="page-header">
+      <div class="breadcrumb">
+        <button class="btn-link" (click)="goToList()">Templates</button>
+        <span class="breadcrumb-sep">›</span>
+        <span>{{ selectedTemplate.name }}</span>
+      </div>
+      <div class="header-actions">
+        <button class="btn-small btn-info" (click)="startEdit(selectedTemplate)">Edit</button>
+        <div class="dropdown">
+          <button class="btn-small btn-duplicate dropdown-toggle" (click)="toggleDuplicateDropdown($event)">
+            Duplicate ▾
+          </button>
+          <div
+            class="dropdown-menu"
+            [class.show]="showDuplicateDropdown"
+            (click)="$event.stopPropagation()"
+            (keydown)="$event.stopPropagation()"
+            tabindex="-1"
+            role="menu"
+          >
+            <button type="button" (click)="duplicateTemplate(selectedTemplate!, true)">Copy with all versions</button>
+            <button type="button" (click)="duplicateTemplate(selectedTemplate!, false)">Copy with last version</button>
+          </div>
+        </div>
+        @if (selectedTemplate.status !== 'Archived') {
+          <button class="btn-small btn-archive" (click)="archiveTemplate(selectedTemplate)">Archive</button>
+        }
+        @if (selectedTemplate.status === 'Archived') {
+          <button class="btn-small btn-reactivate" (click)="reactivateTemplate(selectedTemplate)">Reactivate</button>
+        }
+      </div>
+    </div>
+    @if (error) {
+      <div class="error">{{ error }}</div>
+    }
+    @if (success) {
+      <div class="success">
+        {{ success }}
+        @if (duplicatedTemplateId) {
+          <button
+            class="btn-link"
+            style="color: white; text-decoration: underline; margin-left: 10px"
+            (click)="viewDuplicated()"
+          >
+            View it
+          </button>
+        }
+      </div>
+    }
+    <!-- Edit Form -->
+    @if (editingTemplate) {
+      <div class="form-container">
+        <h3>Edit Template</h3>
+        <form (ngSubmit)="updateTemplate()" #editForm="ngForm">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="editName">Name <span class="required">*</span></label>
+              <input
+                id="editName"
+                type="text"
+                [(ngModel)]="editRequest.name"
+                name="editName"
+                required
+                placeholder="Template name"
+              />
+            </div>
+            <div class="form-group">
+              <label for="editDescription">Description</label>
+              <textarea
+                id="editDescription"
+                [(ngModel)]="editRequest.description"
+                name="editDescription"
+                rows="2"
+              ></textarea>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="editSourcePartner">Source Partner</label>
+              <select id="editSourcePartner" [(ngModel)]="editRequest.sourcePartnerId" name="editSourcePartnerId">
+                <option [ngValue]="undefined">— None —</option>
+                @for (p of partners; track p) {
+                  <option [ngValue]="p.id">{{ p.name }}</option>
+                }
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="editTargetPartner">Target Partner</label>
+              <select id="editTargetPartner" [(ngModel)]="editRequest.targetPartnerId" name="editTargetPartnerId">
+                <option [ngValue]="undefined">— None —</option>
+                @for (p of partners; track p) {
+                  <option [ngValue]="p.id">{{ p.name }}</option>
+                }
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="editSourceSchema">Source Schema (JSON)</label>
+              <textarea
+                id="editSourceSchema"
+                [(ngModel)]="editRequest.sourceSchema"
+                name="editSourceSchema"
+                rows="5"
+                class="json-textarea"
+                placeholder='{ "field": "value", ... }'
+              ></textarea>
+              <div
+                class="drop-zone"
+                (click)="fileInputEditSource.click()"
+                (keydown.enter)="fileInputEditSource.click()"
+                (dragover)="$event.preventDefault()"
+                (drop)="onFileDropSourceSchema($event, true)"
+                tabindex="0"
+                role="button"
+              >
+                <p>Drag &amp; Drop JSON file or <strong>Click to Upload</strong></p>
+                <input
+                  type="file"
+                  #fileInputEditSource
+                  (change)="handleFileUploadSourceSchema($event, true)"
+                  accept=".json"
+                  style="display: none"
+                />
+              </div>
+              <small>Used to auto-suggest source field paths in the Field Mappings screen.</small>
+            </div>
+            <div class="form-group">
+              <label for="editTargetSchema">Target Schema (JSON)</label>
+              <textarea
+                id="editTargetSchema"
+                [(ngModel)]="editRequest.targetSchema"
+                name="editTargetSchema"
+                rows="5"
+                class="json-textarea"
+                placeholder='{ "field": "value", ... }'
+              ></textarea>
+              <div
+                class="drop-zone"
+                (click)="fileInputEditTarget.click()"
+                (keydown.enter)="fileInputEditTarget.click()"
+                (dragover)="$event.preventDefault()"
+                (drop)="onFileDropTargetSchema($event, true)"
+                tabindex="0"
+                role="button"
+              >
+                <p>Drag &amp; Drop JSON file or <strong>Click to Upload</strong></p>
+                <input
+                  type="file"
+                  #fileInputEditTarget
+                  (change)="handleFileUploadTargetSchema($event, true)"
+                  accept=".json"
+                  style="display: none"
+                />
+              </div>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn-primary" [disabled]="!editForm.form.valid">Save Changes</button>
+            <button type="button" class="btn-secondary" (click)="cancelEdit()">Cancel</button>
+          </div>
+        </form>
+      </div>
+    }
+    <!-- Template Info Card -->
+    <div class="detail-card">
+      <div class="detail-grid">
+        <div class="detail-item">
+          <span class="detail-label">ID</span>
+          <span class="muted">{{ selectedTemplate.id }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Status</span>
+          <span class="badge" [ngClass]="getStatusClass(selectedTemplate.status)">{{ selectedTemplate.status }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Description</span>
+          <span>{{ selectedTemplate.description || '—' }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Source Partner</span>
+          <span>{{ selectedTemplate.sourcePartnerName || '—' }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Target Partner</span>
+          <span>{{ selectedTemplate.targetPartnerName || '—' }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Created</span>
+          <span>{{ formatDate(selectedTemplate.createdAt) }}</span>
+        </div>
+      </div>
+    </div>
+    <!-- Versions Section -->
+    <div class="section-header">
+      <h3>Versions</h3>
+    </div>
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Version</th>
+            <th>Base Version</th>
+            <th>Status</th>
+            <th>Created</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (v of templateVersions; track v) {
+            <tr class="clickable-row" (click)="openVersion(v)">
+              <td>
+                <span class="badge badge-version">v{{ v.version }}</span>
+              </td>
+              <td>
+                @if (v.baseVersion) {
+                  <span class="badge badge-version">v{{ v.baseVersion }}</span>
+                }
+                @if (!v.baseVersion) {
+                  <span>—</span>
+                }
+              </td>
+              <td>
+                <span class="badge" [ngClass]="getVersionStatusClass(v.status)">{{ v.status }}</span>
+              </td>
+              <td>{{ formatDateTime(v.createdAt) }}</td>
+              <td class="actions-cell" (click)="$event.stopPropagation()">
+                <!-- Draft Actions -->
+                @if (v.status === 'Draft' && selectedTemplate?.status !== 'Archived') {
+                  @if (templateVersions.length > 1) {
+                    <button class="btn-small btn-danger" (click)="deleteVersion(v)" title="Delete this draft">
+                      Delete
+                    </button>
+                  }
+                }
+                <!-- Other Actions -->
+                @if (v.status !== 'Draft' && !hasAnyDraft() && selectedTemplate?.status !== 'Archived') {
+                  <button
+                    class="btn-small btn-secondary"
+                    (click)="createNewVersion(selectedTemplate!, v.version)"
+                    title="Create a new draft based on this version"
+                  >
+                    Copy to new version
+                  </button>
+                }
+                <button class="btn-small btn-info" (click)="openVersion(v)">View Mappings</button>
+              </td>
+            </tr>
+          }
+          @if (templateVersions.length === 0) {
+            <tr>
+              <td colspan="5" class="no-data">No versions found.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  <!-- ==================== SCREEN: VERSION ==================== -->
+  @if (currentScreen === 'version' && selectedTemplate && selectedVersionObj) {
+    <div class="page-header">
+      <div class="breadcrumb">
+        <button class="btn-link" (click)="goToList()">Templates</button>
+        <span class="breadcrumb-sep">›</span>
+        <button class="btn-link" (click)="goToDetail()">{{ selectedTemplate.name }}</button>
+        <span class="breadcrumb-sep">›</span>
+        <span>v{{ selectedVersionObj.version }}</span>
+      </div>
+      <div class="header-actions">
+        <span class="badge" [ngClass]="getVersionStatusClass(selectedVersionObj.status)">
+          {{ selectedVersionObj.status }}
+        </span>
+        @if (selectedVersionObj.status === 'Draft' && selectedTemplate?.status !== 'Archived') {
+          <button class="btn-small btn-publish" (click)="publishVersion(selectedVersionObj)">Publish</button>
+        }
+      </div>
+    </div>
+    @if (error) {
+      <div class="error">{{ error }}</div>
+    }
+    @if (success) {
+      <div class="success">{{ success }}</div>
+    }
+    <!-- Read-only notice -->
+    @if (isMappingReadonly()) {
+      <div class="readonly-notice">
+        @if (selectedTemplate.status === 'Archived') {
+          <span>🔒 This template is archived. Mappings are read-only.</span>
+        }
+        @if (selectedTemplate.status !== 'Archived' && selectedVersionObj.status !== 'Draft') {
+          <span>🔒 This version is published. Mappings are read-only.</span>
+        }
+      </div>
+    }
+    <!-- Field Mappings Sub-Component -->
+    <app-field-mappings
+      [templateId]="selectedTemplate.id"
+      [templateVersionId]="selectedVersionObj.id"
+      [templateName]="selectedTemplate.name + ' v' + selectedVersionObj.version"
+      [sampleInputJson]="selectedTemplate.sampleInputJson"
+      [sourceSchema]="selectedTemplate.sourceSchema"
+      [targetSchema]="selectedTemplate.targetSchema"
+      [isReadonly]="isMappingReadonly()"
+    >
+    </app-field-mappings>
+  }
+</div>

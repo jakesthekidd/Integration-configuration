@@ -1,0 +1,569 @@
+import { Application } from '../models/application.model';
+import { Capability } from '../models/capability.model';
+import { TmsSystem } from '../models/tms-system.model';
+import { Partner } from '../models/partner.model';
+import { Customer } from '../models/customer.model';
+import { ApiClient } from '../models/api-client.model';
+import { FieldMappingTemplate, TemplateVersionResponse } from '../models/template.model';
+import { FieldMapping } from '../models/field-mapping.model';
+import { LookupTable } from '../models/lookup-table.model';
+import { TransformationLogSummary, TransformationLogDetail } from '../models/transformation-log.model';
+import { Deployment } from '../models/deployment.model';
+
+const now = new Date();
+const daysAgo = (n: number) => new Date(now.getTime() - n * 86400000);
+const isoDaysAgo = (n: number) => daysAgo(n).toISOString();
+
+export const mockApplications: Application[] = [
+  {
+    id: 'app-workflowai',
+    name: 'workflowai',
+    displayName: 'WorkflowAI',
+    description: 'Primary workflow orchestration product',
+    isActive: true,
+    createdAt: isoDaysAgo(365),
+  },
+  {
+    id: 'app-mobile',
+    name: 'mobile',
+    displayName: 'Mobile',
+    description: 'Driver and dispatcher mobile experience',
+    isActive: true,
+    createdAt: isoDaysAgo(300),
+  },
+  {
+    id: 'app-ltl-nav',
+    name: 'ltl-nav',
+    displayName: 'LTL Nav',
+    description: 'LTL navigation and routing product',
+    isActive: true,
+    createdAt: isoDaysAgo(240),
+  },
+];
+
+export const mockCapabilities: Capability[] = [
+  // WorkflowAI
+  {
+    id: 'cap-wfai-import-orders',
+    applicationId: 'app-workflowai',
+    name: 'import-orders',
+    displayName: 'Import Orders',
+    description: 'Pull orders from a customer TMS into WorkflowAI',
+    direction: 'Inbound',
+    isActive: true,
+    createdAt: isoDaysAgo(360),
+  },
+  {
+    id: 'cap-wfai-export-docs',
+    applicationId: 'app-workflowai',
+    name: 'export-documents',
+    displayName: 'Export Documents',
+    description: 'Push documents from WorkflowAI to the customer system',
+    direction: 'Outbound',
+    isActive: true,
+    createdAt: isoDaysAgo(340),
+  },
+  {
+    id: 'cap-wfai-webhook',
+    applicationId: 'app-workflowai',
+    name: 'webhook',
+    displayName: 'Webhook Handler',
+    description: 'Receive event webhooks from a customer system',
+    direction: 'Inbound',
+    isActive: true,
+    createdAt: isoDaysAgo(320),
+  },
+  // Mobile
+  {
+    id: 'cap-mobile-pod-upload',
+    applicationId: 'app-mobile',
+    name: 'pod-upload',
+    displayName: 'POD Upload',
+    description: 'Send proof-of-delivery from the driver app to the customer system',
+    direction: 'Outbound',
+    isActive: true,
+    createdAt: isoDaysAgo(280),
+  },
+  {
+    id: 'cap-mobile-status',
+    applicationId: 'app-mobile',
+    name: 'status-update',
+    displayName: 'Status Update',
+    description: 'Push driver status changes upstream',
+    direction: 'Outbound',
+    isActive: true,
+    createdAt: isoDaysAgo(260),
+  },
+  // LTL Nav
+  {
+    id: 'cap-ltl-rate-quote',
+    applicationId: 'app-ltl-nav',
+    name: 'rate-quote',
+    displayName: 'Rate Quote',
+    description: 'Request rate quotes from a carrier system',
+    direction: 'Bidirectional',
+    isActive: true,
+    createdAt: isoDaysAgo(220),
+  },
+];
+
+export const mockTmsSystems: TmsSystem[] = [
+  {
+    id: 'conn-mcleod-v22',
+    name: 'mcleod-v22',
+    displayName: 'McLeod v22',
+    description: 'McLeod LoadMaster v22 connector',
+    version: '22',
+    isActive: true,
+    sampleJsonSchema: '{"orderId":"string","origin":"string","destination":"string"}',
+    createdAt: daysAgo(180),
+    updatedAt: daysAgo(40),
+    createdBy: 'devs',
+  },
+  {
+    id: 'conn-mcleod-v23',
+    name: 'mcleod-v23',
+    displayName: 'McLeod v23',
+    description: 'McLeod LoadMaster v23 connector',
+    version: '23',
+    isActive: true,
+    sampleJsonSchema: '{"orderId":"string","origin":"string","destination":"string"}',
+    createdAt: daysAgo(90),
+    updatedAt: daysAgo(5),
+    createdBy: 'devs',
+  },
+  {
+    id: 'conn-sap-s4',
+    name: 'sap-s4',
+    displayName: 'SAP S/4 HANA',
+    description: 'SAP S/4 HANA connector',
+    version: '2023',
+    isActive: true,
+    createdAt: daysAgo(120),
+    updatedAt: daysAgo(12),
+    createdBy: 'devs',
+  },
+  {
+    id: 'conn-netsuite',
+    name: 'netsuite',
+    displayName: 'NetSuite',
+    description: 'NetSuite ERP connector',
+    version: '2024.1',
+    isActive: true,
+    createdAt: daysAgo(60),
+    updatedAt: daysAgo(20),
+    createdBy: 'devs',
+  },
+  {
+    id: 'conn-webhook',
+    name: 'webhook',
+    displayName: 'Webhook Receiver',
+    description: 'Generic inbound webhook receiver',
+    version: '1.0',
+    isActive: true,
+    createdAt: daysAgo(45),
+    updatedAt: daysAgo(2),
+    createdBy: 'devs',
+  },
+  {
+    id: 'conn-sftp',
+    name: 'sftp',
+    displayName: 'SFTP',
+    description: 'SFTP file drop connector',
+    version: '1.0',
+    isActive: true,
+    createdAt: daysAgo(30),
+    updatedAt: daysAgo(1),
+    createdBy: 'devs',
+  },
+];
+
+export const mockPartners: Partner[] = [
+  {
+    id: 'partner-001',
+    name: 'Acme Logistics',
+    description: 'Primary freight broker partner',
+    createdAt: daysAgo(150),
+    updatedAt: daysAgo(2),
+    isDeleted: false,
+    revision: 3,
+  },
+  {
+    id: 'partner-002',
+    name: 'Globex Transport',
+    description: 'West coast carrier network',
+    createdAt: daysAgo(100),
+    updatedAt: daysAgo(8),
+    isDeleted: false,
+    revision: 1,
+  },
+  {
+    id: 'partner-003',
+    name: 'Initech Freight',
+    description: 'Regional LTL provider',
+    createdAt: daysAgo(75),
+    updatedAt: daysAgo(15),
+    isDeleted: false,
+    revision: 2,
+  },
+  {
+    id: 'partner-004',
+    name: 'Umbrella Shipping',
+    description: 'International ocean freight',
+    createdAt: daysAgo(40),
+    updatedAt: daysAgo(1),
+    isDeleted: false,
+    revision: 1,
+  },
+];
+
+export const mockCustomers: Customer[] = [
+  {
+    customerId: 'cust-001',
+    customerName: 'Acme Logistics',
+    tmsName: 'mcleod-v23',
+    lastSyncTime: isoDaysAgo(0),
+    enabled: true,
+    outboundEnabled: true,
+    syncFrequencyMinutes: 15,
+    orderRetentionDays: 90,
+    syncBatchSize: 100,
+    credentials: { apiKey: '***-***-***', username: 'acme_svc' },
+    settings: { region: 'US', timezone: 'America/New_York' },
+    updateOrInsertStatusesList: ['Available', 'Dispatched'],
+    updateOnlyStatusesList: ['Delivered', 'Cancelled'],
+  },
+  {
+    customerId: 'cust-002',
+    customerName: 'Globex Transport',
+    tmsName: 'sap-s4',
+    lastSyncTime: isoDaysAgo(0),
+    enabled: true,
+    outboundEnabled: false,
+    syncFrequencyMinutes: 30,
+    orderRetentionDays: 60,
+    credentials: { apiKey: '***-***-***' },
+    updateOrInsertStatusesList: ['New', 'InTransit'],
+    updateOnlyStatusesList: ['Completed'],
+  },
+  {
+    customerId: 'cust-003',
+    customerName: 'Initech Freight',
+    tmsName: 'webhook',
+    lastSyncTime: isoDaysAgo(2),
+    enabled: false,
+    outboundEnabled: false,
+    credentials: {},
+  },
+];
+
+export const mockApiClients: ApiClient[] = [
+  {
+    id: 'client-001',
+    name: 'Acme Production',
+    description: 'Production API client for Acme',
+    isActive: true,
+    createdAt: isoDaysAgo(120),
+    updatedAt: isoDaysAgo(3),
+    createdBy: 'admin',
+  },
+  {
+    id: 'client-002',
+    name: 'Globex Sandbox',
+    description: 'Sandbox client for Globex testing',
+    isActive: true,
+    createdAt: isoDaysAgo(60),
+    updatedAt: isoDaysAgo(7),
+    createdBy: 'admin',
+  },
+  {
+    id: 'client-003',
+    name: 'Internal QA',
+    description: 'Internal QA testing',
+    isActive: false,
+    createdAt: isoDaysAgo(180),
+    updatedAt: isoDaysAgo(45),
+  },
+];
+
+export const mockTemplates: FieldMappingTemplate[] = [
+  {
+    id: 'tmpl-001',
+    name: 'McLeod → EDI 204',
+    description: 'Map McLeod load to EDI 204 motor carrier load tender',
+    version: 3,
+    status: 'Published',
+    latestVersionStatus: 'Published',
+    createdAt: daysAgo(80),
+    updatedAt: daysAgo(2),
+    createdBy: 'admin',
+    sourcePartnerId: 'partner-001',
+    sourcePartnerName: 'Acme Logistics',
+    targetPartnerId: 'partner-002',
+    targetPartnerName: 'Globex Transport',
+  },
+  {
+    id: 'tmpl-002',
+    name: 'TMW → Acme Order JSON',
+    description: 'Transform TMW dispatch records to Acme order format',
+    version: 1,
+    status: 'Draft',
+    latestVersionStatus: 'Draft',
+    createdAt: daysAgo(30),
+    updatedAt: daysAgo(1),
+    createdBy: 'admin',
+    sourcePartnerId: 'partner-003',
+    sourcePartnerName: 'Initech Freight',
+    targetPartnerId: 'partner-001',
+    targetPartnerName: 'Acme Logistics',
+  },
+  {
+    id: 'tmpl-003',
+    name: 'Prophesy → Status Update',
+    description: 'Status webhooks from Prophesy into normalized event stream',
+    version: 2,
+    status: 'Published',
+    latestVersionStatus: 'Draft',
+    createdAt: daysAgo(50),
+    updatedAt: daysAgo(10),
+    createdBy: 'admin',
+  },
+];
+
+export const mockTemplateVersions: { [templateId: string]: TemplateVersionResponse[] } = {
+  'tmpl-001': [
+    { id: 'tv-001-1', templateId: 'tmpl-001', templateName: 'McLeod → EDI 204', version: 1, status: 'Archived', publishedAt: isoDaysAgo(70) },
+    { id: 'tv-001-2', templateId: 'tmpl-001', templateName: 'McLeod → EDI 204', version: 2, status: 'Archived', publishedAt: isoDaysAgo(40) },
+    { id: 'tv-001-3', templateId: 'tmpl-001', templateName: 'McLeod → EDI 204', version: 3, status: 'Published', publishedAt: isoDaysAgo(2) },
+  ],
+  'tmpl-002': [
+    { id: 'tv-002-1', templateId: 'tmpl-002', templateName: 'TMW → Acme Order JSON', version: 1, status: 'Draft' },
+  ],
+  'tmpl-003': [
+    { id: 'tv-003-1', templateId: 'tmpl-003', templateName: 'Prophesy → Status Update', version: 1, status: 'Archived', publishedAt: isoDaysAgo(45) },
+    { id: 'tv-003-2', templateId: 'tmpl-003', templateName: 'Prophesy → Status Update', version: 2, status: 'Published', publishedAt: isoDaysAgo(10) },
+  ],
+};
+
+export const mockFieldMappings: FieldMapping[] = [
+  {
+    id: 'fm-001',
+    templateId: 'tmpl-001',
+    sourcePath: '$.order.id',
+    targetPath: 'B2.04',
+    transformationType: 'Direct',
+    isRequired: true,
+    createdAt: daysAgo(80),
+    updatedAt: daysAgo(2),
+  },
+  {
+    id: 'fm-002',
+    templateId: 'tmpl-001',
+    sourcePath: '$.order.pickup.city',
+    targetPath: 'S5.01',
+    transformationType: 'Direct',
+    isRequired: true,
+    createdAt: daysAgo(80),
+    updatedAt: daysAgo(2),
+  },
+  {
+    id: 'fm-003',
+    templateId: 'tmpl-001',
+    sourcePath: '$.order.weight',
+    targetPath: 'L0.04',
+    transformationType: 'Math',
+    transformationConfig: '{"operation":"multiply","factor":1}',
+    isRequired: false,
+    defaultValue: '0',
+    createdAt: daysAgo(80),
+    updatedAt: daysAgo(2),
+  },
+  {
+    id: 'fm-004',
+    templateId: 'tmpl-002',
+    sourcePath: '$.dispatch.loadNumber',
+    targetPath: 'order.id',
+    transformationType: 'Direct',
+    isRequired: true,
+    createdAt: daysAgo(30),
+    updatedAt: daysAgo(1),
+  },
+  {
+    id: 'fm-005',
+    templateId: 'tmpl-002',
+    sourcePath: '$.dispatch.status',
+    targetPath: 'order.status',
+    transformationType: 'Lookup',
+    transformationConfig: '{"lookupTableId":"lkup-001"}',
+    isRequired: true,
+    defaultValue: 'UNKNOWN',
+    createdAt: daysAgo(30),
+    updatedAt: daysAgo(1),
+  },
+];
+
+export const mockLookupTables: LookupTable[] = [
+  {
+    id: 'lkup-mcleod-status',
+    tmsSystemId: 'conn-mcleod-v23',
+    fieldName: 'status',
+    name: 'McLeod v23 Status Codes',
+    description: 'Map McLeod load status codes to normalized values',
+    mappings: JSON.stringify({ AVL: 'Available', DSP: 'Dispatched', INT: 'InTransit', DLV: 'Delivered' }),
+    defaultValue: 'UNKNOWN',
+    isCaseSensitive: false,
+    createdAt: daysAgo(60),
+    updatedAt: daysAgo(5),
+  },
+  {
+    id: 'lkup-mcleod-equipment',
+    tmsSystemId: 'conn-mcleod-v23',
+    fieldName: 'equipmentType',
+    name: 'McLeod Equipment Codes',
+    mappings: JSON.stringify({ V: 'Van', R: 'Reefer', F: 'Flatbed', T: 'Tanker' }),
+    defaultValue: 'Other',
+    isCaseSensitive: true,
+    createdAt: daysAgo(40),
+    updatedAt: daysAgo(3),
+  },
+  {
+    id: 'lkup-sap-doctypes',
+    tmsSystemId: 'conn-sap-s4',
+    fieldName: 'docCategory',
+    name: 'SAP Document Categories',
+    description: 'Map SAP doc category codes to platform categories',
+    mappings: JSON.stringify({ INV: 'Invoice', POD: 'ProofOfDelivery', RC: 'RateConfirmation' }),
+    defaultValue: 'Other',
+    isCaseSensitive: true,
+    createdAt: daysAgo(30),
+    updatedAt: daysAgo(7),
+  },
+];
+
+export const mockTransformationLogs: TransformationLogSummary[] = [
+  { id: 'log-001', templateId: 'tmpl-001', templateName: 'McLeod → EDI 204', timestamp: isoDaysAgo(0), status: 'Success', durationMs: 142, recordCount: 1, source: 'API', hasErrors: false, hasOutput: true, correlationId: 'corr-aaa-001' },
+  { id: 'log-002', templateId: 'tmpl-001', templateName: 'McLeod → EDI 204', timestamp: isoDaysAgo(0), status: 'Warning', durationMs: 198, recordCount: 1, messageSummary: 'Optional field missing', source: 'API', hasErrors: false, hasOutput: true, correlationId: 'corr-aaa-002' },
+  { id: 'log-003', templateId: 'tmpl-002', templateName: 'TMW → Acme Order JSON', timestamp: isoDaysAgo(1), status: 'Error', durationMs: 87, recordCount: 0, messageSummary: 'Source path $.dispatch.loadNumber not found', source: 'API', hasErrors: true, hasOutput: false, correlationId: 'corr-bbb-001' },
+  { id: 'log-004', templateId: 'tmpl-003', templateName: 'Prophesy → Status Update', timestamp: isoDaysAgo(1), status: 'PartialSuccess', durationMs: 312, recordCount: 5, messageSummary: '4 of 5 records mapped', source: 'Webhook', hasErrors: true, hasOutput: true, correlationId: 'corr-ccc-001' },
+  { id: 'log-005', templateId: 'tmpl-001', templateName: 'McLeod → EDI 204', timestamp: isoDaysAgo(2), status: 'Success', durationMs: 121, recordCount: 1, source: 'API', hasErrors: false, hasOutput: true },
+  { id: 'log-006', templateId: 'tmpl-001', templateName: 'McLeod → EDI 204', timestamp: isoDaysAgo(3), status: 'Success', durationMs: 156, recordCount: 1, source: 'API', hasErrors: false, hasOutput: true },
+];
+
+export const mockTransformationLogDetails: { [id: string]: TransformationLogDetail } = {
+  'log-001': {
+    ...mockTransformationLogs[0],
+    inputData: JSON.stringify({ order: { id: 'A1001', pickup: { city: 'Tampa' }, weight: 42000 } }, null, 2),
+    outputData: '{"B2.04":"A1001","S5.01":"Tampa","L0.04":42000}',
+  },
+  'log-003': {
+    ...mockTransformationLogs[2],
+    inputData: JSON.stringify({ dispatch: { status: 'AVL' } }, null, 2),
+    errors: 'Source path $.dispatch.loadNumber not found in source document',
+  },
+};
+
+export const mockApiClientTemplates: { [clientId: string]: TemplateVersionResponse[] } = {
+  'client-001': [
+    { id: 'tv-001-3', templateId: 'tmpl-001', templateName: 'McLeod → EDI 204', version: 3, status: 'Published', publishedAt: isoDaysAgo(2) },
+    { id: 'tv-003-2', templateId: 'tmpl-003', templateName: 'Prophesy → Status Update', version: 2, status: 'Published', publishedAt: isoDaysAgo(10) },
+  ],
+  'client-002': [
+    { id: 'tv-001-3', templateId: 'tmpl-001', templateName: 'McLeod → EDI 204', version: 3, status: 'Published', publishedAt: isoDaysAgo(2) },
+  ],
+  'client-003': [],
+};
+
+/**
+ * Deployments — the (Customer × App × Capability × Connection × Template × Status)
+ * bundle. Seeded from the ABC Carrier example in the architecture FigJam so the
+ * Customer Detail screen has realistic data.
+ */
+export const mockDeployments: Deployment[] = [
+  // Acme Logistics (cust-001) — 3 deployments under WorkflowAI
+  {
+    id: 'depl-001',
+    customerId: 'cust-001',
+    applicationId: 'app-workflowai',
+    capabilityId: 'cap-wfai-import-orders',
+    connectionId: 'conn-mcleod-v23',
+    forkedFromTemplateId: 'tmpl-001',
+    forkedFromTemplateVersion: 3,
+    apiClientId: 'client-001',
+    status: 'Active',
+    createdAt: isoDaysAgo(80),
+    updatedAt: isoDaysAgo(2),
+    lastTestCorrelationId: 'corr-aaa-001',
+    snapshotVersion: 4,
+  },
+  {
+    id: 'depl-002',
+    customerId: 'cust-001',
+    applicationId: 'app-workflowai',
+    capabilityId: 'cap-wfai-export-docs',
+    connectionId: 'conn-sap-s4',
+    forkedFromTemplateId: 'tmpl-002',
+    forkedFromTemplateVersion: 1,
+    apiClientId: 'client-001',
+    status: 'Active',
+    createdAt: isoDaysAgo(30),
+    updatedAt: isoDaysAgo(5),
+    snapshotVersion: 2,
+  },
+  {
+    id: 'depl-003',
+    customerId: 'cust-001',
+    applicationId: 'app-workflowai',
+    capabilityId: 'cap-wfai-webhook',
+    connectionId: 'conn-webhook',
+    forkedFromTemplateId: 'tmpl-003',
+    forkedFromTemplateVersion: 2,
+    status: 'Draft',
+    createdAt: isoDaysAgo(5),
+    updatedAt: isoDaysAgo(1),
+    snapshotVersion: 1,
+  },
+  // Acme — Mobile / POD Upload via SFTP (Tested but not yet published)
+  {
+    id: 'depl-004',
+    customerId: 'cust-001',
+    applicationId: 'app-mobile',
+    capabilityId: 'cap-mobile-pod-upload',
+    connectionId: 'conn-sftp',
+    forkedFromTemplateId: '',
+    forkedFromTemplateVersion: null,
+    status: 'Tested',
+    createdAt: isoDaysAgo(3),
+    updatedAt: isoDaysAgo(0),
+    lastTestCorrelationId: 'corr-bbb-002',
+    snapshotVersion: 1,
+  },
+  // Globex Transport (cust-002) — 1 deployment
+  {
+    id: 'depl-005',
+    customerId: 'cust-002',
+    applicationId: 'app-workflowai',
+    capabilityId: 'cap-wfai-export-docs',
+    connectionId: 'conn-sap-s4',
+    forkedFromTemplateId: 'tmpl-002',
+    forkedFromTemplateVersion: 1,
+    apiClientId: 'client-002',
+    status: 'Active',
+    createdAt: isoDaysAgo(60),
+    updatedAt: isoDaysAgo(8),
+    snapshotVersion: 3,
+  },
+  // Initech Freight (cust-003) — no active, just a retired one
+  {
+    id: 'depl-006',
+    customerId: 'cust-003',
+    applicationId: 'app-workflowai',
+    capabilityId: 'cap-wfai-webhook',
+    connectionId: 'conn-webhook',
+    forkedFromTemplateId: 'tmpl-003',
+    forkedFromTemplateVersion: 1,
+    status: 'Retired',
+    createdAt: isoDaysAgo(90),
+    updatedAt: isoDaysAgo(45),
+    snapshotVersion: 1,
+  },
+];

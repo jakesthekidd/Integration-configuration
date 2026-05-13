@@ -1,0 +1,188 @@
+@import "primeicons/primeicons.css";
+@import url("https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap");
+
+/* Transflo design tokens — sourced from TransfloTheme + inspiration screens */
+:root {
+  /* Brand palette */
+  --tf-blue-50: #e9f1f8;
+  --tf-blue-100: #d3e3f1;
+  --tf-blue-200: #a7c7e4;
+  --tf-blue-400: #5090c9;
+  --tf-blue-500: #2474bb;
+  --tf-blue-700: #1d5d96;
+  --tf-blue-800: #164670;
+  --tf-blue-900: #0e2e4b;
+  --tf-cyan-500: #72cdf4;
+  --tf-green-500: #00bf30;
+  --tf-orange-500: #ffa300;
+  --tf-orange-700: #cc8200;
+  --tf-red-500: #da1f2c;
+
+  /* Neutral surface palette */
+  --tf-slate-50: #fbfcfc;
+  --tf-slate-100: #f7f8f9;
+  --tf-slate-200: #f3f5f7;
+  --tf-slate-300: #eff2f4;
+  --tf-slate-400: #e2e6eb;
+  --tf-slate-500: #c6ccd6;
+  --tf-slate-700: #8d9aae;
+  --tf-slate-800: #717b8b;
+  --tf-slate-900: #5a626f;
+
+  /* Semantic text — bumped muted to 7:1 contrast for AA */
+  --tf-text-strong: #2c3e50;
+  --tf-text-muted: #5a626f;
+  --tf-text-soft: #717b8b;
+  --tf-surface-hover: #f6f9fc;
+  --tf-required: #d97706;
+  --tf-shadow-card: 0 1px 2px rgba(14, 46, 75, 0.06), 0 4px 12px rgba(14, 46, 75, 0.08);
+
+  /* Typography scale — 4 sizes only. Anything else is a smell.
+     Tuned against production screens (Workflow Studio, Manage Hold Reasons). */
+  --tf-text-display: 18px;   /* page-section title (one per screen) */
+  --tf-text-heading: 15px;   /* sub-section title, card title */
+  --tf-text-body: 13px;      /* default — labels are weight 600 of this */
+  --tf-text-meta: 11px;      /* tags, eyebrows, helper text, table headers */
+
+  /* Legacy aliases — temporary, will be removed after migration */
+  --tf-text-xs: 11px;
+  --tf-text-sm: 12px;
+  --tf-text-base: 13px;
+  --tf-text-md: 14px;
+  --tf-text-lg: 15px;
+  --tf-text-xl: 18px;
+  --tf-text-2xl: 22px;
+
+  /* Spacing scale */
+  --tf-space-1: 4px;
+  --tf-space-2: 8px;
+  --tf-space-3: 12px;
+  --tf-space-4: 16px;
+  --tf-space-5: 20px;
+  --tf-space-6: 24px;
+  --tf-space-8: 32px;
+
+  /* Radius scale */
+  --tf-radius-sm: 4px;
+  --tf-radius-md: 6px;
+  --tf-radius-lg: 8px;
+  --tf-radius-pill: 999px;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: var(--tf-slate-200);
+  color: var(--tf-text-strong);
+  font-size: var(--tf-text-body);
+  line-height: 1.45;
+}
+
+/* Heading defaults — strict 3-level hierarchy */
+h2 {
+  font-size: var(--tf-text-display);
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  line-height: 1.2;
+  color: var(--tf-text-strong);
+}
+h3 {
+  font-size: var(--tf-text-heading);
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--tf-text-strong);
+}
+h4 {
+  font-size: var(--tf-text-body);
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--tf-text-strong);
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
+/* ----- Shared section-header pattern (every non-wizard screen uses this) ----- */
+.tf-section-header {
+  flex-shrink: 0;
+  background: white;
+  padding: var(--tf-space-3) var(--tf-space-5);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--tf-space-4);
+  border-bottom: 1px solid var(--tf-slate-400);
+}
+.tf-section-header h2 {
+  margin: 0;
+}
+.tf-section-header p {
+  font-size: var(--tf-text-body);
+  color: var(--tf-text-muted);
+  margin: var(--tf-space-1) 0 0 0;
+}
+.tf-section-header__actions {
+  display: flex;
+  gap: var(--tf-space-2);
+  align-items: center;
+}
+
+/* ----- Tag density — small + rounded by default across the app ----- */
+.p-tag {
+  font-size: var(--tf-text-meta) !important;
+  font-weight: 700;
+  padding: 2px 8px !important;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+.p-tag.p-tag-rounded {
+  border-radius: var(--tf-radius-pill) !important;
+}
+
+/* ----- Button density — small everywhere unless explicitly overridden ----- */
+.p-button:not(.p-button-lg):not(.p-button-xl) {
+  font-size: var(--tf-text-body);
+  padding: 6px 12px;
+}
+.p-button.p-button-icon-only {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+}
+
+/* ----- Input density — small everywhere ----- */
+.p-inputtext,
+.p-select,
+.p-textarea {
+  font-size: var(--tf-text-body);
+}
+
+/* ----- Table density (PrimeNG p-datatable-sm baseline) ----- */
+.p-datatable.p-datatable-sm .p-datatable-thead > tr > th {
+  font-size: var(--tf-text-meta);
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  background: var(--tf-slate-100);
+  color: var(--tf-text-strong);
+  padding: var(--tf-space-3) var(--tf-space-4);
+}
+.p-datatable.p-datatable-sm .p-datatable-tbody > tr > td {
+  font-size: var(--tf-text-body);
+  padding: var(--tf-space-3) var(--tf-space-4);
+}

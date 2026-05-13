@@ -1,0 +1,295 @@
+<div class="container">
+  <div class="toolbar">
+    <div class="filter-group">
+      <label>
+        Status:
+        <select [(ngModel)]="filterActive" (change)="loadCustomers()">
+          <option [ngValue]="null">All</option>
+          <option [ngValue]="true">Active</option>
+          <option [ngValue]="false">Inactive</option>
+        </select>
+      </label>
+    </div>
+  </div>
+
+  <!-- Create / Edit form -->
+  @if (showCreateForm || editingCustomer) {
+    <div class="form-card">
+      <h3>{{ editingCustomer ? 'Edit Customer' : 'New Customer' }}</h3>
+      <form (ngSubmit)="saveCustomer()" #customerForm="ngForm">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="customerId">Customer ID <span class="required">*</span></label>
+            <input
+              id="customerId"
+              type="text"
+              [(ngModel)]="formData.customerId"
+              name="customerId"
+              required
+              [disabled]="!!editingCustomer"
+            />
+          </div>
+          <div class="form-group">
+            <label for="customerName">Customer Name <span class="required">*</span></label>
+            <input id="customerName" type="text" [(ngModel)]="formData.customerName" name="customerName" required />
+          </div>
+          <div class="form-group">
+            <label for="tmsName">TMS Name <span class="required">*</span></label>
+            <select id="tmsName" [(ngModel)]="formData.tmsName" name="tmsName" required class="form-control">
+              <option value="" disabled>Select TMS</option>
+              @for (tms of tmsOptions; track tms) {
+                <option [value]="tms">{{ tms }}</option>
+              }
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="syncFrequencyMinutes">Sync Frequency Minutes <span class="required">*</span></label>
+            <input
+              id="syncFrequencyMinutes"
+              type="number"
+              [(ngModel)]="formData.syncFrequencyMinutes"
+              name="syncFrequencyMinutes"
+              class="form-control"
+              required
+              min="0"
+              (keypress)="allowOnlyNumbers($event)"
+            />
+          </div>
+          <div class="form-group">
+            <label for="orderRetentionDays">Order Retention Days <span class="required">*</span></label>
+            <input
+              id="orderRetentionDays"
+              type="number"
+              [(ngModel)]="formData.orderRetentionDays"
+              name="orderRetentionDays"
+              class="form-control"
+              required
+              min="0"
+              (keypress)="allowOnlyNumbers($event)"
+            />
+          </div>
+          <div class="form-group">
+            <label for="tonuCode">Tonu Code</label>
+            <input id="tonuCode" type="text" [(ngModel)]="formData.tonuCode" name="tonuCode" class="form-control" />
+          </div>
+        </div>
+        <div class="form-group checkbox">
+          <label>
+            <input type="checkbox" [(ngModel)]="formData.enabled" name="enabled" />
+            Enabled
+          </label>
+        </div>
+        <div class="form-group checkbox">
+          <label>
+            <input type="checkbox" [(ngModel)]="formData.outboundEnabled" name="outboundEnabled" />
+            Outbound Enabled
+          </label>
+        </div>
+        <p><b>Credential</b></p>
+        <br />
+        @if (getCurrentTmsKeys().length) {
+          <div>
+            <div class="form-row">
+              @for (key of getCurrentTmsKeys(); track key) {
+                <div class="col">
+                  <div class="form-group">
+                    <label [for]="'credentials-' + key">
+                      {{ key }}
+                      @if (isDmsCredentialRequired(key)) {
+                        <span class="required">*</span>
+                      }
+                    </label>
+                    <!-- Template dropdown -->
+                    @if (isTemplateDropdown(key)) {
+                      <select
+                        [id]="'credentials-' + key"
+                        [(ngModel)]="formData.credentials[key]"
+                        [name]="'credentials.' + key"
+                        class="form-control"
+                        required
+                        #tmplCtrl="ngModel"
+                      >
+                        <option value="">Select template</option>
+                        @for (t of dmsTemplates; track t) {
+                          <option [value]="t.id">{{ t.name }}</option>
+                        }
+                      </select>
+                      @if (tmplCtrl.invalid && tmplCtrl.touched) {
+                        <span class="field-error">{{ key }} is required.</span>
+                      }
+                    }
+                    <!-- API client dropdown -->
+                    @if (isApiClientDropdown(key)) {
+                      <select
+                        [id]="'credentials-' + key"
+                        [(ngModel)]="formData.credentials[key]"
+                        [name]="'credentials.' + key"
+                        class="form-control"
+                        required
+                        #clientCtrl="ngModel"
+                      >
+                        <option value="">Select API client</option>
+                        @for (c of dmsApiClients; track c) {
+                          <option [value]="c.id">{{ c.name }}</option>
+                        }
+                      </select>
+                      @if (clientCtrl.invalid && clientCtrl.touched) {
+                        <span class="field-error">{{ key }} is required.</span>
+                      }
+                    }
+                    <!-- Numeric field (text input so value is submitted as string) -->
+                    @if (isNumericField(key)) {
+                      <input
+                        [id]="'credentials-' + key"
+                        type="text"
+                        [(ngModel)]="formData.credentials[key]"
+                        [name]="'credentials.' + key"
+                        class="form-control"
+                        required
+                        pattern="[0-9]+"
+                        (keypress)="allowOnlyNumbers($event)"
+                        #numCtrl="ngModel"
+                      />
+                      @if (numCtrl.invalid && numCtrl.touched) {
+                        <span class="field-error">
+                          @if (numCtrl.errors?.['required']) {
+                            {{ key }} is required.
+                          }
+                          @if (numCtrl.errors?.['pattern']) {
+                            Must be a numeric value.
+                          }
+                        </span>
+                      }
+                    }
+                    <!-- Transformer base URL (read-only, auto-populated) -->
+                    @if (isTransformerBaseUrlField(key)) {
+                      <input
+                        [id]="'credentials-' + key"
+                        type="text"
+                        [value]="transformerBaseUrl"
+                        [name]="'credentials.' + key"
+                        class="form-control"
+                        disabled
+                      />
+                    }
+                    <!-- Regular text / URL field -->
+                    @if (
+                      !isTemplateDropdown(key) &&
+                      !isApiClientDropdown(key) &&
+                      !isNumericField(key) &&
+                      !isTransformerBaseUrlField(key)
+                    ) {
+                      <input
+                        [id]="'credentials-' + key"
+                        type="text"
+                        [(ngModel)]="formData.credentials[key]"
+                        [name]="'credentials.' + key"
+                        class="form-control"
+                        [required]="isDmsCredentialRequired(key)"
+                        [pattern]="isDmsCredentialRequired(key) && isUrlField(key) ? urlPattern : ''"
+                        #credInput="ngModel"
+                      />
+                      @if (credInput.invalid && credInput.touched) {
+                        <span class="field-error">
+                          @if (credInput.errors?.['required']) {
+                            {{ key }} is required.
+                          }
+                          @if (credInput.errors?.['pattern']) {
+                            Must be a valid URL (starting with http:// or https://).
+                          }
+                        </span>
+                      }
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        }
+        <div class="form-actions">
+          <button class="btn-primary" type="submit" [disabled]="!customerForm.form.valid || creating || updating">
+            @if (creating || updating) {
+              <span class="spinner"></span>
+            }
+            {{
+              creating ? 'Creating...' : updating ? 'Saving...' : editingCustomer ? 'Save Changes' : 'Create Customer'
+            }}
+          </button>
+          <button type="button" class="btn-secondary" (click)="cancelEdit()">Cancel</button>
+        </div>
+      </form>
+    </div>
+  }
+
+  @if (error) {
+    <div class="alert alert-error">{{ error }}</div>
+  }
+  @if (success) {
+    <div class="alert alert-success">{{ success }}</div>
+  }
+
+  <!-- Customers Table (PrimeNG) -->
+  <p-table
+    [value]="customers"
+    [loading]="isInitialLoading"
+    [paginator]="customers.length > 10"
+    [rows]="10"
+    [rowHover]="true"
+    styleClass="p-datatable-sm p-datatable-striped customer-table"
+    responsiveLayout="scroll"
+  >
+    <ng-template pTemplate="header">
+      <tr>
+        <th>Name</th>
+        <th>TMS</th>
+        <th>Status</th>
+        <th>Sync (min)</th>
+        <th>Retention (days)</th>
+        <th>Last Sync</th>
+        <th>Tonu Code</th>
+        <th style="width: 56px;"></th>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="body" let-c>
+      <tr>
+        <td>
+          <button type="button" class="customer-link" (click)="openCustomer(c)">
+            {{ c.customerName }}
+          </button>
+        </td>
+        <td>{{ c.tmsName }}</td>
+        <td>
+          <p-tag
+            [value]="c.enabled ? 'Active' : 'Inactive'"
+            [severity]="c.enabled ? 'success' : 'secondary'"
+            [rounded]="true"
+          ></p-tag>
+        </td>
+        <td>{{ c.syncFrequencyMinutes || '—' }}</td>
+        <td>{{ c.orderRetentionDays || '—' }}</td>
+        <td>{{ c.lastSyncTime | date: 'mediumDate' }}</td>
+        <td>{{ c.tonuCode || '—' }}</td>
+        <td class="actions-cell">
+          <p-button
+            icon="pi pi-ellipsis-v"
+            size="small"
+            severity="secondary"
+            [text]="true"
+            [rounded]="true"
+            aria-label="Customer actions"
+            (onClick)="rowMenu.toggle($event); activeRow = c"
+          />
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="8" class="no-data">No customers found.</td>
+      </tr>
+    </ng-template>
+  </p-table>
+
+  <p-menu #rowMenu [model]="rowMenuItems" [popup]="true" appendTo="body" />
+</div>
