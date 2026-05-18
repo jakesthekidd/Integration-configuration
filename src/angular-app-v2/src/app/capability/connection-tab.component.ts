@@ -21,6 +21,7 @@ import { ApiService } from '../services/api.service';
 import { GeneralService } from '../services/general.service';
 import { Deployment } from '../models/deployment.model';
 import { TmsSystem } from '../models/tms-system.model';
+import { Partner } from '../models/partner.model';
 import {
   CONNECTION_CREDENTIAL_SCHEMAS,
   CredentialField,
@@ -68,6 +69,21 @@ import {
         />
         <small class="hint" *ngIf="connectionId()">
           {{ connectionDescription() }}
+        </small>
+      </label>
+
+      <label class="field field--narrow">
+        <span class="field__label">Partner</span>
+        <p-select
+          [options]="partnerOptions()"
+          [ngModel]="partnerId()"
+          (ngModelChange)="partnerId.set($event)"
+          placeholder="Select a partner"
+          [showClear]="true"
+          appendTo="body"
+        />
+        <small class="hint">
+          Which partner is this deployment for? Partners are managed by engineering.
         </small>
       </label>
     </section>
@@ -270,12 +286,15 @@ export class ConnectionTabComponent implements OnChanges {
   private gen = inject(GeneralService);
 
   connections = signal<TmsSystem[]>([]);
+  partners = signal<Partner[]>([]);
   connectionId = signal<string>('');
+  partnerId = signal<string>('');
   credentials = signal<Record<string, string>>({});
 
   /** Original snapshot to compare for dirty state. */
-  private snapshot = signal<{ connectionId: string; credentials: Record<string, string> }>({
+  private snapshot = signal<{ connectionId: string; partnerId: string; credentials: Record<string, string> }>({
     connectionId: '',
+    partnerId: '',
     credentials: {},
   });
 
@@ -292,6 +311,12 @@ export class ConnectionTabComponent implements OnChanges {
       .map((c) => ({ label: `${c.displayName} (v${c.version})`, value: c.id })),
   );
 
+  partnerOptions = computed(() =>
+    this.partners()
+      .filter((p) => !p.isDeleted)
+      .map((p) => ({ label: p.name, value: p.id })),
+  );
+
   connectionDescription = computed(() => {
     const c = this.connections().find((x) => x.id === this.connectionId());
     return c?.description ?? '';
@@ -302,6 +327,7 @@ export class ConnectionTabComponent implements OnChanges {
   dirty = computed(() => {
     const snap = this.snapshot();
     if (snap.connectionId !== this.connectionId()) return true;
+    if (snap.partnerId !== this.partnerId()) return true;
     const a = snap.credentials;
     const b = this.credentials();
     const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
@@ -314,17 +340,25 @@ export class ConnectionTabComponent implements OnChanges {
   ngOnChanges(changes: SimpleChanges) {
     if (changes['deployment']) {
       this.connectionId.set(this.deployment.connectionId);
+      this.partnerId.set('');
       // Credentials aren't on the Deployment object yet; would come from a CustomerConnection.
       // For now reset to empty and let the user fill them.
       this.credentials.set({});
-      this.snapshot.set({ connectionId: this.deployment.connectionId, credentials: {} });
+      this.snapshot.set({ connectionId: this.deployment.connectionId, partnerId: '', credentials: {} });
       this.loadConnections();
+      this.loadPartners();
     }
   }
 
   private loadConnections() {
     this.api.getTmsSystems(true).subscribe((res) => {
       if (res.success && res.data) this.connections.set(res.data.systems);
+    });
+  }
+
+  private loadPartners() {
+    this.api.getPartners().subscribe((res) => {
+      if (res.success && res.data) this.partners.set(res.data.partners);
     });
   }
 
@@ -345,6 +379,7 @@ export class ConnectionTabComponent implements OnChanges {
     setTimeout(() => {
       this.snapshot.set({
         connectionId: this.connectionId(),
+        partnerId: this.partnerId(),
         credentials: { ...this.credentials() },
       });
       this.saving.set(false);
