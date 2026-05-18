@@ -66,7 +66,7 @@ interface AppGroup {
           <h2>{{ customer()?.customerName ?? '…' }}</h2>
           @if (customer(); as c) {
             <p>
-              {{ c.tmsName || 'No TMS on file' }} ·
+              {{ c.tmsName || 'No connection on file' }} ·
               <span [class.status-active]="c.enabled" [class.status-inactive]="!c.enabled">
                 {{ c.enabled ? 'Active' : 'Inactive' }}
               </span>

@@ -1,9 +1,9 @@
 <div class="container">
-  <h2>TMS Systems</h2>
+  <h2>Connections</h2>
 
   <div class="actions">
     <button (click)="showCreateForm = !showCreateForm" class="btn btn-primary">
-      {{ showCreateForm ? 'Cancel' : 'Create New System' }}
+      {{ showCreateForm ? 'Cancel' : 'Create New Connection' }}
     </button>
     <label class="filter">
       <input type="checkbox" [(ngModel)]="activeOnly" (change)="loadSystems()" />
@@ -13,7 +13,7 @@
 
   @if (showCreateForm) {
     <div class="form-container">
-      <h3>Create TMS System</h3>
+      <h3>Create Connection</h3>
       <form (ngSubmit)="createSystem()">
         <div class="form-group">
           <label for="systemName">Name:</label>
@@ -74,7 +74,7 @@
   }
 
   @if (systems.length === 0 && !loading) {
-    <p>No TMS systems found.</p>
+    <p>No connections found.</p>
   }
   @if (loading) {
     <p>Loading...</p>

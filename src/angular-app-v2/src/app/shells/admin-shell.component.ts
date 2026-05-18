@@ -7,9 +7,8 @@ import { TmsSystemsComponent } from '../components/tms-systems/tms-systems.compo
 import { TemplatesComponent } from '../components/templates/templates.component';
 import { LookupTablesComponent } from '../components/lookup-tables/lookup-tables.component';
 import { TransformationLogsComponent } from '../components/transformation-logs/transformation-logs.component';
-import { IntegrationsComponent } from '../components/integrations/integrations.component';
 
-const TABS = ['applications', 'connections', 'templates', 'lookups', 'integrations', 'logs'] as const;
+const TABS = ['applications', 'connections', 'templates', 'lookups', 'logs'] as const;
 type TabId = (typeof TABS)[number];
 
 /**
@@ -26,7 +25,6 @@ type TabId = (typeof TABS)[number];
     TemplatesComponent,
     LookupTablesComponent,
     TransformationLogsComponent,
-    IntegrationsComponent,
   ],
   template: `
     @switch (activeTab()) {
@@ -34,7 +32,6 @@ type TabId = (typeof TABS)[number];
       @case ('connections') { <app-tms-systems /> }
       @case ('templates') { <app-templates /> }
       @case ('lookups') { <app-lookup-tables /> }
-      @case ('integrations') { <app-integrations /> }
       @case ('logs') { <app-transformation-logs /> }
     }
   `,

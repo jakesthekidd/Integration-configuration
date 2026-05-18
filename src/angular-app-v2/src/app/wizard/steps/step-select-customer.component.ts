@@ -26,7 +26,7 @@ import { PickItem, WizardPickGridComponent } from '../wizard-pick-grid.component
       <input
         pInputText
         type="text"
-        placeholder="Search customers by name or TMS…"
+        placeholder="Search customers by name or connection…"
         [ngModel]="query()"
         (ngModelChange)="query.set($event)"
       />

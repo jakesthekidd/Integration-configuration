@@ -48,7 +48,6 @@ const LIBRARY_TABS: StageTab[] = [
   { id: 'connections', label: 'Connections' },
   { id: 'templates', label: 'Mapping Templates' },
   { id: 'lookups', label: 'Lookup Tables' },
-  { id: 'integrations', label: 'Integrations' },
   { id: 'logs', label: 'Logs' },
 ];
 

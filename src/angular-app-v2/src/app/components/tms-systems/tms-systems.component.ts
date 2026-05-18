@@ -45,7 +45,7 @@ export class TmsSystemsComponent implements OnInit {
         this.loading = false;
       },
       error: (err) => {
-        this.error = 'Failed to load TMS systems';
+        this.error = 'Failed to load connections';
         this.loading = false;
         console.error(err);
       },
@@ -67,7 +67,7 @@ export class TmsSystemsComponent implements OnInit {
         }
       },
       error: (err) => {
-        this.error = 'Failed to create TMS system';
+        this.error = 'Failed to create connection';
         console.error(err);
       },
     });
@@ -76,8 +76,8 @@ export class TmsSystemsComponent implements OnInit {
   deleteSystem(id: string) {
     this.generalService
       .confirm({
-        title: 'Delete TMS System',
-        text: 'Are you sure you want to delete this TMS system?',
+        title: 'Delete Connection',
+        text: 'Are you sure you want to delete this connection?',
         confirmText: 'Yes, Delete',
         confirmColor: '#e74c3c',
         icon: 'warning',
@@ -87,11 +87,11 @@ export class TmsSystemsComponent implements OnInit {
 
         this.apiService.deleteTmsSystem(id).subscribe({
           next: () => {
-            this.generalService.success('TMS system deleted successfully');
+            this.generalService.success('Connection deleted successfully');
             this.loadSystems();
           },
           error: (err) => {
-            this.error = 'Failed to delete TMS system';
+            this.error = 'Failed to delete connection';
             console.error(err);
           },
         });
