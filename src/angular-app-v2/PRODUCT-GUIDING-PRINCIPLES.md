@@ -4,7 +4,9 @@
 **Status:** Active prototype — v2 of the field-mapping app
 **Reference:** Architecture diagrams in [FigJam — Integration Configuration](https://www.figma.com/board/JjOP6pBBp4C85LxaY7t9oB/Integration-Configuration)
 **Design system:** [github.com/jakesthekidd/transflo-design-system](https://github.com/jakesthekidd/transflo-design-system) (PrimeNG 21 + TransfloTheme preset)
-**Design decisions:** See [`DESIGN-DECISIONS-2025-05-13.md`](./DESIGN-DECISIONS-2025-05-13.md) for the May 13 PM/lead-dev review decisions.
+**Design decisions:**
+- [`DESIGN-DECISIONS-2025-05-13.md`](./DESIGN-DECISIONS-2025-05-13.md) — PM + lead dev review
+- [`DESIGN-DECISIONS-2025-05-19.md`](./DESIGN-DECISIONS-2025-05-19.md) — wider team review (Mohammed, Allison, Scott)
 
 This document is the **canonical reference** for what we're building, why, and the shape it has to take. It captures decisions made across the v2 design conversations so future work doesn't drift.
 
@@ -103,8 +105,8 @@ Both apps live behind the same TRANSFLO chrome. The **app switcher** in the head
 |---|---|---|---|
 | **Application** | Engineering | Top-level product | Hard-coded catalog: `WorkflowAI`, `Mobile`, `LTL Nav`. Read-only in UI. |
 | **Capability** | Engineering | Owned by Application | Has direction (`Inbound` / `Outbound` / `Bidirectional`). E.g., WorkflowAI → Import Orders (Inbound), Export Documents (Outbound). |
-| **Connection** | Engineering | Versioned adapter to an external system | e.g., `McLeod v22`, `McLeod v23`, `SAP S/4 HANA`, `NetSuite`, `Webhook Receiver`, `SFTP`. Defines credential schema + endpoint chain. Previously called "TMS System" — renamed May 13. |
-| **Partner** | Engineering | External business partner | Carrier, broker, or 3PL. Maintained by engineering in the library; selected by PS at the connection level per deployment. |
+| **Connection** | Engineering | Versioned adapter to an external system | e.g., `McLeod v22`, `McLeod v23`, `SAP S/4 HANA`, `NetSuite`, `Webhook Receiver`, `SFTP`. Defines credential schema, base URL, and auth method type. Previously called "TMS System" — renamed May 13. Full CRUD needed (currently delete-only). |
+| ~~**Partner**~~ | ~~Engineering~~ | ~~External business partner~~ | ~~Removed May 19~~ — confirmed unnecessary after AJ consultation. Partner is not a data point needed at the connection level. |
 | **Lookup Table** | Engineering | Scoped to a Connection | Key→value dictionaries (status codes, equipment types, doc categories). |
 | **Mapping Template (Master)** | Engineering | Scoped to (Application, Capability, Connection) | Default field translations. Authored once, forked many times. |
 | **API Client** | Engineering | Runtime identity | The `x-client-id` value runtime callers use. Has assigned MasterTemplate versions. |
@@ -205,7 +207,7 @@ Each tab is **independently savable** — partial progress is fine. A deployment
 
 | Tab | Owns | Persists to |
 |---|---|---|
-| **Connection** | Connection picker + Partner dropdown + customer's credentials | `CustomerConnection` |
+| **Connection** | Connection picker + customer credentials (auth method varies by connection type) + Test Connection button | `CustomerConnection` |
 | **Mapping** | Fork-master-template picker + field-mapping table + versioned published-mappings list + inline JSON test panel | `CustomerTemplate` |
 | **Test & Publish** | Real-order test runner, Publish / Activate / Retire / Rollback buttons | Mutates `Deployment.status` and `snapshotVersion` |
 | **Activity** | Read-only transformation log filtered to this `deploymentId` | — |
@@ -213,8 +215,10 @@ Each tab is **independently savable** — partial progress is fine. A deployment
 ### Versioned Mappings List (new — May 13)
 The Mapping tab shows a grid of all published (but potentially inactive) versions before the Activate action. Columns: version number, publish date, published by. This allows PS to reference prior configs and promotes a clear paper trail before going live.
 
-### Connection tab Partner dropdown (new — May 13)
-The Connection tab includes a **Partner** dropdown between the Connection picker and the Credentials form. Partners are maintained by engineering; PS selects which partner this deployment is for. Changing the partner (like changing the connection) marks the tab dirty.
+### Connection tab auth methods (expanded — May 19)
+The Connection tab credentials form should expand auth options modeled after Postman: API Key, Bearer Token, Basic Auth, OAuth 2.0. The connection type definition drives which auth fields are required. A **Test Connection** button validates credentials against the live system (separate from the mapping test).
+
+> ~~**Partner dropdown (May 13):**~~ Removed May 19 — confirmed unnecessary after AJ consultation. Partner is not needed at the connection level.
 
 ### Deployment ⇄ tab semantics
 
@@ -292,20 +296,34 @@ Brand blue (`--tf-blue-500: #2474BB`) is the primary. Status uses PrimeNG severi
 | Terminology: "Connections" throughout (TMS Systems removed) | ✓ May 13 |
 | Integrations tab removed | ✓ May 13 |
 | Partners standalone management removed | ✓ May 13 |
-| Partner dropdown on Connection tab | ✓ May 13 |
+| ~~Partner dropdown on Connection tab~~ | ⚠ Needs removal — reversed May 19 (AJ confirmed unnecessary) |
 
-## What's coming next (pre-architecture review)
+## What's coming next (MVP backlog — post May 19 review)
 
+### Code cleanup (immediate)
+- [ ] **Remove Partner field** from `connection-tab.component.ts` — reversed May 19
+
+### UX / Feature work (pre-handoff to Mohammed)
 - [ ] **Versioned mappings list** in the Mapping tab — published version history grid before Activate
-- [ ] **"Add Customer" button + portal dropdown** — replace auto-populated list with explicit activation
-- [ ] **Tenant picker** — at application level in the tree view (deferred until architecture review clarifies backend model)
-- [ ] Update `PRODUCT-GUIDING-PRINCIPLES.md` post-architecture review (week of May 19)
+- [ ] **"Add Customer" button + portal dropdown** — super admin flow, replaces auto-populated list
+- [ ] **Stronger Publish vs. Activate visual distinction** — the difference wasn't clear to wider team; needs better labeling/explainer in Test & Publish tab
+- [ ] **POC placeholder cleanup** — remove any fake content that doesn't reflect real functionality
 
-## What's out of scope until architecture review
+### Dev section (Integration Library) — CRUD completeness
+- [ ] **Connection Create + Edit** — currently delete-only; needs full CRUD with base URL field + auth method selector
+- [ ] **Auth method options** — model after Postman types (API Key, Bearer, Basic, OAuth 2.0)
+- [ ] **Test Connection button** — validates credentials against live system, separate from mapping test
 
-- How tenants are modeled in the backend
+### Backend integrations (Mohammed's work)
+- [ ] Portal GraphQL integration for customer data
+- [ ] Portal authentication / SSO
+- [ ] Super admin customer management page
+
+## What's out of scope until Mohammed's architecture session
+
+- Tenant modeling in the backend
 - One deployed app vs two separate surfaces
-- Integration mechanism with portal customer records
+- Import Orders → Export Documents → Webhooks rollout sequence (Import Orders is MVP focus)
 - Visual Connections page in Workflow AI settings (Phase 3)
 - Real backend / auth / multi-tenant scoping
 
@@ -318,7 +336,7 @@ Brand blue (`--tf-blue-500: #2474BB`) is the primary. Status uses PrimeNG severi
 - **Wizard never edits the library.** PS flows produce CustomerTemplates / CustomerConnections / Deployments — never modify library entities.
 - **Forks are detached.** Editing a CustomerTemplate must not affect its MasterTemplate origin.
 - **One Active per (Customer, App, Capability).** Activating retires the prior Active. Surface this prominently.
-- **Partners are engineering-managed.** PS selects a partner per deployment; they do not create partners.
+- ~~**Partners are engineering-managed.**~~ Partner field removed May 19 — not needed at connection level.
 - **Publish first, Activate second.** Never let PS skip directly to Active. The two-step workflow is non-negotiable.
 - **PrimeNG before custom.** New surfaces import from `primeng/*`. Custom components use design tokens.
 - **Sync the design system, don't fork it.** Use the `transflo-design-system-sync` skill; never rewrite ported components from scratch.
@@ -330,10 +348,12 @@ Brand blue (`--tf-blue-500: #2474BB`) is the primary. Status uses PrimeNG severi
 | # | Question | Owner | Status |
 |---|---|---|---|
 | 1 | What specific fields are needed in the Test & Publish section? | Jake + Brian | Open |
-| 2 | How is the partner dropdown populated — dev-only CRUD or synced from somewhere? | Brian | Open |
-| 3 | Customer list filter criteria for portal records dropdown (active only? by type?) | PM | Open |
-| 4 | How are tenants defined — by environment, business unit, or both? | Architecture Review | Deferred |
-| 5 | One app or two deployed surfaces post-architecture review? | Scott + Allison | Deferred |
+| 2 | Portal filter criteria — which customers appear in the add-customer picklist? | Allison / Portal team | Open |
+| 3 | Redirect vs. embedded experience — does portal launch Integration Configurator in a new tab or iframe? | Scott + Mohammed | Open |
+| 4 | Authentication flow — SSO from portal session or separate login? | Mohammed + Portal team | Open |
+| 5 | Base URL — per-connection-type or per-customer (can customers override)? | Mohammed + Jake | Open |
+| 6 | How are tenants defined — by environment, business unit, or both? | Mohammed session | Deferred |
+| 7 | One app or two deployed surfaces? | Mohammed + Scott | Deferred |
 
 ### Resolved
 - ~~Wizard or no wizard?~~ → **No wizard.** Tree-view + per-capability tabs.
@@ -343,4 +363,6 @@ Brand blue (`--tf-blue-500: #2474BB`) is the primary. Status uses PrimeNG severi
 - ~~Multi-deployment + upsell flows~~ → `+ Add application` / `+ Add capability` modals.
 - ~~"TMS Systems" terminology~~ → **Renamed to "Connections"** (May 13).
 - ~~Integrations tab~~ → **Removed** (May 13). Consolidated under Connections.
-- ~~Partners standalone management UI~~ → **Removed** (May 13). Now a dropdown on the Connection tab.
+- ~~Partners standalone management UI~~ → **Removed** (May 13, re-removed May 19). Partner field confirmed unnecessary by AJ.
+- ~~Angular framework choice~~ → **Confirmed** (May 19). Stick with Jake's existing Angular codebase.
+- ~~Publish/Activate two-step workflow~~ → **Confirmed** by wider team (May 19). Visual clarity needs improvement.
