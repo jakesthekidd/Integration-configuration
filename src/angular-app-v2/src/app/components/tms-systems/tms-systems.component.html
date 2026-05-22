@@ -47,6 +47,9 @@
           <th>Name</th>
           <th>Display Name</th>
           <th>Version</th>
+          <th>Application</th>
+          <th>Capability</th>
+          <th class="num">Total Active</th>
           <th>Status</th>
           <th>Created</th>
           <th>Actions</th>
@@ -58,6 +61,13 @@
             <td>{{ system.name }}</td>
             <td>{{ system.displayName }}</td>
             <td>{{ system.version }}</td>
+            <td class="usage">{{ applicationsFor(system.id) }}</td>
+            <td class="usage">{{ capabilitiesFor(system.id) }}</td>
+            <td class="num">
+              <span class="active-count" [class.active-count--zero]="totalActiveFor(system.id) === 0">
+                {{ totalActiveFor(system.id) }}
+              </span>
+            </td>
             <td>
               <span [class.active]="system.isActive" [class.inactive]="!system.isActive">
                 {{ system.isActive ? 'Active' : 'Inactive' }}

@@ -104,3 +104,37 @@
   border-radius: 4px;
   margin: 10px 0;
 }
+
+/* ── New columns: Application / Capability / Total Active ──────── */
+.data-table .usage {
+  max-width: 220px;
+  font-size: 13px;
+  color: #475569;
+  line-height: 1.4;
+}
+
+.data-table .num {
+  text-align: center;
+  width: 110px;
+}
+
+.active-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 12px;
+  background: #e5f9ea;
+  color: #1b6b3a;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.active-count--zero {
+  background: #f1f5f9;
+  color: #64748b;
+  font-weight: 500;
+}
+

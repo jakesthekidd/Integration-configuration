@@ -1,9 +1,19 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { forkJoin } from 'rxjs';
 import { ApiService } from '../../services/api.service';
 import { GeneralService } from '../../services/general.service';
 import { TmsSystem, CreateTmsSystemRequest } from '../../models/tms-system.model';
+import { Application } from '../../models/application.model';
+import { Capability } from '../../models/capability.model';
+import { Deployment } from '../../models/deployment.model';
+
+interface ConnectionUsageSummary {
+  applications: string[];
+  capabilities: string[];
+  totalActive: number;
+}
 
 @Component({
     selector: 'app-tms-systems',
@@ -24,6 +34,9 @@ export class TmsSystemsComponent implements OnInit {
     version: '1.0',
   };
 
+  /** Per-connection-id usage summary, refreshed any time we reload the data. */
+  usage: Record<string, ConnectionUsageSummary> = {};
+
   constructor(
     private apiService: ApiService,
     private generalService: GeneralService,
@@ -37,11 +50,24 @@ export class TmsSystemsComponent implements OnInit {
     this.loading = true;
     this.error = null;
 
-    this.apiService.getTmsSystems(this.activeOnly).subscribe({
-      next: (response) => {
-        if (response.success && response.data) {
-          this.systems = response.data.systems;
-        }
+    // Load connections, deployments, applications and capabilities together so
+    // we can derive per-connection usage columns (Application, Capability,
+    // Total Active) without N additional requests.
+    forkJoin({
+      systems: this.apiService.getTmsSystems(this.activeOnly),
+      deployments: this.apiService.getDeployments(),
+      applications: this.apiService.getApplications(),
+      capabilities: this.apiService.getCapabilities(),
+    }).subscribe({
+      next: (res) => {
+        if (res.systems.success && res.systems.data) this.systems = res.systems.data.systems;
+        const deployments: Deployment[] =
+          res.deployments.success && res.deployments.data ? res.deployments.data.deployments : [];
+        const applications: Application[] =
+          res.applications.success && res.applications.data ? res.applications.data.applications : [];
+        const capabilities: Capability[] =
+          res.capabilities.success && res.capabilities.data ? res.capabilities.data.capabilities : [];
+        this.usage = this.buildUsageMap(deployments, applications, capabilities);
         this.loading = false;
       },
       error: (err) => {
@@ -50,6 +76,41 @@ export class TmsSystemsComponent implements OnInit {
         console.error(err);
       },
     });
+  }
+
+  /** Build a connectionId → { applications, capabilities, totalActive } lookup. */
+  private buildUsageMap(
+    deployments: Deployment[],
+    applications: Application[],
+    capabilities: Capability[],
+  ): Record<string, ConnectionUsageSummary> {
+    const appById = new Map(applications.map((a) => [a.id, a.displayName]));
+    const capById = new Map(capabilities.map((c) => [c.id, c.displayName]));
+    const out: Record<string, ConnectionUsageSummary> = {};
+    for (const d of deployments) {
+      if (!d.connectionId) continue;
+      const entry =
+        out[d.connectionId] ?? (out[d.connectionId] = { applications: [], capabilities: [], totalActive: 0 });
+      const appName = appById.get(d.applicationId);
+      const capName = capById.get(d.capabilityId);
+      if (appName && !entry.applications.includes(appName)) entry.applications.push(appName);
+      if (capName && !entry.capabilities.includes(capName)) entry.capabilities.push(capName);
+      if (d.status === 'Active') entry.totalActive += 1;
+    }
+    return out;
+  }
+
+  /** Template helpers — return display strings (or em-dash when empty). */
+  applicationsFor(systemId: string): string {
+    const list = this.usage[systemId]?.applications ?? [];
+    return list.length ? list.sort().join(', ') : '—';
+  }
+  capabilitiesFor(systemId: string): string {
+    const list = this.usage[systemId]?.capabilities ?? [];
+    return list.length ? list.sort().join(', ') : '—';
+  }
+  totalActiveFor(systemId: string): number {
+    return this.usage[systemId]?.totalActive ?? 0;
   }
 
   createSystem() {
