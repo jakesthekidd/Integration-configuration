@@ -73,8 +73,8 @@ import { Deployment, DeploymentStatus } from '../models/deployment.model';
           </article>
         }
 
-        <!-- Activate: from Published → Active -->
-        @if (status() === 'Published' || status() === 'Tested') {
+        <!-- Activate: from Published → Active (only after Publish step) -->
+        @if (status() === 'Published') {
           <article class="action-card">
             <div>
               <h5>Activate</h5>

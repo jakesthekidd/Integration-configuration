@@ -590,8 +590,13 @@ export class CustomerDetailComponent implements OnInit {
     const conns = new Map(this.connections().map((c) => [c.id, c]));
     const collapsed = this.collapsedApps();
 
+    // MVP: only surface Import Orders deployments in the rail.
+    const MVP_ALLOWED = ['Import Orders'];
+
     const byApp = new Map<string, CapabilityNode[]>();
     for (const d of this.deployments()) {
+      const capName = caps.get(d.capabilityId)?.displayName ?? '';
+      if (!MVP_ALLOWED.includes(capName)) continue;
       const node: CapabilityNode = {
         deploymentId: d.id,
         capabilityId: d.capabilityId,
