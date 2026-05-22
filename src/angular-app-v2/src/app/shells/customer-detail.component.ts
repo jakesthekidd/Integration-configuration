@@ -590,13 +590,8 @@ export class CustomerDetailComponent implements OnInit {
     const conns = new Map(this.connections().map((c) => [c.id, c]));
     const collapsed = this.collapsedApps();
 
-    // MVP: only surface Import Orders deployments in the rail.
-    const MVP_ALLOWED = ['Import Orders'];
-
     const byApp = new Map<string, CapabilityNode[]>();
     for (const d of this.deployments()) {
-      const capName = caps.get(d.capabilityId)?.displayName ?? '';
-      if (!MVP_ALLOWED.includes(capName)) continue;
       const node: CapabilityNode = {
         deploymentId: d.id,
         capabilityId: d.capabilityId,
@@ -611,12 +606,26 @@ export class CustomerDetailComponent implements OnInit {
     }
 
     return Array.from(byApp.entries())
-      .map(([applicationId, capList]) => ({
-        applicationId,
-        applicationName: apps.get(applicationId)?.displayName ?? applicationId,
-        expanded: !collapsed.has(applicationId),
-        capabilities: capList.sort((a, b) => a.capabilityName.localeCompare(b.capabilityName)),
-      }))
+      .map(([applicationId, capList]) => {
+        // Number duplicate capabilities: if same capabilityId appears more than once, suffix them (1), (2)...
+        const countById = new Map<string, number>();
+        capList.forEach(n => countById.set(n.capabilityId, (countById.get(n.capabilityId) ?? 0) + 1));
+        const indexById = new Map<string, number>();
+        const numberedList = capList.map(n => {
+          if ((countById.get(n.capabilityId) ?? 1) > 1) {
+            const idx = (indexById.get(n.capabilityId) ?? 0) + 1;
+            indexById.set(n.capabilityId, idx);
+            return { ...n, capabilityName: `${n.capabilityName} (${idx})` };
+          }
+          return n;
+        });
+        return {
+          applicationId,
+          applicationName: apps.get(applicationId)?.displayName ?? applicationId,
+          expanded: !collapsed.has(applicationId),
+          capabilities: numberedList.sort((a, b) => a.capabilityName.localeCompare(b.capabilityName)),
+        };
+      })
       .sort((a, b) => a.applicationName.localeCompare(b.applicationName));
   });
 
