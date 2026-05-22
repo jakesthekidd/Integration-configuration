@@ -143,6 +143,21 @@ import {
       }
     </section>
 
+    <!-- Test Authentication result banner -->
+    @if (testResult()) {
+      <div
+        class="test-result"
+        [class.test-result--pass]="testResult()!.success"
+        [class.test-result--fail]="!testResult()!.success"
+      >
+        <i [class]="testResult()!.success ? 'pi pi-check-circle' : 'pi pi-times-circle'"></i>
+        <span>{{ testResult()!.message }}</span>
+        <button type="button" class="test-result__dismiss" (click)="testResult.set(null)" aria-label="Dismiss">
+          <i class="pi pi-times"></i>
+        </button>
+      </div>
+    }
+
     <footer class="actions">
       @if (!isComplete()) {
         <span class="status-pill status-pill--draft">
@@ -156,6 +171,16 @@ import {
         </span>
       }
       <span class="grow"></span>
+      <p-button
+        label="Test Authentication"
+        icon="pi pi-bolt"
+        severity="secondary"
+        [outlined]="true"
+        size="small"
+        [disabled]="!isComplete()"
+        [loading]="testing()"
+        (onClick)="testAuth()"
+      />
       <p-button
         label="Save changes"
         icon="pi pi-save"
@@ -260,6 +285,46 @@ import {
         background: #fff6e5;
         color: #92510a;
       }
+
+      /* ── Test Auth result ──────────────────────────────────────────── */
+      .test-result {
+        display: flex;
+        align-items: center;
+        gap: var(--tf-space-2);
+        padding: var(--tf-space-3) var(--tf-space-4);
+        border-radius: var(--tf-radius-md);
+        font-size: var(--tf-text-body);
+        font-weight: 600;
+        border: 1px solid;
+      }
+      .test-result--pass {
+        background: #e5f9ea;
+        color: #1b6b3a;
+        border-color: #a3d9b1;
+      }
+      .test-result--fail {
+        background: #fbe9ea;
+        color: #83131a;
+        border-color: #f0a5ab;
+      }
+      .test-result i:first-child {
+        font-size: 1rem;
+      }
+      .test-result span {
+        flex: 1 1 auto;
+      }
+      .test-result__dismiss {
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: inherit;
+        opacity: 0.6;
+        padding: 0;
+        line-height: 1;
+      }
+      .test-result__dismiss:hover {
+        opacity: 1;
+      }
     `,
   ],
 })
@@ -281,6 +346,8 @@ export class ConnectionTabComponent implements OnChanges {
   });
 
   saving = signal<boolean>(false);
+  testing = signal<boolean>(false);
+  testResult = signal<{ success: boolean; message: string } | null>(null);
 
   schema = computed<CredentialField[]>(() => {
     const cid = this.connectionId();
@@ -319,6 +386,7 @@ connectionDescription = computed(() => {
       // For now reset to empty and let the user fill them.
       this.credentials.set({});
       this.snapshot.set({ connectionId: this.deployment.connectionId, credentials: {} });
+      this.testResult.set(null);
       this.loadConnections();
     }
   }
@@ -337,6 +405,29 @@ onConnectionChange(id: string) {
 
   onCredChange(key: string, value: string) {
     this.credentials.update((c) => ({ ...c, [key]: value ?? '' }));
+  }
+
+  testAuth() {
+    if (this.testing() || !this.isComplete()) return;
+    this.testResult.set(null);
+    this.testing.set(true);
+    // Mock: 80% pass, 20% fail to make the demo realistic.
+    setTimeout(() => {
+      const pass = Math.random() > 0.2;
+      const conn = this.connections().find((c) => c.id === this.connectionId());
+      this.testResult.set(
+        pass
+          ? {
+              success: true,
+              message: `Authentication successful — connected to ${conn?.displayName ?? 'the system'}.`,
+            }
+          : {
+              success: false,
+              message: 'Authentication failed: invalid credentials or endpoint unreachable. Verify your credentials and try again.',
+            },
+      );
+      this.testing.set(false);
+    }, 1200);
   }
 
   save() {
