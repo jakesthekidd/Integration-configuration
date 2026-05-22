@@ -7,6 +7,7 @@
 **Design decisions:**
 - [`DESIGN-DECISIONS-2025-05-13.md`](./DESIGN-DECISIONS-2025-05-13.md) — PM + lead dev review
 - [`DESIGN-DECISIONS-2025-05-19.md`](./DESIGN-DECISIONS-2025-05-19.md) — wider team review (Mohammed, Allison, Scott)
+- [`DESIGN-DECISIONS-2025-05-21.md`](./DESIGN-DECISIONS-2025-05-21.md) — PM sprint planning review
 
 This document is the **canonical reference** for what we're building, why, and the shape it has to take. It captures decisions made across the v2 design conversations so future work doesn't drift.
 
@@ -138,13 +139,15 @@ Draft  →  Tested  →  Published  →  Active  →  Retired
 
 Sub-tabs (in the navy stage banner):
 1. **Applications & Capabilities** — read-only catalog browser
-2. **Connections** — list + editor for McLeod v22, SAP S/4, etc. *(formerly "TMS Systems" — renamed May 13)*
+2. **Connections** — list + editor for McLeod v22, SAP S/4, etc. Table includes Application, Capability, and Total Active columns. *(formerly "TMS Systems" — renamed May 13)*
 3. **Mapping Templates** — list + editor, organized as `Application × Capability × Connection`
 4. **Lookup Tables** — list + editor, scoped per Connection
-5. **Logs** — runtime transformation telemetry
+5. **Customers** — super admin tab for adding customers from portal picklist *(new — May 21)*
+6. **Logs** — runtime transformation telemetry
 
-> **Removed May 13:** The "Integrations" tab has been eliminated. Its concepts consolidate under Connections.
-> **Removed May 13:** The "Partners" standalone management tab is removed. Partner CRUD lives in the Connections surface; PS selects a partner per deployment via dropdown on the Connection tab.
+> **Removed May 13:** The "Integrations" tab has been eliminated.
+> **Removed May 13/19:** The "Partners" standalone management tab is removed. Partner field also removed from Connection tab (May 19).
+> **Auth (May 21):** Dev side is password-protected for super admins. Standard PSG users get pass-through.
 
 ### App 2 — Customer Setup  (`/customers`)
 **Persona:** Professional Services
@@ -207,18 +210,20 @@ Each tab is **independently savable** — partial progress is fine. A deployment
 
 | Tab | Owns | Persists to |
 |---|---|---|
-| **Connection** | Connection picker + customer credentials (auth method varies by connection type) + Test Connection button | `CustomerConnection` |
-| **Mapping** | Fork-master-template picker + field-mapping table + versioned published-mappings list + inline JSON test panel | `CustomerTemplate` |
-| **Test & Publish** | Real-order test runner, Publish / Activate / Retire / Rollback buttons | Mutates `Deployment.status` and `snapshotVersion` |
+| **Connection** | Connection picker + customer credentials (auth method varies by type) + **Test Authentication** button | `CustomerConnection` |
+| **Mapping** | Fork-master-template picker + field-mapping table + lookup table reference + versioned published-mappings list | `CustomerTemplate` |
+| **Publish and Activate** *(formerly "Test & Publish" — renamed May 21)* | Publish / Activate / Retire / Rollback / Reactivate + "Send to master templates" option | Mutates `Deployment.status` and `snapshotVersion` |
 | **Activity** | Read-only transformation log filtered to this `deploymentId` | — |
 
 ### Versioned Mappings List (new — May 13)
 The Mapping tab shows a grid of all published (but potentially inactive) versions before the Activate action. Columns: version number, publish date, published by. This allows PS to reference prior configs and promotes a clear paper trail before going live.
 
-### Connection tab auth methods (expanded — May 19)
-The Connection tab credentials form should expand auth options modeled after Postman: API Key, Bearer Token, Basic Auth, OAuth 2.0. The connection type definition drives which auth fields are required. A **Test Connection** button validates credentials against the live system (separate from the mapping test).
+### Connection tab auth methods (expanded — May 19/21)
+The Connection tab credentials form expands auth options modeled after Postman: API Key, Bearer Token, Basic Auth, OAuth 2.0. The connection type definition drives which auth fields are required.
 
-> ~~**Partner dropdown (May 13):**~~ Removed May 19 — confirmed unnecessary after AJ consultation. Partner is not needed at the connection level.
+A **Test Authentication** button appears after the credentials form — validates credentials against the live system endpoint and returns an inline pass/fail. This replaces the test runner that was previously on the Test & Publish tab.
+
+> ~~**Partner dropdown (May 13):**~~ Removed May 19 — confirmed unnecessary after AJ consultation.
 
 ### Deployment ⇄ tab semantics
 
@@ -298,26 +303,37 @@ Brand blue (`--tf-blue-500: #2474BB`) is the primary. Status uses PrimeNG severi
 | Partners standalone management removed | ✓ May 13 |
 | ~~Partner dropdown on Connection tab~~ | ⚠ Needs removal — reversed May 19 (AJ confirmed unnecessary) |
 
-## What's coming next (MVP backlog — post May 19 review)
+## What's coming next (MVP backlog — updated May 21)
 
 ### Code cleanup (immediate)
-- [ ] **Remove Partner field** from `connection-tab.component.ts` — reversed May 19
+- [ ] **Push partner field removal** — done locally, needs commit + push
+- [ ] **Rename "Test and Publish" → "Publish and Activate"** — tab label, component, route param
+- [ ] **Remove test runner section** from Publish and Activate tab
+- [ ] **Remove Export + Webhook Handler** from capability picker (Import Orders only for MVP)
+- [ ] **Remove Tonu code column** from customer list
 
-### UX / Feature work (pre-handoff to Mohammed)
-- [ ] **Versioned mappings list** in the Mapping tab — published version history grid before Activate
-- [ ] **"Add Customer" button + portal dropdown** — super admin flow, replaces auto-populated list
-- [ ] **Stronger Publish vs. Activate visual distinction** — the difference wasn't clear to wider team; needs better labeling/explainer in Test & Publish tab
-- [ ] **POC placeholder cleanup** — remove any fake content that doesn't reflect real functionality
+### Connection tab
+- [ ] **Test Authentication button** — inline credential validator after credentials form
+- [ ] **Auth method options** — model after Postman (API Key, Bearer, Basic, OAuth 2.0)
+- [ ] **Base URL field** on connection definition
 
-### Dev section (Integration Library) — CRUD completeness
-- [ ] **Connection Create + Edit** — currently delete-only; needs full CRUD with base URL field + auth method selector
-- [ ] **Auth method options** — model after Postman types (API Key, Bearer, Basic, OAuth 2.0)
-- [ ] **Test Connection button** — validates credentials against live system, separate from mapping test
+### Mapping tab
+- [ ] **Lookup table reference panel** — surface relevant lookup tables for the active connection
+- [ ] **Versioned mappings list** — published version history grid before Activate
+
+### Publish and Activate tab
+- [ ] **"Send to master templates"** — promote successful activated config back to master template library
+
+### Integration Library (dev side)
+- [ ] **Connections table** — add Application, Capability, Total Active columns; Total Active click-through to customer list
+- [ ] **Connection Create + Edit** — currently delete-only; needs full CRUD
+- [ ] **Customers tab** — super admin search + picklist from portal for adding customers to the system
+- [ ] **Password protection** — gate dev side behind password for super admins; pass-through for standard PSG
 
 ### Backend integrations (Mohammed's work)
 - [ ] Portal GraphQL integration for customer data
 - [ ] Portal authentication / SSO
-- [ ] Super admin customer management page
+- [ ] Super admin customer management
 
 ## What's out of scope until Mohammed's architecture session
 
@@ -337,6 +353,9 @@ Brand blue (`--tf-blue-500: #2474BB`) is the primary. Status uses PrimeNG severi
 - **Forks are detached.** Editing a CustomerTemplate must not affect its MasterTemplate origin.
 - **One Active per (Customer, App, Capability).** Activating retires the prior Active. Surface this prominently.
 - ~~**Partners are engineering-managed.**~~ Partner field removed May 19 — not needed at connection level.
+- **One connection = one capability.** A TMS may have multiple connection records — one per application/capability pair (e.g., Truckmate has separate connections for WorkflowAI/Import Orders and Mobile/Import Orders).
+- **Test Authentication lives on the Connection tab.** The Publish and Activate tab is lifecycle-only — no test runner.
+- **Import Orders first.** Export Documents and Webhook Handler are excluded from the customer capability picker for MVP.
 - **Publish first, Activate second.** Never let PS skip directly to Active. The two-step workflow is non-negotiable.
 - **PrimeNG before custom.** New surfaces import from `primeng/*`. Custom components use design tokens.
 - **Sync the design system, don't fork it.** Use the `transflo-design-system-sync` skill; never rewrite ported components from scratch.
@@ -362,7 +381,10 @@ Brand blue (`--tf-blue-500: #2474BB`) is the primary. Status uses PrimeNG severi
 - ~~Customer detail screen pattern~~ → Tree view (§6).
 - ~~Multi-deployment + upsell flows~~ → `+ Add application` / `+ Add capability` modals.
 - ~~"TMS Systems" terminology~~ → **Renamed to "Connections"** (May 13).
-- ~~Integrations tab~~ → **Removed** (May 13). Consolidated under Connections.
-- ~~Partners standalone management UI~~ → **Removed** (May 13, re-removed May 19). Partner field confirmed unnecessary by AJ.
-- ~~Angular framework choice~~ → **Confirmed** (May 19). Stick with Jake's existing Angular codebase.
-- ~~Publish/Activate two-step workflow~~ → **Confirmed** by wider team (May 19). Visual clarity needs improvement.
+- ~~Integrations tab~~ → **Removed** (May 13).
+- ~~Partners standalone management UI~~ → **Removed** (May 13/19). Partner field confirmed unnecessary by AJ.
+- ~~Angular framework choice~~ → **Confirmed** (May 19).
+- ~~Publish/Activate two-step workflow~~ → **Confirmed** (May 19/21). Tab renamed "Publish and Activate".
+- ~~Test runner in final tab~~ → **Removed** (May 21). Auth testing moves to Connection tab; mapping tested separately.
+- ~~"Test and Publish" tab name~~ → **Renamed "Publish and Activate"** (May 21).
+- ~~Export + Webhook Handler in customer capability picker~~ → **Removed for MVP** (May 21). Import Orders only.
