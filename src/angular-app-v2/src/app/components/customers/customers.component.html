@@ -246,7 +246,6 @@
         <th>Sync (min)</th>
         <th>Retention (days)</th>
         <th>Last Sync</th>
-        <th>Tonu Code</th>
         <th style="width: 56px;"></th>
       </tr>
     </ng-template>
@@ -269,7 +268,6 @@
         <td>{{ c.syncFrequencyMinutes || '—' }}</td>
         <td>{{ c.orderRetentionDays || '—' }}</td>
         <td>{{ c.lastSyncTime | date: 'mediumDate' }}</td>
-        <td>{{ c.tonuCode || '—' }}</td>
         <td class="actions-cell">
           <p-button
             icon="pi pi-ellipsis-v"
@@ -286,7 +284,7 @@
 
     <ng-template pTemplate="emptymessage">
       <tr>
-        <td colspan="8" class="no-data">No customers found.</td>
+        <td colspan="7" class="no-data">No customers found.</td>
       </tr>
     </ng-template>
   </p-table>

@@ -16,7 +16,7 @@ import { TestPublishTabComponent } from '../capability/test-publish-tab.componen
 import { ActivityTabComponent } from '../capability/activity-tab.component';
 import { AddDeploymentDialogComponent } from '../capability/add-deployment-dialog.component';
 
-type CapabilityTab = 'connection' | 'mapping' | 'test-publish' | 'activity';
+type CapabilityTab = 'connection' | 'mapping' | 'publish-activate' | 'activity';
 
 interface CapabilityNode {
   deploymentId: string;
@@ -205,10 +205,10 @@ interface AppGroup {
               <button
                 class="tab"
                 type="button"
-                [class.tab--active]="activeTab() === 'test-publish'"
-                (click)="selectTab('test-publish')"
+                [class.tab--active]="activeTab() === 'publish-activate'"
+                (click)="selectTab('publish-activate')"
               >
-                Test &amp; Publish
+                Publish &amp; Activate
               </button>
               <button
                 class="tab"
@@ -228,7 +228,7 @@ interface AppGroup {
                   @case ('mapping') {
                     <app-mapping-tab [deployment]="dep" (saved)="onDeploymentChanged()" />
                   }
-                  @case ('test-publish') {
+                  @case ('publish-activate') {
                     <app-test-publish-tab [deployment]="dep" (statusChanged)="onDeploymentChanged()" />
                   }
                   @case ('activity') {
@@ -635,7 +635,7 @@ export class CustomerDetailComponent implements OnInit {
       this.selectedDeploymentId.set(cap);
 
       const tab = params.get('tab') ?? 'connection';
-      const valid: CapabilityTab[] = ['connection', 'mapping', 'test-publish', 'activity'];
+      const valid: CapabilityTab[] = ['connection', 'mapping', 'publish-activate', 'activity'];
       this.activeTab.set((valid as string[]).includes(tab) ? (tab as CapabilityTab) : 'connection');
     });
 

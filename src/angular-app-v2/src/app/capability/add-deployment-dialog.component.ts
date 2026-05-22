@@ -269,7 +269,11 @@ export class AddDeploymentDialogComponent implements OnChanges {
         .filter((d) => d.applicationId === appId && d.status !== 'Retired')
         .map((d) => d.capabilityId),
     );
-    return this.capabilities.filter((c) => c.applicationId === appId && c.isActive && !liveCapIds.has(c.id));
+    // MVP: Import Orders only — Export Documents and Webhook Handler excluded until phase 2.
+    const MVP_ALLOWED = ['Import Orders'];
+    return this.capabilities.filter(
+      (c) => c.applicationId === appId && c.isActive && !liveCapIds.has(c.id) && MVP_ALLOWED.includes(c.displayName),
+    );
   });
 
   canCreate = computed<boolean>(() => !!this.selectedAppId() && !!this.selectedCapabilityId());

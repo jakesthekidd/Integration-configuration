@@ -18,18 +18,15 @@ import { GeneralService } from '../services/general.service';
 import { Deployment, DeploymentStatus } from '../models/deployment.model';
 
 /**
- * Test & Publish tab — the lifecycle home for one deployment.
+ * Publish & Activate tab — the lifecycle home for one deployment.
  *
- *   - Run a real-order test (mock'd here; pulls live data when backend exists).
  *   - Publish snapshots the current Connection + Mapping into a versioned Deployment.
  *   - Activate makes it live and retires any prior Active for the same
  *     (customer, application, capability) tuple — see §4 invariant.
  *   - Retire / Rollback available based on current status.
  *
- * Activation gating: per PRODUCT-GUIDING-PRINCIPLES.md §6 you cannot Activate
- * until Connection + Mapping have at least their minimums. Today we approximate
- * by checking that the Deployment has connectionId and either a forked template
- * id (fork-from-master) or the SCRATCH sentinel (built from scratch).
+ * Auth testing lives on the Connection tab (Test Authentication button).
+ * Mapping testing is handled separately. This tab is lifecycle-only.
  *
  * State transitions emit `(statusChanged)` so the parent refetches the
  * deployments list and the rail re-renders.
@@ -38,36 +35,6 @@ import { Deployment, DeploymentStatus } from '../models/deployment.model';
   selector: 'app-test-publish-tab',
   imports: [CommonModule, ButtonModule, TagModule, MessageModule],
   template: `
-    <!-- ── Test runner ─────────────────────────────────────────────── -->
-    <section class="block test-block">
-      <header class="block__head">
-        <div>
-          <h4>Run a real-order test</h4>
-          <p class="muted">
-            Pulls live data using this customer's credentials. Auth, fetch, and transform are
-            exercised. No writes are issued in production.
-          </p>
-        </div>
-        <p-button
-          label="Run test"
-          icon="pi pi-play"
-          severity="primary"
-          size="small"
-          [loading]="testing()"
-          [disabled]="testing()"
-          (onClick)="runTest()"
-        />
-      </header>
-
-      @if (lastResult(); as r) {
-        @if (r.success) {
-          <p-message severity="success" [text]="r.message" />
-        } @else {
-          <p-message severity="error" [text]="r.message" />
-        }
-      }
-    </section>
-
     <!-- ── Lifecycle ───────────────────────────────────────────────── -->
     <section class="block">
       <header class="block__head">
@@ -231,11 +198,6 @@ import { Deployment, DeploymentStatus } from '../models/deployment.model';
         margin: 4px 0 0 0;
       }
 
-      .test-block {
-        background: var(--tf-blue-50);
-        border-color: var(--tf-blue-200);
-      }
-
       .lifecycle {
         display: flex;
         flex-direction: column;
@@ -278,14 +240,10 @@ export class TestPublishTabComponent implements OnChanges {
 
   status = computed<DeploymentStatus>(() => this.localStatus() ?? this.deployment.status);
 
-  testing = signal<boolean>(false);
-  lastResult = signal<{ success: boolean; message: string } | null>(null);
   busyAction = signal<'publish' | 'activate' | 'retire' | 'rollback' | 'reactivate' | null>(null);
 
-  /** True when a Tested correlation exists OR the user just ran a successful test. */
-  testedRecently = computed<boolean>(
-    () => !!this.deployment.lastTestCorrelationId || this.lastResult()?.success === true,
-  );
+  /** True when a Tested correlation exists (auth tested on Connection tab). */
+  testedRecently = computed<boolean>(() => !!this.deployment.lastTestCorrelationId);
 
   /** Gate for Activate: need Connection + at least a template choice + a recent test. */
   canActivate = computed<boolean>(() => {
@@ -313,33 +271,8 @@ export class TestPublishTabComponent implements OnChanges {
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes['deployment']) {
-      this.localStatus.set(null); // reset overlay when the deployment changes
-      this.lastResult.set(null);
+      this.localStatus.set(null);
     }
-  }
-
-  runTest() {
-    if (this.testing()) return;
-    this.testing.set(true);
-    this.lastResult.set(null);
-    setTimeout(() => {
-      const success = Math.random() > 0.15;
-      const correlationId = 'corr-' + Math.random().toString(36).slice(2, 10);
-      this.lastResult.set({
-        success,
-        message: success
-          ? `Test passed. Auth + fetch + transform succeeded. Correlation: ${correlationId}`
-          : 'Test failed: source path $.order.id was not found in the sample document.',
-      });
-      this.testing.set(false);
-      // Successful tests bump Draft → Tested.
-      if (success && this.status() === 'Draft') {
-        this.localStatus.set('Tested');
-        this.statusChanged.emit();
-      }
-      if (success) this.gen.success('Test passed.');
-      else this.gen.error('Test failed.');
-    }, 1200);
   }
 
   publish() {
