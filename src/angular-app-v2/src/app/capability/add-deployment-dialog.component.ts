@@ -245,9 +245,16 @@ export class AddDeploymentDialogComponent implements OnChanges {
   selectedCapabilityId = signal<string>('');
   creating = signal<boolean>(false);
 
+  // Signal mirrors of the @Inputs so the computeds below stay reactive.
+  // `computed()` only tracks signal reads — plain @Input properties don't
+  // trigger re-runs, which is what bit us before (cached empty filter result).
+  private applicationsSig = signal<Application[]>([]);
+  private capabilitiesSig = signal<Capability[]>([]);
+  private existingDeploymentsSig = signal<Deployment[]>([]);
+
   pickedApp = computed<Application | null>(() => {
     const id = this.selectedAppId();
-    return this.applications.find((a) => a.id === id) ?? null;
+    return this.applicationsSig().find((a) => a.id === id) ?? null;
   });
 
   header = computed(() => (this.step() === 'app' ? 'Add application' : 'Add capability'));
@@ -255,9 +262,9 @@ export class AddDeploymentDialogComponent implements OnChanges {
   /** Apps the customer doesn't yet have ANY non-Retired deployment for. */
   availableApps = computed<Application[]>(() => {
     const liveAppIds = new Set(
-      this.existingDeployments.filter((d) => d.status !== 'Retired').map((d) => d.applicationId),
+      this.existingDeploymentsSig().filter((d) => d.status !== 'Retired').map((d) => d.applicationId),
     );
-    return this.applications.filter((a) => a.isActive && !liveAppIds.has(a.id));
+    return this.applicationsSig().filter((a) => a.isActive && !liveAppIds.has(a.id));
   });
 
   /** Capabilities of `selectedAppId` not yet deployed for this customer. */
@@ -265,11 +272,11 @@ export class AddDeploymentDialogComponent implements OnChanges {
     const appId = this.selectedAppId();
     if (!appId) return [];
     const liveCapIds = new Set(
-      this.existingDeployments
+      this.existingDeploymentsSig()
         .filter((d) => d.applicationId === appId && d.status !== 'Retired')
         .map((d) => d.capabilityId),
     );
-    return this.capabilities.filter(
+    return this.capabilitiesSig().filter(
       (c) => c.applicationId === appId && c.isActive && !liveCapIds.has(c.id),
     );
   });
@@ -277,6 +284,9 @@ export class AddDeploymentDialogComponent implements OnChanges {
   canCreate = computed<boolean>(() => !!this.selectedAppId() && !!this.selectedCapabilityId());
 
   ngOnChanges(changes: SimpleChanges) {
+    if (changes['applications']) this.applicationsSig.set(this.applications);
+    if (changes['capabilities']) this.capabilitiesSig.set(this.capabilities);
+    if (changes['existingDeployments']) this.existingDeploymentsSig.set(this.existingDeployments);
     if (changes['visible']) {
       this.visibleProxy = this.visible;
       if (this.visible) this.reset();
