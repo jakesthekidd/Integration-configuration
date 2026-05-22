@@ -178,7 +178,10 @@ export const mockApiInterceptor: HttpInterceptorFn = (req, next) => {
   // /deployments
   if (segs[0] === 'deployments') {
     if (segs.length === 1) {
-      const customerId = req.params.get('customerId');
+      // Read customerId from BOTH HttpParams (set via { params }) and the URL
+      // query string (when callers bake it inline). The api.service does the latter.
+      const qs = url.includes('?') ? new URLSearchParams(url.split('?')[1]) : null;
+      const customerId = req.params.get('customerId') ?? qs?.get('customerId') ?? null;
       const list = customerId ? mockDeployments.filter((d) => d.customerId === customerId) : mockDeployments;
       return ok({ deployments: list, totalCount: list.length });
     }
