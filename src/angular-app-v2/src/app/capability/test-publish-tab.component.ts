@@ -11,309 +11,327 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
-import { TagModule } from 'primeng/tag';
-import { MessageModule } from 'primeng/message';
 import { MenuModule } from 'primeng/menu';
 import { MenuItem } from 'primeng/api';
 
 import { GeneralService } from '../services/general.service';
-import { Deployment, DeploymentStatus } from '../models/deployment.model';
+import { Deployment } from '../models/deployment.model';
+import { Version, VersionState } from '../models/version.model';
+import { mockVersions } from '../mocks/mock-data';
+import { LifecycleChevronComponent } from './lifecycle-chevron.component';
 
-type StepKey = 'draft' | 'published' | 'active';
-type StepState = 'done' | 'current' | 'pending';
-
-interface NextAction {
-  label: string;
-  icon: string;
-  busyKey: 'publish' | 'activate' | 'reactivate';
-  /** PrimeNG severity — drives the button color. */
-  severity: 'primary' | 'success';
-  disabled: boolean;
-  handler: () => void;
-}
+type ChevronStage = 'Draft' | 'Published' | 'Activated';
 
 /**
- * Status tab — the lifecycle home for one deployment.
+ * Status tab — version stack home for one deployment.
  *
- * Replaces the prior stacked "Lifecycle" + "Promote" cards with a single
- * status banner (state + version + stepper + one primary CTA) and a
- * Manage overflow menu for the secondary actions (Retire / Rollback /
- * Send to master templates). One forward step is always the obvious
- * thing to click — destructive / niche actions live behind ⋯.
+ * Implements DESIGN-STATUS-VERSIONING.md. Every deployment has a stack of
+ * versions:
  *
- *   Draft / Tested → Published → Active     (Retire → Retired → Reactivate)
+ *   Drafts (newest first, expanded)
+ *   ─ Published (if any, expanded)
+ *   ─ Activated (one, expanded, with "+ New draft from this")
+ *   ─ Archived (collapsed by default, history)
  *
- * State transitions emit `(statusChanged)` so the parent refetches the
- * deployments list and the rail re-renders.
+ * The chevron on each container is the primary lifecycle control. Click
+ * advance → confirm → commit. Secondary actions (Archive, Rollback,
+ * Duplicate, Delete) live in each container's ⋯ Manage menu.
  */
 @Component({
   selector: 'app-test-publish-tab',
-  imports: [CommonModule, ButtonModule, TagModule, MessageModule, MenuModule],
+  imports: [CommonModule, ButtonModule, MenuModule, LifecycleChevronComponent],
   template: `
-    <!-- ── Status banner ───────────────────────────────────────────── -->
-    <section class="banner" [attr.data-status]="status()">
-      <div class="banner__top">
-        <div class="banner__title">
-          <span class="status-dot" [attr.data-status]="status()" aria-hidden="true"></span>
-          <strong>{{ statusLabel() }}</strong>
-          @if (deployment.snapshotVersion > 0) {
-            <span class="banner__meta">· v{{ deployment.snapshotVersion }}</span>
-          }
-          @if (publishedRelative(); as p) {
-            <span class="banner__meta">· {{ p }}</span>
-          }
-        </div>
-
-        <div class="banner__actions">
-          @if (canPromote()) {
+    <div class="versions">
+      <!-- ── Drafts ───────────────────────────────────────────────── -->
+      @for (v of draftVersions(); track v.id) {
+        <article class="version" data-state="Draft">
+          <header class="version__header">
+            <div class="version__id">
+              <span class="version__chip" data-state="Draft">Draft</span>
+              <strong>v{{ v.versionNumber }}</strong>
+              <span class="version__meta">
+                Created {{ v.createdAt | date: 'MMM d, y \\'·\\' h:mm a' }} · {{ v.createdBy }}
+              </span>
+            </div>
             <p-button
-              label="Send to master templates"
-              icon="pi pi-share-alt"
-              severity="primary"
-              [outlined]="true"
+              icon="pi pi-ellipsis-h"
+              severity="secondary"
+              [text]="true"
+              [rounded]="true"
               size="small"
-              [loading]="busyAction() === 'promote'"
-              (onClick)="sendToMasterTemplates()"
+              ariaLabel="Manage version"
+              (onClick)="openMenu(v.id, $event, sharedMenu)"
             />
-          }
-          @if (nextAction(); as next) {
+          </header>
+          <div class="version__body">
+            @if (v.notes) {
+              <p class="version__notes">{{ v.notes }}</p>
+            }
+            <app-lifecycle-chevron
+              [current]="v.state"
+              (advance)="onAdvance(v, $event)"
+            />
+          </div>
+        </article>
+      }
+
+      <!-- ── Published (the in-between, if any) ────────────────────── -->
+      @for (v of publishedVersions(); track v.id) {
+        <article class="version" data-state="Published">
+          <header class="version__header">
+            <div class="version__id">
+              <span class="version__chip" data-state="Published">Published</span>
+              <strong>v{{ v.versionNumber }}</strong>
+              <span class="version__meta">
+                Published {{ v.publishedAt | date: 'MMM d, y' }} · {{ v.createdBy }}
+              </span>
+            </div>
             <p-button
-              [label]="next.label"
-              [icon]="next.icon"
-              iconPos="right"
-              [severity]="next.severity"
+              icon="pi pi-ellipsis-h"
+              severity="secondary"
+              [text]="true"
+              [rounded]="true"
               size="small"
-              [disabled]="next.disabled"
-              [loading]="busyAction() === next.busyKey"
-              (onClick)="next.handler()"
+              ariaLabel="Manage version"
+              (onClick)="openMenu(v.id, $event, sharedMenu)"
             />
-          }
-          @if (hasManageActions()) {
+          </header>
+          <div class="version__body">
+            @if (v.notes) {
+              <p class="version__notes">{{ v.notes }}</p>
+            }
+            <app-lifecycle-chevron
+              [current]="v.state"
+              (advance)="onAdvance(v, $event)"
+            />
+          </div>
+        </article>
+      }
+
+      <!-- ── Activated (zero or one) ───────────────────────────────── -->
+      @if (activatedVersion(); as v) {
+        <article class="version version--activated" data-state="Activated">
+          <header class="version__header">
+            <div class="version__id">
+              <span class="version__chip" data-state="Activated">Activated</span>
+              <strong>v{{ v.versionNumber }}</strong>
+              <span class="version__meta">
+                Active since {{ v.activatedAt | date: 'MMM d, y' }} · {{ v.createdBy }}
+              </span>
+            </div>
             <p-button
-              label="Manage"
-              icon="pi pi-chevron-down"
-              iconPos="right"
-              severity="primary"
-              [outlined]="true"
+              icon="pi pi-ellipsis-h"
+              severity="secondary"
+              [text]="true"
+              [rounded]="true"
               size="small"
-              (onClick)="manageMenu.toggle($event)"
+              ariaLabel="Manage version"
+              (onClick)="openMenu(v.id, $event, sharedMenu)"
             />
-            <p-menu #manageMenu [model]="manageMenuItems()" [popup]="true" appendTo="body" />
+          </header>
+          <div class="version__body">
+            @if (v.notes) {
+              <p class="version__notes">{{ v.notes }}</p>
+            }
+            <app-lifecycle-chevron [current]="v.state" [inert]="true" />
+            <div class="version__activated-actions">
+              <p-button
+                label="+ New draft from this"
+                icon="pi pi-plus"
+                severity="primary"
+                [outlined]="true"
+                size="small"
+                (onClick)="forkNewDraft(v)"
+              />
+            </div>
+          </div>
+        </article>
+      }
+
+      <!-- ── Archived (history, collapsed) ─────────────────────────── -->
+      @if (archivedVersions().length > 0) {
+        <div class="archived-header">History</div>
+      }
+      @for (v of archivedVersions(); track v.id) {
+        <article
+          class="version version--archived"
+          data-state="Archived"
+          [class.version--collapsed]="!isExpanded(v.id)"
+        >
+          <header class="version__header version__header--clickable" (click)="toggleExpanded(v.id)">
+            <div class="version__id">
+              <i
+                class="pi"
+                [class.pi-chevron-right]="!isExpanded(v.id)"
+                [class.pi-chevron-down]="isExpanded(v.id)"
+                aria-hidden="true"
+              ></i>
+              <span class="version__chip" data-state="Archived">Archived</span>
+              <strong>v{{ v.versionNumber }}</strong>
+              <span class="version__meta">
+                Archived {{ v.archivedAt | date: 'MMM d, y' }} · {{ v.createdBy }}
+              </span>
+            </div>
+            <p-button
+              icon="pi pi-ellipsis-h"
+              severity="secondary"
+              [text]="true"
+              [rounded]="true"
+              size="small"
+              ariaLabel="Manage version"
+              (onClick)="openMenu(v.id, $event, sharedMenu); $event.stopPropagation()"
+            />
+          </header>
+          @if (isExpanded(v.id)) {
+            <div class="version__body">
+              @if (v.notes) {
+                <p class="version__notes">{{ v.notes }}</p>
+              }
+              <app-lifecycle-chevron [current]="v.state" [inert]="true" />
+              <div class="version__lineage">
+                Published {{ v.publishedAt | date: 'MMM d, y' }}
+                @if (v.activatedAt) {
+                  · Was Active {{ v.activatedAt | date: 'MMM d' }} – {{ v.archivedAt | date: 'MMM d, y' }}
+                }
+              </div>
+            </div>
           }
-        </div>
-      </div>
-
-      <!-- Stepper -->
-      <ol class="stepper" [class.stepper--retired]="status() === 'Retired'">
-        <li class="step" [attr.data-state]="stepState('draft')">
-          <span class="step__bullet">
-            @if (stepState('draft') === 'done') {
-              <i class="pi pi-check"></i>
-            }
-          </span>
-          <span class="step__label">Draft</span>
-        </li>
-        <li class="step__connector" [attr.data-state]="stepState('published')"></li>
-        <li class="step" [attr.data-state]="stepState('published')">
-          <span class="step__bullet">
-            @if (stepState('published') === 'done') {
-              <i class="pi pi-check"></i>
-            }
-          </span>
-          <span class="step__label">Published</span>
-        </li>
-        <li class="step__connector" [attr.data-state]="stepState('active')"></li>
-        <li class="step" [attr.data-state]="stepState('active')">
-          <span class="step__bullet">
-            @if (stepState('active') === 'done' && status() !== 'Retired') {
-              <i class="pi pi-check"></i>
-            }
-          </span>
-          <span class="step__label">{{ status() === 'Retired' ? 'Retired' : 'Active' }}</span>
-        </li>
-      </ol>
-
-      <p class="banner__desc">{{ statusDescription() }}</p>
-
-      <!-- Inline callouts -->
-      @if (status() === 'Published' && !canActivate()) {
-        <p-message
-          severity="warn"
-          text="Complete the Connection and Mapping tabs before activating."
-        />
+        </article>
       }
-      @if (
-        (status() === 'Draft' || status() === 'Tested') &&
-        !testedRecently()
-      ) {
-        <p-message
-          severity="info"
-          text="No successful test on file yet. You can still publish, but consider running a test first."
-        />
-      }
-      @if (promotedAt(); as p) {
-        <p-message
-          severity="success"
-          [text]="'Promoted to master templates · ' + (p | date: 'medium')"
-        />
-      }
-    </section>
+
+      <!-- Single shared p-menu — model is rebuilt per-version on toggle -->
+      <p-menu #sharedMenu [model]="currentMenuItems()" [popup]="true" appendTo="body" />
+    </div>
   `,
   styles: [
     `
       :host {
         display: flex;
         flex-direction: column;
-        gap: var(--tf-space-5);
+        gap: var(--tf-space-4);
       }
 
-      /* ── Banner ─────────────────────────────────────────────────── */
-      .banner {
+      .versions {
+        display: flex;
+        flex-direction: column;
+        gap: var(--tf-space-3);
+      }
+
+      /* ── Version container ──────────────────────────────────────── */
+      .version {
         background: white;
         border: 1px solid var(--tf-slate-300);
         border-radius: var(--tf-radius-md);
-        padding: var(--tf-space-5);
+        padding: var(--tf-space-4) var(--tf-space-5);
         display: flex;
         flex-direction: column;
-        gap: var(--tf-space-4);
+        gap: var(--tf-space-3);
       }
-      .banner[data-status='Active'] {
-        border-color: #a3d9b1;
-        background: linear-gradient(135deg, #f0fdf4 0%, white 70%);
-      }
-      .banner[data-status='Published'] {
-        border-color: #9ec5ec;
-        background: linear-gradient(135deg, #f0f7ff 0%, white 70%);
-      }
-      .banner[data-status='Draft'],
-      .banner[data-status='Tested'] {
+      .version[data-state='Draft'] {
         border-color: #f5cf94;
         background: linear-gradient(135deg, #fff8eb 0%, white 70%);
       }
-      .banner[data-status='Retired'] {
-        border-color: var(--tf-slate-400);
-        background: var(--tf-slate-50);
+      .version[data-state='Published'] {
+        border-color: #9ec5ec;
+        background: linear-gradient(135deg, #f0f7ff 0%, white 70%);
+      }
+      .version[data-state='Activated'] {
+        border-color: #a3d9b1;
+        background: linear-gradient(135deg, #f0fdf4 0%, white 70%);
+      }
+      .version[data-state='Archived'] {
+        border-color: var(--tf-slate-300);
+        background: white;
+      }
+      .version--collapsed {
+        padding: var(--tf-space-3) var(--tf-space-5);
+      }
+      .version--collapsed .version__body {
+        display: none;
       }
 
-      .banner__top {
+      .version__header {
         display: flex;
         align-items: center;
         justify-content: space-between;
         gap: var(--tf-space-3);
       }
-      .banner__title {
-        display: flex;
-        align-items: baseline;
-        gap: 8px;
-        font-size: var(--tf-text-heading);
-        line-height: 1.2;
+      .version__header--clickable {
+        cursor: pointer;
       }
-      .banner__title strong {
-        font-weight: 700;
+      .version__id {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: var(--tf-text-body);
         color: var(--tf-text-strong);
       }
-      .banner__meta {
-        font-weight: 400;
+      .version__id strong {
+        font-weight: 700;
+      }
+      .version__meta {
         color: var(--tf-text-muted);
-        font-size: var(--tf-text-body);
-      }
-      .banner__actions {
-        display: flex;
-        align-items: center;
-        gap: var(--tf-space-2);
-        flex-shrink: 0;
-      }
-      .banner__desc {
-        margin: 0;
-        color: var(--tf-text-muted);
-        font-size: var(--tf-text-body);
-        max-width: 70ch;
-      }
-
-      .status-dot {
-        width: 10px;
-        height: 10px;
-        border-radius: 50%;
-        background: var(--tf-slate-500);
-        flex-shrink: 0;
-        align-self: center;
-      }
-      .status-dot[data-status='Active'] {
-        background: #1b6b3a;
-      }
-      .status-dot[data-status='Published'],
-      .status-dot[data-status='Tested'] {
-        background: #1d6fc0;
-      }
-      .status-dot[data-status='Draft'] {
-        background: #d97706;
-      }
-      .status-dot[data-status='Retired'] {
-        background: var(--tf-slate-500);
-      }
-
-      /* ── Stepper ────────────────────────────────────────────────── */
-      .stepper {
-        display: flex;
-        align-items: center;
-        gap: 0;
-        padding: 0;
-        margin: 0;
-        list-style: none;
-      }
-      .step {
-        display: flex;
-        align-items: center;
-        gap: 8px;
         font-size: var(--tf-text-meta);
-        font-weight: 600;
-        color: var(--tf-text-muted);
+        font-weight: 400;
       }
-      .step__bullet {
+
+      .version__chip {
         display: inline-flex;
         align-items: center;
-        justify-content: center;
-        width: 22px;
-        height: 22px;
-        border-radius: 50%;
+        padding: 2px 10px;
+        border-radius: var(--tf-radius-pill);
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+      }
+      .version__chip[data-state='Draft'] {
+        background: #fff6e5;
+        color: #92510a;
+      }
+      .version__chip[data-state='Published'] {
+        background: #e6f0fb;
+        color: #1d4e89;
+      }
+      .version__chip[data-state='Activated'] {
+        background: #e5f9ea;
+        color: #1b6b3a;
+      }
+      .version__chip[data-state='Archived'] {
         background: var(--tf-slate-200);
-        color: white;
-        font-size: 10px;
-        flex-shrink: 0;
-      }
-      .step[data-state='done'] .step__bullet {
-        background: #1d6fc0;
-      }
-      .step[data-state='current'] .step__bullet {
-        background: white;
-        border: 2px solid #1d6fc0;
-        box-shadow: 0 0 0 4px rgba(29, 111, 192, 0.18);
-      }
-      .step[data-state='done'] .step__label,
-      .step[data-state='current'] .step__label {
-        color: var(--tf-text-strong);
-      }
-      .step__connector {
-        flex: 0 0 40px;
-        height: 2px;
-        margin: 0 8px;
-        background: var(--tf-slate-200);
-      }
-      .step__connector[data-state='done'] {
-        background: #1d6fc0;
-      }
-
-      .stepper--retired .step__bullet,
-      .stepper--retired .step__connector {
-        background: var(--tf-slate-400);
-        border-color: var(--tf-slate-400);
-        box-shadow: none;
-      }
-      .stepper--retired .step__label {
         color: var(--tf-text-muted);
       }
-      .stepper--retired .step:last-child .step__label {
-        color: #83131a;
+
+      .version__body {
+        display: flex;
+        flex-direction: column;
+        gap: var(--tf-space-3);
+        padding-left: 2px;
+      }
+      .version__notes {
+        margin: 0;
+        color: var(--tf-text-muted);
+        font-size: var(--tf-text-body);
+        font-style: italic;
+        max-width: 70ch;
+      }
+      .version__activated-actions {
+        margin-top: 4px;
+      }
+      .version__lineage {
+        color: var(--tf-text-muted);
+        font-size: var(--tf-text-meta);
+        font-style: italic;
+      }
+
+      .archived-header {
+        margin-top: var(--tf-space-3);
+        font-size: var(--tf-text-meta);
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--tf-text-muted);
+        padding: 0 var(--tf-space-2);
       }
 
       /* PrimeNG menu danger item styling */
@@ -328,300 +346,329 @@ interface NextAction {
 })
 export class TestPublishTabComponent implements OnChanges {
   @Input({ required: true }) deployment!: Deployment;
+  /** Customer display name — used to make confirm copy specific
+   *  ("apply the new mapping to {customerName}'s integration"). */
+  @Input() customerName = 'this customer';
   @Output() statusChanged = new EventEmitter<void>();
 
   private gen = inject(GeneralService);
 
-  /** Locally-overridden status — flips immediately on successful action while
-   *  the parent refetches to make the rail catch up. */
-  private localStatus = signal<DeploymentStatus | null>(null);
+  /** Local version stack — seeded from mockVersions per deployment, then
+   *  mutated locally as the user works. Lives in component state so the
+   *  parent's rail-refresh logic doesn't reset the demo. */
+  versions = signal<Version[]>([]);
 
-  status = computed<DeploymentStatus>(() => this.localStatus() ?? this.deployment.status);
+  /** Which archived versions are expanded by the user. */
+  private expandedSet = signal<Set<string>>(new Set());
 
-  busyAction = signal<
-    'publish' | 'activate' | 'retire' | 'rollback' | 'reactivate' | 'promote' | null
-  >(null);
+  /** Per-version action busy state. */
+  busyAction = signal<{ versionId: string; action: string } | null>(null);
 
-  /** Timestamp of the most recent successful promotion to master templates. */
-  promotedAt = signal<Date | null>(null);
+  /** Author display name for newly forked drafts. */
+  private currentAuthor = 'Jake Cummings';
 
-  /** Gate for "Send to master templates" — only finalized mappings should be promoted. */
-  canPromote = computed<boolean>(() => {
-    const s = this.status();
-    return s === 'Published' || s === 'Active';
+  // ── Bucketed views (sorted within each group) ────────────────────
+  draftVersions = computed<Version[]>(() =>
+    this.versions()
+      .filter((v) => v.state === 'Draft')
+      .sort((a, b) => b.versionNumber - a.versionNumber),
+  );
+
+  publishedVersions = computed<Version[]>(() =>
+    this.versions()
+      .filter((v) => v.state === 'Published')
+      .sort((a, b) => b.versionNumber - a.versionNumber),
+  );
+
+  activatedVersion = computed<Version | null>(
+    () => this.versions().find((v) => v.state === 'Activated') ?? null,
+  );
+
+  archivedVersions = computed<Version[]>(() =>
+    this.versions()
+      .filter((v) => v.state === 'Archived')
+      .sort((a, b) => b.versionNumber - a.versionNumber),
+  );
+
+  // ── Manage menu (one shared p-menu, model rebuilt per click) ─────
+  private menuVersionId = signal<string | null>(null);
+  currentMenuItems = computed<MenuItem[]>(() => {
+    const id = this.menuVersionId();
+    if (!id) return [];
+    const v = this.versions().find((x) => x.id === id);
+    if (!v) return [];
+    return this.buildMenuItems(v);
   });
 
-  /** True when a Tested correlation exists (auth tested on Connection tab). */
-  testedRecently = computed<boolean>(() => !!this.deployment.lastTestCorrelationId);
-
-  /** Gate for Activate: need Connection + at least a template choice. */
-  canActivate = computed<boolean>(() => {
-    const d = this.deployment;
-    const hasConnection = !!d.connectionId;
-    const hasTemplate = !!d.forkedFromTemplateId || d.forkedFromTemplateVersion === null;
-    return hasConnection && hasTemplate;
-  });
-
-  statusLabel = computed<string>(() => {
-    switch (this.status()) {
-      case 'Tested':
-        return 'Draft · tested';
-      default:
-        return this.status();
-    }
-  });
-
-  statusDescription = computed<string>(() => {
-    switch (this.status()) {
-      case 'Draft':
-        return `No snapshot yet. Publish to capture the current Connection + Mapping as v${this.deployment.snapshotVersion + 1}.`;
-      case 'Tested':
-        return `Tested but not yet published. Publish to capture as v${this.deployment.snapshotVersion + 1}.`;
-      case 'Published':
-        return 'Snapshot is ready. Activate to make it live for this customer.';
-      case 'Active':
-        return 'This deployment is live and processing customer traffic.';
-      case 'Retired':
-        return 'This deployment is offline. Reactivate to publish a new snapshot and bring it back.';
-    }
-  });
-
-  /** Relative "Published 3 days ago" — driven by deployment.updatedAt for the mock. */
-  publishedRelative = computed<string | null>(() => {
-    if (this.deployment.snapshotVersion === 0) return null;
-    const updated = new Date(this.deployment.updatedAt);
-    if (Number.isNaN(updated.getTime())) return null;
-    const days = Math.floor((Date.now() - updated.getTime()) / 86400000);
-    if (days <= 0) return 'Published today';
-    if (days === 1) return 'Published yesterday';
-    if (days < 30) return `Published ${days} days ago`;
-    const months = Math.floor(days / 30);
-    if (months === 1) return 'Published 1 month ago';
-    return `Published ${months} months ago`;
-  });
-
-  /** Returns the single forward step the user can take from the current status. */
-  nextAction = computed<NextAction | null>(() => {
-    const s = this.status();
-    if (s === 'Draft' || s === 'Tested') {
-      return {
-        label: 'Publish snapshot',
-        icon: 'pi pi-bookmark',
-        busyKey: 'publish',
-        severity: 'primary',
-        disabled: false,
-        handler: () => this.publish(),
-      };
-    }
-    if (s === 'Published') {
-      return {
-        label: 'Activate',
-        icon: 'pi pi-arrow-right',
-        busyKey: 'activate',
-        severity: 'success',
-        disabled: !this.canActivate(),
-        handler: () => this.activate(),
-      };
-    }
-    if (s === 'Retired') {
-      return {
-        label: 'Reactivate',
-        icon: 'pi pi-refresh',
-        busyKey: 'reactivate',
-        severity: 'primary',
-        disabled: false,
-        handler: () => this.reactivate(),
-      };
-    }
-    // Active is a terminal "happy" state — no forward action, manage via menu.
-    return null;
-  });
-
-  /** Status-dependent Manage menu. Destructive actions sit below a separator. */
-  manageMenuItems = computed<MenuItem[]>(() => {
-    const s = this.status();
+  private buildMenuItems(v: Version): MenuItem[] {
     const items: MenuItem[] = [];
-
-    if (s === 'Active') {
+    if (v.state === 'Activated') {
       items.push({
-        label: 'Publish new version',
-        icon: 'pi pi-pencil',
-        command: () => this.publishNewVersion(),
-      });
-      items.push({
-        label: 'Roll back to previous version',
-        icon: 'pi pi-undo',
-        command: () => this.rollback(),
-      });
-      items.push({ separator: true });
-      items.push({
-        label: 'Retire deployment',
+        label: 'Archive this version',
         icon: 'pi pi-pause',
         styleClass: 'menu-item--danger',
-        command: () => this.retire(),
+        command: () => this.archive(v),
       });
     }
-
+    if (v.state === 'Archived') {
+      items.push({
+        label: 'Rollback (reactivate)',
+        icon: 'pi pi-undo',
+        command: () => this.rollback(v),
+      });
+    }
+    items.push({
+      label: 'Duplicate as new draft',
+      icon: 'pi pi-copy',
+      command: () => this.duplicate(v),
+    });
+    if (v.state === 'Draft') {
+      items.push({ separator: true });
+      items.push({
+        label: 'Delete draft',
+        icon: 'pi pi-trash',
+        styleClass: 'menu-item--danger',
+        command: () => this.deleteDraft(v),
+      });
+    }
     return items;
-  });
-
-  /** Whether to render the Manage button at all (skip it on states with no actions). */
-  hasManageActions = computed<boolean>(() => this.manageMenuItems().length > 0);
-
-  /** Stepper progression. Retired is rendered with a special class on the <ol>. */
-  stepState(step: StepKey): StepState {
-    const s = this.status();
-    if (s === 'Retired') {
-      // All three steps show as completed but visually muted via stepper--retired.
-      return 'done';
-    }
-    if (step === 'draft') {
-      if (s === 'Draft' || s === 'Tested') return 'current';
-      return 'done';
-    }
-    if (step === 'published') {
-      if (s === 'Draft' || s === 'Tested') return 'pending';
-      if (s === 'Published') return 'current';
-      return 'done';
-    }
-    // active
-    if (s === 'Active') return 'current';
-    return 'pending';
   }
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes['deployment']) {
-      this.localStatus.set(null);
-      this.promotedAt.set(null);
+      const id = this.deployment?.id;
+      // Deep-clone the seed so per-deployment mutations don't bleed back.
+      const seed = id ? mockVersions[id] ?? [] : [];
+      this.versions.set(seed.map((v) => ({ ...v })));
+      this.expandedSet.set(new Set());
+      this.busyAction.set(null);
+      this.menuVersionId.set(null);
     }
   }
 
-  // ── Actions ───────────────────────────────────────────────────────
-  sendToMasterTemplates() {
-    if (this.busyAction() || !this.canPromote()) return;
+  // ── Helpers used in the template ─────────────────────────────────
+  isExpanded(versionId: string): boolean {
+    return this.expandedSet().has(versionId);
+  }
+
+  toggleExpanded(versionId: string) {
+    this.expandedSet.update((s) => {
+      const next = new Set(s);
+      if (next.has(versionId)) next.delete(versionId);
+      else next.add(versionId);
+      return next;
+    });
+  }
+
+  /** Bound to the per-row "⋯" button — sets which version's menu items
+   *  to render, then toggles the shared p-menu. The menu reference is
+   *  passed in directly from the template via #sharedMenu. */
+  openMenu(versionId: string, event: Event, menu: { toggle: (e: Event) => void }) {
+    this.menuVersionId.set(versionId);
+    menu.toggle(event);
+  }
+
+  // ── Lifecycle transitions ────────────────────────────────────────
+  /** Chevron advance click. */
+  onAdvance(v: Version, target: ChevronStage) {
+    if (target === 'Published') {
+      this.publishDraft(v);
+    } else if (target === 'Activated') {
+      this.activatePublished(v);
+    }
+  }
+
+  /** Draft → Published. */
+  private publishDraft(v: Version) {
+    if (this.busyAction()) return;
     this.gen
       .confirm({
-        title: 'Send to master templates?',
+        title: `Publish v${v.versionNumber}?`,
         text:
-          'A new master template will be created from this deployment\'s current Connection + Mapping. ' +
-          'Other customers will be able to fork it as a starting point.',
-        confirmText: 'Yes, promote',
-        confirmColor: '#0066cc',
+          'This locks the current Connection + Mapping into a versioned snapshot. The version is not ' +
+          'live yet — activate it next when you are ready.',
+        confirmText: 'Yes, publish',
+        confirmColor: '#1d6fc0',
         icon: 'info',
       })
       .then((result) => {
         if (!result.isConfirmed) return;
-        this.busyAction.set('promote');
+        this.busyAction.set({ versionId: v.id, action: 'publish' });
         setTimeout(() => {
-          this.promotedAt.set(new Date());
+          this.versions.update((list) =>
+            list.map((x) =>
+              x.id === v.id
+                ? { ...x, state: 'Published' as VersionState, publishedAt: new Date().toISOString() }
+                : x,
+            ),
+          );
           this.busyAction.set(null);
-          this.gen.success('Mapping promoted to master templates.');
-        }, 600);
+          this.gen.success(`v${v.versionNumber} published.`);
+          this.statusChanged.emit();
+        }, 500);
       });
   }
 
-  publish() {
+  /** Published → Activated. Auto-archives any prior Activated. */
+  private activatePublished(v: Version) {
     if (this.busyAction()) return;
-    this.busyAction.set('publish');
-    setTimeout(() => {
-      this.localStatus.set('Published');
-      this.busyAction.set(null);
-      this.gen.success('Snapshot published.');
-      this.statusChanged.emit();
-    }, 600);
-  }
+    const currentActive = this.activatedVersion();
+    const archiveCopy = currentActive
+      ? `Activating v${v.versionNumber} will archive v${currentActive.versionNumber} and apply the new mapping to ${this.customerName}'s integration. Continue?`
+      : `Activating v${v.versionNumber} will apply the new mapping to ${this.customerName}'s integration. Continue?`;
 
-  activate() {
-    if (this.busyAction() || !this.canActivate()) return;
     this.gen
       .confirm({
-        title: 'Activate deployment?',
-        text:
-          'Any prior Active deployment for the same Customer / Application / Capability will be ' +
-          'retired automatically. This affects live traffic.',
+        title: `Activate v${v.versionNumber}?`,
+        text: archiveCopy,
         confirmText: 'Yes, activate',
         confirmColor: '#28a745',
         icon: 'warning',
       })
       .then((result) => {
         if (!result.isConfirmed) return;
-        this.busyAction.set('activate');
+        this.busyAction.set({ versionId: v.id, action: 'activate' });
         setTimeout(() => {
-          this.localStatus.set('Active');
+          const now = new Date().toISOString();
+          this.versions.update((list) =>
+            list.map((x) => {
+              if (x.id === v.id) {
+                return { ...x, state: 'Activated' as VersionState, activatedAt: now };
+              }
+              if (x.state === 'Activated') {
+                return { ...x, state: 'Archived' as VersionState, archivedAt: now };
+              }
+              return x;
+            }),
+          );
           this.busyAction.set(null);
-          this.gen.success('Deployment is live.');
+          this.gen.success(`v${v.versionNumber} is live.`);
           this.statusChanged.emit();
         }, 600);
       });
   }
 
-  retire() {
+  /** Activated → Archived (manual archive via Manage menu). */
+  archive(v: Version) {
     if (this.busyAction()) return;
     this.gen
       .confirm({
-        title: 'Retire deployment?',
-        text: 'Live traffic for this mapping stops immediately. You can publish a new version later.',
-        confirmText: 'Yes, retire',
-        confirmColor: '#e74c3c',
+        title: `Archive v${v.versionNumber}?`,
+        text: `This deployment goes offline until another version is activated. ${this.customerName}'s integration stops processing traffic immediately.`,
+        confirmText: 'Yes, archive',
+        confirmColor: '#83131a',
         icon: 'warning',
       })
       .then((result) => {
         if (!result.isConfirmed) return;
-        this.busyAction.set('retire');
+        this.busyAction.set({ versionId: v.id, action: 'archive' });
         setTimeout(() => {
-          this.localStatus.set('Retired');
+          const now = new Date().toISOString();
+          this.versions.update((list) =>
+            list.map((x) => (x.id === v.id ? { ...x, state: 'Archived' as VersionState, archivedAt: now } : x)),
+          );
           this.busyAction.set(null);
-          this.gen.success('Deployment retired.');
+          this.gen.success(`v${v.versionNumber} archived.`);
+          this.statusChanged.emit();
+        }, 500);
+      });
+  }
+
+  /** Archived → Activated. Auto-archives the currently-Activated version. */
+  rollback(v: Version) {
+    if (this.busyAction()) return;
+    const currentActive = this.activatedVersion();
+    const text = currentActive
+      ? `Reactivating v${v.versionNumber} will archive v${currentActive.versionNumber} and apply v${v.versionNumber}'s mapping to ${this.customerName}'s integration immediately. Continue?`
+      : `Reactivating v${v.versionNumber} will apply its mapping to ${this.customerName}'s integration immediately. Continue?`;
+
+    this.gen
+      .confirm({
+        title: `Rollback to v${v.versionNumber}?`,
+        text,
+        confirmText: 'Yes, rollback',
+        confirmColor: '#1d6fc0',
+        icon: 'warning',
+      })
+      .then((result) => {
+        if (!result.isConfirmed) return;
+        this.busyAction.set({ versionId: v.id, action: 'rollback' });
+        setTimeout(() => {
+          const now = new Date().toISOString();
+          this.versions.update((list) =>
+            list.map((x) => {
+              if (x.id === v.id) {
+                return { ...x, state: 'Activated' as VersionState, activatedAt: now, archivedAt: undefined };
+              }
+              if (x.state === 'Activated') {
+                return { ...x, state: 'Archived' as VersionState, archivedAt: now };
+              }
+              return x;
+            }),
+          );
+          this.busyAction.set(null);
+          this.gen.success(`Rolled back to v${v.versionNumber}.`);
           this.statusChanged.emit();
         }, 600);
       });
   }
 
-  rollback() {
+  /** Create a new Draft seeded with this version's notes/config. */
+  duplicate(v: Version) {
     if (this.busyAction()) return;
-    this.busyAction.set('rollback');
-    setTimeout(() => {
-      this.busyAction.set(null);
-      this.gen.success('Rollback is a placeholder — real impl when backend lands.');
-    }, 400);
+    const next = this.nextVersionNumber();
+    const draft: Version = {
+      id: `${v.deploymentId}-ver-${next}-${Date.now()}`,
+      deploymentId: v.deploymentId,
+      versionNumber: next,
+      state: 'Draft',
+      createdAt: new Date().toISOString(),
+      createdBy: this.currentAuthor,
+      notes: v.notes ? `Duplicated from v${v.versionNumber} — ${v.notes}` : `Duplicated from v${v.versionNumber}`,
+    };
+    this.versions.update((list) => [draft, ...list]);
+    this.gen.success(`v${next} created from v${v.versionNumber}.`);
   }
 
-  /** From Active → Draft. Lets users demo the full Draft→Published→Active
-   *  cycle on a single deployment without first retiring it. In a real product
-   *  this is what happens implicitly when you edit the Connection or Mapping
-   *  tabs of a live deployment. */
-  publishNewVersion() {
+  /** Activated container "+ New draft from this" button. */
+  forkNewDraft(v: Version) {
     if (this.busyAction()) return;
+    const next = this.nextVersionNumber();
+    const draft: Version = {
+      id: `${v.deploymentId}-ver-${next}-${Date.now()}`,
+      deploymentId: v.deploymentId,
+      versionNumber: next,
+      state: 'Draft',
+      createdAt: new Date().toISOString(),
+      createdBy: this.currentAuthor,
+      notes: `Forked from v${v.versionNumber} for new changes`,
+    };
+    this.versions.update((list) => [draft, ...list]);
+    this.gen.success(`v${next} draft created. Edit Connection or Mapping, then publish.`);
+  }
+
+  /** Permanently remove an unpublished draft. */
+  deleteDraft(v: Version) {
+    if (this.busyAction()) return;
+    if (v.state !== 'Draft') return;
     this.gen
       .confirm({
-        title: 'Publish a new version?',
-        text:
-          'This drops the deployment back to Draft so you can capture an updated snapshot. ' +
-          'Live traffic keeps flowing on the current snapshot until you re-Activate.',
-        confirmText: 'Yes, start new version',
-        confirmColor: '#0066cc',
-        icon: 'info',
+        title: `Delete v${v.versionNumber} draft?`,
+        text: 'The draft and any pending edits will be permanently removed. This cannot be undone.',
+        confirmText: 'Yes, delete',
+        confirmColor: '#83131a',
+        icon: 'warning',
       })
       .then((result) => {
         if (!result.isConfirmed) return;
-        this.busyAction.set('publish');
-        setTimeout(() => {
-          this.localStatus.set('Draft');
-          this.busyAction.set(null);
-          this.gen.success('New version started — Publish when ready.');
-          this.statusChanged.emit();
-        }, 400);
+        this.versions.update((list) => list.filter((x) => x.id !== v.id));
+        this.gen.success(`v${v.versionNumber} deleted.`);
       });
   }
 
-  reactivate() {
-    if (this.busyAction()) return;
-    this.busyAction.set('reactivate');
-    setTimeout(() => {
-      this.localStatus.set('Active');
-      this.busyAction.set(null);
-      this.gen.success('Deployment reactivated.');
-      this.statusChanged.emit();
-    }, 600);
+  private nextVersionNumber(): number {
+    const max = this.versions().reduce((acc, v) => Math.max(acc, v.versionNumber), 0);
+    return max + 1;
   }
+
 }

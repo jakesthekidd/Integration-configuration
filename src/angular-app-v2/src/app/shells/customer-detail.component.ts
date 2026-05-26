@@ -229,7 +229,11 @@ interface AppGroup {
                     <app-mapping-tab [deployment]="dep" (saved)="onDeploymentChanged()" />
                   }
                   @case ('publish-activate') {
-                    <app-test-publish-tab [deployment]="dep" (statusChanged)="onDeploymentChanged()" />
+                    <app-test-publish-tab
+                      [deployment]="dep"
+                      [customerName]="customer()?.customerName ?? 'this customer'"
+                      (statusChanged)="onDeploymentChanged()"
+                    />
                   }
                   @case ('activity') {
                     <app-activity-tab [deployment]="dep" />

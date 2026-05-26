@@ -9,6 +9,7 @@ import { FieldMapping } from '../models/field-mapping.model';
 import { LookupTable } from '../models/lookup-table.model';
 import { TransformationLogSummary, TransformationLogDetail } from '../models/transformation-log.model';
 import { Deployment } from '../models/deployment.model';
+import { Version } from '../models/version.model';
 
 const now = new Date();
 const daysAgo = (n: number) => new Date(now.getTime() - n * 86400000);
@@ -748,3 +749,186 @@ export const mockDeployments: Deployment[] = [
     snapshotVersion: 1,
   },
 ];
+
+/**
+ * Versions — the stacked history of each deployment.
+ * Per DESIGN-STATUS-VERSIONING.md, every deployment has one or more
+ * versions; exactly one Activated at a time; Drafts on top, Archived
+ * below. Seed data is chosen to show interesting states across the
+ * three demo customers (multi-draft stack, history + rollback,
+ * Published-but-not-yet-Activated, plain single-version).
+ */
+export const mockVersions: Record<string, Version[]> = {
+  // Acme · Mobile · Import Loads — Activated + two pending drafts (demos multi-draft stacking)
+  'depl-001': [
+    {
+      id: 'ver-001-3',
+      deploymentId: 'depl-001',
+      versionNumber: 3,
+      state: 'Draft',
+      createdAt: isoDaysAgo(1),
+      createdBy: 'Jake Cummings',
+      notes: 'Tweaked driver-ID normalization',
+    },
+    {
+      id: 'ver-001-2',
+      deploymentId: 'depl-001',
+      versionNumber: 2,
+      state: 'Draft',
+      createdAt: isoDaysAgo(4),
+      createdBy: 'AJ Chen',
+      notes: 'Alternate approach to load-status mapping',
+    },
+    {
+      id: 'ver-001-1',
+      deploymentId: 'depl-001',
+      versionNumber: 1,
+      state: 'Activated',
+      createdAt: isoDaysAgo(60),
+      createdBy: 'Jake Cummings',
+      publishedAt: isoDaysAgo(58),
+      activatedAt: isoDaysAgo(58),
+    },
+  ],
+
+  // Globex · WorkflowAI · Import Documents — Activated with prior Archived (demos history + rollback)
+  'depl-002': [
+    {
+      id: 'ver-002-2',
+      deploymentId: 'depl-002',
+      versionNumber: 2,
+      state: 'Activated',
+      createdAt: isoDaysAgo(45),
+      createdBy: 'Mohammed Rahman',
+      publishedAt: isoDaysAgo(42),
+      activatedAt: isoDaysAgo(40),
+      notes: 'Added support for revised invoice schema',
+    },
+    {
+      id: 'ver-002-1',
+      deploymentId: 'depl-002',
+      versionNumber: 1,
+      state: 'Archived',
+      createdAt: isoDaysAgo(120),
+      createdBy: 'Jake Cummings',
+      publishedAt: isoDaysAgo(118),
+      activatedAt: isoDaysAgo(118),
+      archivedAt: isoDaysAgo(40),
+    },
+  ],
+
+  // Globex · WorkflowAI · Export Documents — single Draft (demos chevron-as-button starting state)
+  'depl-003': [
+    {
+      id: 'ver-003-1',
+      deploymentId: 'depl-003',
+      versionNumber: 1,
+      state: 'Draft',
+      createdAt: isoDaysAgo(7),
+      createdBy: 'Allison Park',
+      notes: 'Initial export config for AR department',
+    },
+  ],
+
+  // Globex · Mobile · Import Loads — single Activated
+  'depl-004': [
+    {
+      id: 'ver-004-1',
+      deploymentId: 'depl-004',
+      versionNumber: 1,
+      state: 'Activated',
+      createdAt: isoDaysAgo(90),
+      createdBy: 'AJ Chen',
+      publishedAt: isoDaysAgo(88),
+      activatedAt: isoDaysAgo(88),
+    },
+  ],
+
+  // Globex · Mobile · Export Scans — single Published, not yet Activated (demos the in-between)
+  'depl-005': [
+    {
+      id: 'ver-005-1',
+      deploymentId: 'depl-005',
+      versionNumber: 1,
+      state: 'Published',
+      createdAt: isoDaysAgo(15),
+      createdBy: 'Jake Cummings',
+      publishedAt: isoDaysAgo(3),
+      notes: 'Ready for review with the dispatch team',
+    },
+  ],
+
+  // Initech — six simple Activated deployments, one version each
+  'depl-006': [
+    {
+      id: 'ver-006-1',
+      deploymentId: 'depl-006',
+      versionNumber: 1,
+      state: 'Activated',
+      createdAt: isoDaysAgo(150),
+      createdBy: 'Mohammed Rahman',
+      publishedAt: isoDaysAgo(148),
+      activatedAt: isoDaysAgo(148),
+    },
+  ],
+  'depl-007': [
+    {
+      id: 'ver-007-1',
+      deploymentId: 'depl-007',
+      versionNumber: 1,
+      state: 'Activated',
+      createdAt: isoDaysAgo(140),
+      createdBy: 'Allison Park',
+      publishedAt: isoDaysAgo(138),
+      activatedAt: isoDaysAgo(138),
+    },
+  ],
+  'depl-008': [
+    {
+      id: 'ver-008-1',
+      deploymentId: 'depl-008',
+      versionNumber: 1,
+      state: 'Activated',
+      createdAt: isoDaysAgo(120),
+      createdBy: 'AJ Chen',
+      publishedAt: isoDaysAgo(118),
+      activatedAt: isoDaysAgo(118),
+    },
+  ],
+  'depl-009': [
+    {
+      id: 'ver-009-1',
+      deploymentId: 'depl-009',
+      versionNumber: 1,
+      state: 'Activated',
+      createdAt: isoDaysAgo(100),
+      createdBy: 'Jake Cummings',
+      publishedAt: isoDaysAgo(98),
+      activatedAt: isoDaysAgo(98),
+    },
+  ],
+  'depl-010': [
+    {
+      id: 'ver-010-1',
+      deploymentId: 'depl-010',
+      versionNumber: 1,
+      state: 'Activated',
+      createdAt: isoDaysAgo(95),
+      createdBy: 'Allison Park',
+      publishedAt: isoDaysAgo(93),
+      activatedAt: isoDaysAgo(93),
+    },
+  ],
+  'depl-011': [
+    {
+      id: 'ver-011-1',
+      deploymentId: 'depl-011',
+      versionNumber: 1,
+      state: 'Activated',
+      createdAt: isoDaysAgo(80),
+      createdBy: 'Mohammed Rahman',
+      publishedAt: isoDaysAgo(78),
+      activatedAt: isoDaysAgo(78),
+    },
+  ],
+};
