@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { TooltipModule } from 'primeng/tooltip';
 import { forkJoin } from 'rxjs';
 import { ApiService } from '../../services/api.service';
 import { GeneralService } from '../../services/general.service';
@@ -20,7 +19,7 @@ interface ConnectionUsageSummary {
 
 @Component({
     selector: 'app-tms-systems',
-    imports: [CommonModule, FormsModule, TooltipModule],
+    imports: [CommonModule, FormsModule],
     templateUrl: './tms-systems.component.html',
     styleUrl: './tms-systems.component.scss'
 })
@@ -95,7 +94,7 @@ export class TmsSystemsComponent implements OnInit {
   ): Record<string, ConnectionUsageSummary> {
     const appById = new Map(applications.map((a) => [a.id, a.displayName]));
     const capById = new Map(capabilities.map((c) => [c.id, c.displayName]));
-    const custById = new Map(customers.map((c) => [c.id, c.name]));
+    const custById = new Map(customers.map((c) => [c.customerId, c.customerName]));
     const out: Record<string, ConnectionUsageSummary> = {};
     for (const d of deployments) {
       if (!d.connectionId) continue;
