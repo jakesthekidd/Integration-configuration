@@ -5,6 +5,9 @@ export interface TmsSystem {
   description?: string;
   version: string;
   isActive: boolean;
+  /** Each connection serves exactly ONE (application, capability) pair. */
+  applicationId: string;
+  capabilityId: string;
   sampleJsonSchema?: string;
   connectionConfig?: string;
   createdAt: Date;
@@ -18,6 +21,8 @@ export interface CreateTmsSystemRequest {
   displayName: string;
   description?: string;
   version?: string;
+  applicationId: string;
+  capabilityId: string;
   sampleJsonSchema?: string;
   connectionConfig?: string;
   metadata?: string;

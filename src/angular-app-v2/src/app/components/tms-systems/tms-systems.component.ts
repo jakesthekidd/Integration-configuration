@@ -32,6 +32,8 @@ export class TmsSystemsComponent implements OnInit {
     displayName: '',
     description: '',
     version: '1.0',
+    applicationId: '',
+    capabilityId: '',
   };
 
   /** Per-connection-id usage summary, refreshed any time we reload the data. */
@@ -123,6 +125,8 @@ export class TmsSystemsComponent implements OnInit {
             displayName: '',
             description: '',
             version: '1.0',
+            applicationId: '',
+            capabilityId: '',
           };
           this.loadSystems();
         }

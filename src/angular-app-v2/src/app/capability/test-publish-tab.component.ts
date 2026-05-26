@@ -166,6 +166,49 @@ import { Deployment, DeploymentStatus } from '../models/deployment.model';
         }
       </div>
     </section>
+
+    <!-- ── Promote ─────────────────────────────────────────────────── -->
+    <section class="block">
+      <header class="block__head">
+        <div>
+          <h4>Promote</h4>
+          <p class="muted">Share this mapping with the rest of the team as a master template.</p>
+        </div>
+      </header>
+
+      <article class="action-card">
+        <div>
+          <h5>Send to master templates</h5>
+          <p class="muted">
+            Promotes this deployment's current Connection + Mapping as a <strong>master template</strong>.
+            Other customers can fork from it as a starting point — useful when you've built a configuration
+            that should become the default for similar customers.
+          </p>
+          @if (!canPromote()) {
+            <p-message
+              severity="warn"
+              text="Available once this deployment is Published or Active. Master templates are built from finalized mappings, not drafts."
+            />
+          }
+          @if (promotedAt(); as p) {
+            <p-message
+              severity="success"
+              [text]="'Promoted to master templates · ' + (p | date: 'medium')"
+            />
+          }
+        </div>
+        <p-button
+          label="Send to master templates"
+          icon="pi pi-share-alt"
+          severity="secondary"
+          [outlined]="true"
+          size="small"
+          [disabled]="!canPromote()"
+          [loading]="busyAction() === 'promote'"
+          (onClick)="sendToMasterTemplates()"
+        />
+      </article>
+    </section>
   `,
   styles: [
     `
@@ -240,7 +283,16 @@ export class TestPublishTabComponent implements OnChanges {
 
   status = computed<DeploymentStatus>(() => this.localStatus() ?? this.deployment.status);
 
-  busyAction = signal<'publish' | 'activate' | 'retire' | 'rollback' | 'reactivate' | null>(null);
+  busyAction = signal<'publish' | 'activate' | 'retire' | 'rollback' | 'reactivate' | 'promote' | null>(null);
+
+  /** Timestamp of the most recent successful promotion to master templates. */
+  promotedAt = signal<Date | null>(null);
+
+  /** Gate for "Send to master templates" — only finalized mappings should be promoted. */
+  canPromote = computed<boolean>(() => {
+    const s = this.status();
+    return s === 'Published' || s === 'Active';
+  });
 
   /** True when a Tested correlation exists (auth tested on Connection tab). */
   testedRecently = computed<boolean>(() => !!this.deployment.lastTestCorrelationId);
@@ -272,7 +324,33 @@ export class TestPublishTabComponent implements OnChanges {
   ngOnChanges(changes: SimpleChanges) {
     if (changes['deployment']) {
       this.localStatus.set(null);
+      this.promotedAt.set(null);
     }
+  }
+
+  sendToMasterTemplates() {
+    if (this.busyAction() || !this.canPromote()) return;
+    this.gen
+      .confirm({
+        title: 'Send to master templates?',
+        text:
+          'A new master template will be created from this deployment\'s current Connection + Mapping. ' +
+          'Other customers will be able to fork it as a starting point.',
+        confirmText: 'Yes, promote',
+        confirmColor: '#0066cc',
+        icon: 'info',
+      })
+      .then((result) => {
+        if (!result.isConfirmed) return;
+        this.busyAction.set('promote');
+        // Mock: pretend we POSTed a new master template. Real impl would call
+        // api.createTemplateFromDeployment(deploymentId) and refresh the library.
+        setTimeout(() => {
+          this.promotedAt.set(new Date());
+          this.busyAction.set(null);
+          this.gen.success('Mapping promoted to master templates.');
+        }, 600);
+      });
   }
 
   publish() {
