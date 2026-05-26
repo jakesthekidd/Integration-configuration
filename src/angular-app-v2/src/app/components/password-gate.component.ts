@@ -57,50 +57,50 @@ import { AuthService } from '../services/auth.service';
       display: flex;
       align-items: center;
       justify-content: center;
-      background: #0f172a;
+      background: rgba(15, 23, 42, 0.55);
+      backdrop-filter: blur(3px);
     }
 
     .gate__card {
       width: 100%;
-      max-width: 420px;
+      max-width: 400px;
       background: #ffffff;
-      border-radius: 16px;
-      padding: 48px 40px 40px;
-      box-shadow: 0 24px 64px rgba(0,0,0,0.4);
+      border-radius: 12px;
+      padding: 36px 32px 28px;
+      box-shadow: 0 20px 48px rgba(0,0,0,0.25);
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 0;
     }
 
     .gate__logo {
-      width: 64px;
-      height: 64px;
-      border-radius: 16px;
+      width: 52px;
+      height: 52px;
+      border-radius: 12px;
       background: var(--tf-primary, #1a56db);
       display: flex;
       align-items: center;
       justify-content: center;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
     }
     .gate__logo i {
-      font-size: 1.75rem;
+      font-size: 1.4rem;
       color: #ffffff;
     }
 
     .gate__title {
-      font-size: 1.5rem;
+      font-size: 1.25rem;
       font-weight: 700;
       color: #0f172a;
-      margin: 0 0 8px;
+      margin: 0 0 6px;
       text-align: center;
     }
 
     .gate__sub {
-      font-size: 0.875rem;
+      font-size: 0.8125rem;
       color: #64748b;
       text-align: center;
-      margin: 0 0 32px;
+      margin: 0 0 28px;
       line-height: 1.5;
     }
 
@@ -108,7 +108,7 @@ import { AuthService } from '../services/auth.service';
       width: 100%;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
     }
 
     .gate__error {
@@ -121,15 +121,12 @@ import { AuthService } from '../services/auth.service';
     }
 
     .gate__footer {
-      margin-top: 28px;
+      margin-top: 20px;
       font-size: 0.75rem;
       color: #94a3b8;
       text-align: center;
     }
 
-    :host ::ng-deep .gate__btn {
-      margin-top: 4px;
-    }
     :host ::ng-deep .p-password,
     :host ::ng-deep .p-password input {
       width: 100%;

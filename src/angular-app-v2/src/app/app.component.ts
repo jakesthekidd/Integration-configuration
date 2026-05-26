@@ -64,7 +64,7 @@ const LIBRARY_TABS: StageTab[] = [
     PasswordGateComponent,
   ],
   template: `
-    @if (!auth.isAuthenticated()) {
+    @if (activeApp().id === 'library' && !auth.isAuthenticated()) {
       <app-password-gate />
     }
 
