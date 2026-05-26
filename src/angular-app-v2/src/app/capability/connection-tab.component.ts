@@ -354,11 +354,16 @@ export class ConnectionTabComponent implements OnChanges {
     return CONNECTION_CREDENTIAL_SCHEMAS[cid] ?? [];
   });
 
-  connectionOptions = computed(() =>
-    this.connections()
+  /** Only connections purposed for THIS deployment's (application, capability)
+   *  pair are valid choices. Each connection is statically scoped to one
+   *  (app, cap) per the model, so the dropdown should reflect that. */
+  connectionOptions = computed(() => {
+    const dep = this.deployment;
+    return this.connections()
       .filter((c) => c.isActive)
-      .map((c) => ({ label: `${c.displayName} (v${c.version})`, value: c.id })),
-  );
+      .filter((c) => c.applicationId === dep.applicationId && c.capabilityId === dep.capabilityId)
+      .map((c) => ({ label: `${c.displayName} (v${c.version})`, value: c.id }));
+  });
 
 connectionDescription = computed(() => {
     const c = this.connections().find((x) => x.id === this.connectionId());
