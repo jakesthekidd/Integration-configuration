@@ -1,4 +1,4 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { ToastModule } from 'primeng/toast';
@@ -6,6 +6,8 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 
 import { HeaderApp, HeaderToolbarComponent } from './design-system/header-toolbar.component';
 import { StageLayoutComponent, StageTab } from './design-system/stage-layout.component';
+import { PasswordGateComponent } from './components/password-gate.component';
+import { AuthService } from './services/auth.service';
 
 /**
  * Top-level applications, each representing a distinct persona's view of integrations.
@@ -59,8 +61,13 @@ const LIBRARY_TABS: StageTab[] = [
     StageLayoutComponent,
     ToastModule,
     ConfirmDialogModule,
+    PasswordGateComponent,
   ],
   template: `
+    @if (!auth.isAuthenticated()) {
+      <app-password-gate />
+    }
+
     <app-header-toolbar
       [pageLabel]="activeApp().pageTitle"
       userInitials="JS"
@@ -105,6 +112,7 @@ const LIBRARY_TABS: StageTab[] = [
   ],
 })
 export class AppComponent {
+  auth = inject(AuthService);
   apps: HeaderApp[] = APPS.map(({ id, label, icon }) => ({ id, label, icon }));
 
   private currentUrl = signal<string>('');
