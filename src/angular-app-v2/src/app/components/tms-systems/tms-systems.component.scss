@@ -138,13 +138,62 @@
   font-weight: 500;
 }
 
-.active-count--hoverable {
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+/* ── Hover tooltip wrapper ─────────────────────────────────────────── */
+.active-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.active-count--hoverable:hover {
+.active-wrap:hover .active-count:not(.active-count--zero) {
   background: #1b6b3a;
   color: #fff;
+  cursor: pointer;
+}
+
+.active-tip {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1e293b;
+  color: #f1f5f9;
+  border-radius: 8px;
+  padding: 10px 14px;
+  min-width: 180px;
+  z-index: 9999;
+  white-space: nowrap;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+  pointer-events: none;
+}
+
+.active-tip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: #1e293b;
+}
+
+.active-tip__header {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  opacity: .6;
+  margin-bottom: 6px;
+}
+
+.active-tip__row {
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.active-wrap:hover .active-tip {
+  display: block;
 }
 

@@ -127,12 +127,8 @@ export class TmsSystemsComponent implements OnInit {
   totalActiveFor(systemId: string): number {
     return this.usage[systemId]?.totalActive ?? 0;
   }
-  activeCustomerTooltip(systemId: string): string | null {
-    const list = this.usage[systemId]?.activeCustomers ?? [];
-    if (!list.length) return null;
-    const header = `<div style="font-size:11px;font-weight:600;opacity:.65;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Active customers</div>`;
-    const rows = list.sort().map((n) => `<div>• ${n}</div>`).join('');
-    return `${header}${rows}`;
+  activeCustomerList(systemId: string): string[] {
+    return (this.usage[systemId]?.activeCustomers ?? []).slice().sort();
   }
 
   createSystem() {
