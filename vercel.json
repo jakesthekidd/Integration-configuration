@@ -1,0 +1,8 @@
+{
+  "buildCommand": "cd src/angular-app-v2 && npm install --include=dev && npx ng build --configuration production",
+  "outputDirectory": "src/angular-app-v2/dist/field-mapping-app-v2/browser",
+  "framework": null,
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
