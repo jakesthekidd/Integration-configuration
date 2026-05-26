@@ -63,6 +63,17 @@ interface NextAction {
         </div>
 
         <div class="banner__actions">
+          @if (canPromote()) {
+            <p-button
+              label="Send to master templates"
+              icon="pi pi-share-alt"
+              severity="secondary"
+              [outlined]="true"
+              size="small"
+              [loading]="busyAction() === 'promote'"
+              (onClick)="sendToMasterTemplates()"
+            />
+          }
           @if (nextAction(); as next) {
             <p-button
               [label]="next.label"
@@ -75,16 +86,18 @@ interface NextAction {
               (onClick)="next.handler()"
             />
           }
-          <p-button
-            icon="pi pi-ellipsis-h"
-            severity="secondary"
-            [text]="true"
-            [rounded]="true"
-            size="small"
-            ariaLabel="Manage"
-            (onClick)="manageMenu.toggle($event)"
-          />
-          <p-menu #manageMenu [model]="manageMenuItems()" [popup]="true" appendTo="body" />
+          @if (hasManageActions()) {
+            <p-button
+              label="Manage"
+              icon="pi pi-chevron-down"
+              iconPos="right"
+              severity="secondary"
+              [outlined]="true"
+              size="small"
+              (onClick)="manageMenu.toggle($event)"
+            />
+            <p-menu #manageMenu [model]="manageMenuItems()" [popup]="true" appendTo="body" />
+          }
         </div>
       </div>
 
@@ -424,15 +437,12 @@ export class TestPublishTabComponent implements OnChanges {
     const s = this.status();
     const items: MenuItem[] = [];
 
-    if (this.canPromote()) {
-      items.push({
-        label: 'Send to master templates',
-        icon: 'pi pi-share-alt',
-        command: () => this.sendToMasterTemplates(),
-      });
-    }
-
     if (s === 'Active') {
+      items.push({
+        label: 'Publish new version',
+        icon: 'pi pi-pencil',
+        command: () => this.publishNewVersion(),
+      });
       items.push({
         label: 'Roll back to previous version',
         icon: 'pi pi-undo',
@@ -447,12 +457,11 @@ export class TestPublishTabComponent implements OnChanges {
       });
     }
 
-    if (items.length === 0) {
-      items.push({ label: 'No actions available', disabled: true });
-    }
-
     return items;
   });
+
+  /** Whether to render the Manage button at all (skip it on states with no actions). */
+  hasManageActions = computed<boolean>(() => this.manageMenuItems().length > 0);
 
   /** Stepper progression. Retired is rendered with a special class on the <ol>. */
   stepState(step: StepKey): StepState {
@@ -570,6 +579,34 @@ export class TestPublishTabComponent implements OnChanges {
       this.busyAction.set(null);
       this.gen.success('Rollback is a placeholder — real impl when backend lands.');
     }, 400);
+  }
+
+  /** From Active → Draft. Lets users demo the full Draft→Published→Active
+   *  cycle on a single deployment without first retiring it. In a real product
+   *  this is what happens implicitly when you edit the Connection or Mapping
+   *  tabs of a live deployment. */
+  publishNewVersion() {
+    if (this.busyAction()) return;
+    this.gen
+      .confirm({
+        title: 'Publish a new version?',
+        text:
+          'This drops the deployment back to Draft so you can capture an updated snapshot. ' +
+          'Live traffic keeps flowing on the current snapshot until you re-Activate.',
+        confirmText: 'Yes, start new version',
+        confirmColor: '#0066cc',
+        icon: 'info',
+      })
+      .then((result) => {
+        if (!result.isConfirmed) return;
+        this.busyAction.set('publish');
+        setTimeout(() => {
+          this.localStatus.set('Draft');
+          this.busyAction.set(null);
+          this.gen.success('New version started — Publish when ready.');
+          this.statusChanged.emit();
+        }, 400);
+      });
   }
 
   reactivate() {
