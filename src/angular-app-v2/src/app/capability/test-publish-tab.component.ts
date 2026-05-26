@@ -26,6 +26,8 @@ interface NextAction {
   label: string;
   icon: string;
   busyKey: 'publish' | 'activate' | 'reactivate';
+  /** PrimeNG severity — drives the button color. */
+  severity: 'primary' | 'success';
   disabled: boolean;
   handler: () => void;
 }
@@ -67,7 +69,7 @@ interface NextAction {
             <p-button
               label="Send to master templates"
               icon="pi pi-share-alt"
-              severity="secondary"
+              severity="primary"
               [outlined]="true"
               size="small"
               [loading]="busyAction() === 'promote'"
@@ -79,7 +81,7 @@ interface NextAction {
               [label]="next.label"
               [icon]="next.icon"
               iconPos="right"
-              severity="primary"
+              [severity]="next.severity"
               size="small"
               [disabled]="next.disabled"
               [loading]="busyAction() === next.busyKey"
@@ -91,7 +93,7 @@ interface NextAction {
               label="Manage"
               icon="pi pi-chevron-down"
               iconPos="right"
-              severity="secondary"
+              severity="primary"
               [outlined]="true"
               size="small"
               (onClick)="manageMenu.toggle($event)"
@@ -406,6 +408,7 @@ export class TestPublishTabComponent implements OnChanges {
         label: 'Publish snapshot',
         icon: 'pi pi-bookmark',
         busyKey: 'publish',
+        severity: 'primary',
         disabled: false,
         handler: () => this.publish(),
       };
@@ -415,6 +418,7 @@ export class TestPublishTabComponent implements OnChanges {
         label: 'Activate',
         icon: 'pi pi-arrow-right',
         busyKey: 'activate',
+        severity: 'success',
         disabled: !this.canActivate(),
         handler: () => this.activate(),
       };
@@ -424,6 +428,7 @@ export class TestPublishTabComponent implements OnChanges {
         label: 'Reactivate',
         icon: 'pi pi-refresh',
         busyKey: 'reactivate',
+        severity: 'primary',
         disabled: false,
         handler: () => this.reactivate(),
       };
