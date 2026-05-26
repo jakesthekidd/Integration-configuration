@@ -1,6 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 
-const SESSION_KEY = 'tf_int_auth';
+const SESSION_KEY = 'tf_int_auth_v2';
 
 /**
  * Lightweight gate service for the Integration Library.
