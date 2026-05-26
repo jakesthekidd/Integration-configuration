@@ -13,201 +13,135 @@ import { CommonModule } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
 import { MessageModule } from 'primeng/message';
+import { MenuModule } from 'primeng/menu';
+import { MenuItem } from 'primeng/api';
 
 import { GeneralService } from '../services/general.service';
 import { Deployment, DeploymentStatus } from '../models/deployment.model';
 
+type StepKey = 'draft' | 'published' | 'active';
+type StepState = 'done' | 'current' | 'pending';
+
+interface NextAction {
+  label: string;
+  icon: string;
+  busyKey: 'publish' | 'activate' | 'reactivate';
+  disabled: boolean;
+  handler: () => void;
+}
+
 /**
- * Publish & Activate tab — the lifecycle home for one deployment.
+ * Status tab — the lifecycle home for one deployment.
  *
- *   - Publish snapshots the current Connection + Mapping into a versioned Deployment.
- *   - Activate makes it live and retires any prior Active for the same
- *     (customer, application, capability) tuple — see §4 invariant.
- *   - Retire / Rollback available based on current status.
+ * Replaces the prior stacked "Lifecycle" + "Promote" cards with a single
+ * status banner (state + version + stepper + one primary CTA) and a
+ * Manage overflow menu for the secondary actions (Retire / Rollback /
+ * Send to master templates). One forward step is always the obvious
+ * thing to click — destructive / niche actions live behind ⋯.
  *
- * Auth testing lives on the Connection tab (Test Authentication button).
- * Mapping testing is handled separately. This tab is lifecycle-only.
+ *   Draft / Tested → Published → Active     (Retire → Retired → Reactivate)
  *
  * State transitions emit `(statusChanged)` so the parent refetches the
  * deployments list and the rail re-renders.
  */
 @Component({
   selector: 'app-test-publish-tab',
-  imports: [CommonModule, ButtonModule, TagModule, MessageModule],
+  imports: [CommonModule, ButtonModule, TagModule, MessageModule, MenuModule],
   template: `
-    <!-- ── Lifecycle ───────────────────────────────────────────────── -->
-    <section class="block">
-      <header class="block__head">
-        <div>
-          <h4>Lifecycle</h4>
-          <p class="muted">Current status of this deployment.</p>
+    <!-- ── Status banner ───────────────────────────────────────────── -->
+    <section class="banner" [attr.data-status]="status()">
+      <div class="banner__top">
+        <div class="banner__title">
+          <span class="status-dot" [attr.data-status]="status()" aria-hidden="true"></span>
+          <strong>{{ statusLabel() }}</strong>
+          @if (deployment.snapshotVersion > 0) {
+            <span class="banner__meta">· v{{ deployment.snapshotVersion }}</span>
+          }
+          @if (publishedRelative(); as p) {
+            <span class="banner__meta">· {{ p }}</span>
+          }
         </div>
-        <p-tag [value]="status()" [severity]="severity()" [rounded]="true" />
-      </header>
 
-      <div class="lifecycle">
-        <!-- Publish: from Draft / Tested → Published -->
-        @if (status() === 'Draft' || status() === 'Tested') {
-          <article class="action-card">
-            <div>
-              <h5>Publish snapshot</h5>
-              <p class="muted">
-                Captures the current Connection + Mapping into a versioned snapshot
-                (v{{ deployment.snapshotVersion + 1 }}). Does not make it live.
-              </p>
-              @if (!testedRecently()) {
-                <p-message
-                  severity="warn"
-                  text="No successful test on file. You can still publish, but consider testing first."
-                />
-              }
-            </div>
+        <div class="banner__actions">
+          @if (nextAction(); as next) {
             <p-button
-              label="Publish"
-              icon="pi pi-bookmark"
+              [label]="next.label"
+              [icon]="next.icon"
+              iconPos="right"
               severity="primary"
               size="small"
-              [loading]="busyAction() === 'publish'"
-              (onClick)="publish()"
+              [disabled]="next.disabled"
+              [loading]="busyAction() === next.busyKey"
+              (onClick)="next.handler()"
             />
-          </article>
-        }
-
-        <!-- Activate: from Published → Active (only after Publish step) -->
-        @if (status() === 'Published') {
-          <article class="action-card">
-            <div>
-              <h5>Activate</h5>
-              <p class="muted">
-                Makes this deployment <strong>live</strong>. Any prior Active deployment for
-                the same Customer / Application / Capability is automatically retired.
-              </p>
-              @if (!canActivate()) {
-                <p-message
-                  severity="warn"
-                  text="Complete the Connection and Mapping tabs before activating."
-                />
-              }
-            </div>
-            <p-button
-              label="Activate"
-              icon="pi pi-check"
-              severity="success"
-              size="small"
-              [disabled]="!canActivate()"
-              [loading]="busyAction() === 'activate'"
-              (onClick)="activate()"
-            />
-          </article>
-        }
-
-        <!-- Retire: from Active → Retired -->
-        @if (status() === 'Active') {
-          <article class="action-card action-card--danger">
-            <div>
-              <h5>Retire</h5>
-              <p class="muted">
-                Takes this deployment offline. Existing traffic stops flowing through this
-                mapping. You can publish a new version later to bring it back.
-              </p>
-            </div>
-            <p-button
-              label="Retire"
-              icon="pi pi-pause"
-              severity="danger"
-              [outlined]="true"
-              size="small"
-              [loading]="busyAction() === 'retire'"
-              (onClick)="retire()"
-            />
-          </article>
-        }
-
-        <!-- Rollback: from Active → restore prior Active (placeholder) -->
-        @if (status() === 'Active') {
-          <article class="action-card">
-            <div>
-              <h5>Rollback</h5>
-              <p class="muted">
-                Reactivates the most recently retired version of this deployment. Useful when a
-                new release misbehaves and you need to revert quickly.
-              </p>
-            </div>
-            <p-button
-              label="Rollback"
-              icon="pi pi-undo"
-              severity="secondary"
-              [outlined]="true"
-              size="small"
-              [loading]="busyAction() === 'rollback'"
-              (onClick)="rollback()"
-            />
-          </article>
-        }
-
-        <!-- Reactivate: from Retired → republish + activate (placeholder) -->
-        @if (status() === 'Retired') {
-          <article class="action-card">
-            <div>
-              <h5>Reactivate</h5>
-              <p class="muted">
-                Publishes a new snapshot from the current Connection + Mapping and activates it.
-              </p>
-            </div>
-            <p-button
-              label="Reactivate"
-              icon="pi pi-refresh"
-              severity="primary"
-              size="small"
-              [loading]="busyAction() === 'reactivate'"
-              (onClick)="reactivate()"
-            />
-          </article>
-        }
+          }
+          <p-button
+            icon="pi pi-ellipsis-h"
+            severity="secondary"
+            [text]="true"
+            [rounded]="true"
+            size="small"
+            ariaLabel="Manage"
+            (onClick)="manageMenu.toggle($event)"
+          />
+          <p-menu #manageMenu [model]="manageMenuItems()" [popup]="true" appendTo="body" />
+        </div>
       </div>
-    </section>
 
-    <!-- ── Promote ─────────────────────────────────────────────────── -->
-    <section class="block">
-      <header class="block__head">
-        <div>
-          <h4>Promote</h4>
-          <p class="muted">Share this mapping with the rest of the team as a master template.</p>
-        </div>
-      </header>
+      <!-- Stepper -->
+      <ol class="stepper" [class.stepper--retired]="status() === 'Retired'">
+        <li class="step" [attr.data-state]="stepState('draft')">
+          <span class="step__bullet">
+            @if (stepState('draft') === 'done') {
+              <i class="pi pi-check"></i>
+            }
+          </span>
+          <span class="step__label">Draft</span>
+        </li>
+        <li class="step__connector" [attr.data-state]="stepState('published')"></li>
+        <li class="step" [attr.data-state]="stepState('published')">
+          <span class="step__bullet">
+            @if (stepState('published') === 'done') {
+              <i class="pi pi-check"></i>
+            }
+          </span>
+          <span class="step__label">Published</span>
+        </li>
+        <li class="step__connector" [attr.data-state]="stepState('active')"></li>
+        <li class="step" [attr.data-state]="stepState('active')">
+          <span class="step__bullet">
+            @if (stepState('active') === 'done' && status() !== 'Retired') {
+              <i class="pi pi-check"></i>
+            }
+          </span>
+          <span class="step__label">{{ status() === 'Retired' ? 'Retired' : 'Active' }}</span>
+        </li>
+      </ol>
 
-      <article class="action-card">
-        <div>
-          <h5>Send to master templates</h5>
-          <p class="muted">
-            Promotes this deployment's current Connection + Mapping as a <strong>master template</strong>.
-            Other customers can fork from it as a starting point — useful when you've built a configuration
-            that should become the default for similar customers.
-          </p>
-          @if (!canPromote()) {
-            <p-message
-              severity="warn"
-              text="Available once this deployment is Published or Active. Master templates are built from finalized mappings, not drafts."
-            />
-          }
-          @if (promotedAt(); as p) {
-            <p-message
-              severity="success"
-              [text]="'Promoted to master templates · ' + (p | date: 'medium')"
-            />
-          }
-        </div>
-        <p-button
-          label="Send to master templates"
-          icon="pi pi-share-alt"
-          severity="secondary"
-          [outlined]="true"
-          size="small"
-          [disabled]="!canPromote()"
-          [loading]="busyAction() === 'promote'"
-          (onClick)="sendToMasterTemplates()"
+      <p class="banner__desc">{{ statusDescription() }}</p>
+
+      <!-- Inline callouts -->
+      @if (status() === 'Published' && !canActivate()) {
+        <p-message
+          severity="warn"
+          text="Complete the Connection and Mapping tabs before activating."
         />
-      </article>
+      }
+      @if (
+        (status() === 'Draft' || status() === 'Tested') &&
+        !testedRecently()
+      ) {
+        <p-message
+          severity="info"
+          text="No successful test on file yet. You can still publish, but consider running a test first."
+        />
+      }
+      @if (promotedAt(); as p) {
+        <p-message
+          severity="success"
+          [text]="'Promoted to master templates · ' + (p | date: 'medium')"
+        />
+      }
     </section>
   `,
   styles: [
@@ -218,54 +152,160 @@ import { Deployment, DeploymentStatus } from '../models/deployment.model';
         gap: var(--tf-space-5);
       }
 
-      .block {
+      /* ── Banner ─────────────────────────────────────────────────── */
+      .banner {
         background: white;
-        border: 1px solid var(--tf-slate-400);
+        border: 1px solid var(--tf-slate-300);
         border-radius: var(--tf-radius-md);
-        padding: var(--tf-space-4) var(--tf-space-5);
-      }
-      .block__head {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        gap: var(--tf-space-4);
-        margin-bottom: var(--tf-space-3);
-      }
-      .block__head h4 {
-        margin: 0;
-        font-size: var(--tf-text-heading);
-      }
-      .muted {
-        color: var(--tf-text-muted);
-        font-size: var(--tf-text-body);
-        margin: 4px 0 0 0;
-      }
-
-      .lifecycle {
+        padding: var(--tf-space-5);
         display: flex;
         flex-direction: column;
-        gap: var(--tf-space-3);
-      }
-      .action-card {
-        display: flex;
-        align-items: flex-start;
-        justify-content: space-between;
         gap: var(--tf-space-4);
-        padding: var(--tf-space-3) var(--tf-space-4);
-        border: 1px solid var(--tf-slate-400);
-        border-radius: var(--tf-radius-sm);
+      }
+      .banner[data-status='Active'] {
+        border-color: #a3d9b1;
+        background: linear-gradient(135deg, #f0fdf4 0%, white 70%);
+      }
+      .banner[data-status='Published'] {
+        border-color: #9ec5ec;
+        background: linear-gradient(135deg, #f0f7ff 0%, white 70%);
+      }
+      .banner[data-status='Draft'],
+      .banner[data-status='Tested'] {
+        border-color: #f5cf94;
+        background: linear-gradient(135deg, #fff8eb 0%, white 70%);
+      }
+      .banner[data-status='Retired'] {
+        border-color: var(--tf-slate-400);
         background: var(--tf-slate-50);
       }
-      .action-card h5 {
-        margin: 0;
-        font-size: var(--tf-text-body);
+
+      .banner__top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--tf-space-3);
+      }
+      .banner__title {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        font-size: var(--tf-text-heading);
+        line-height: 1.2;
+      }
+      .banner__title strong {
         font-weight: 700;
+        color: var(--tf-text-strong);
       }
-      .action-card--danger {
-        border-color: #f0a5ab;
-        background: #fbe9ea;
+      .banner__meta {
+        font-weight: 400;
+        color: var(--tf-text-muted);
+        font-size: var(--tf-text-body);
       }
-      .action-card--danger h5 {
+      .banner__actions {
+        display: flex;
+        align-items: center;
+        gap: var(--tf-space-2);
+        flex-shrink: 0;
+      }
+      .banner__desc {
+        margin: 0;
+        color: var(--tf-text-muted);
+        font-size: var(--tf-text-body);
+        max-width: 70ch;
+      }
+
+      .status-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--tf-slate-500);
+        flex-shrink: 0;
+        align-self: center;
+      }
+      .status-dot[data-status='Active'] {
+        background: #1b6b3a;
+      }
+      .status-dot[data-status='Published'],
+      .status-dot[data-status='Tested'] {
+        background: #1d6fc0;
+      }
+      .status-dot[data-status='Draft'] {
+        background: #d97706;
+      }
+      .status-dot[data-status='Retired'] {
+        background: var(--tf-slate-500);
+      }
+
+      /* ── Stepper ────────────────────────────────────────────────── */
+      .stepper {
+        display: flex;
+        align-items: center;
+        gap: 0;
+        padding: 0;
+        margin: 0;
+        list-style: none;
+      }
+      .step {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: var(--tf-text-meta);
+        font-weight: 600;
+        color: var(--tf-text-muted);
+      }
+      .step__bullet {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: var(--tf-slate-200);
+        color: white;
+        font-size: 10px;
+        flex-shrink: 0;
+      }
+      .step[data-state='done'] .step__bullet {
+        background: #1d6fc0;
+      }
+      .step[data-state='current'] .step__bullet {
+        background: white;
+        border: 2px solid #1d6fc0;
+        box-shadow: 0 0 0 4px rgba(29, 111, 192, 0.18);
+      }
+      .step[data-state='done'] .step__label,
+      .step[data-state='current'] .step__label {
+        color: var(--tf-text-strong);
+      }
+      .step__connector {
+        flex: 0 0 40px;
+        height: 2px;
+        margin: 0 8px;
+        background: var(--tf-slate-200);
+      }
+      .step__connector[data-state='done'] {
+        background: #1d6fc0;
+      }
+
+      .stepper--retired .step__bullet,
+      .stepper--retired .step__connector {
+        background: var(--tf-slate-400);
+        border-color: var(--tf-slate-400);
+        box-shadow: none;
+      }
+      .stepper--retired .step__label {
+        color: var(--tf-text-muted);
+      }
+      .stepper--retired .step:last-child .step__label {
+        color: #83131a;
+      }
+
+      /* PrimeNG menu danger item styling */
+      :host ::ng-deep .p-menu .menu-item--danger .p-menuitem-link {
+        color: #83131a;
+      }
+      :host ::ng-deep .p-menu .menu-item--danger .p-menuitem-icon {
         color: #83131a;
       }
     `,
@@ -283,7 +323,9 @@ export class TestPublishTabComponent implements OnChanges {
 
   status = computed<DeploymentStatus>(() => this.localStatus() ?? this.deployment.status);
 
-  busyAction = signal<'publish' | 'activate' | 'retire' | 'rollback' | 'reactivate' | 'promote' | null>(null);
+  busyAction = signal<
+    'publish' | 'activate' | 'retire' | 'rollback' | 'reactivate' | 'promote' | null
+  >(null);
 
   /** Timestamp of the most recent successful promotion to master templates. */
   promotedAt = signal<Date | null>(null);
@@ -297,29 +339,141 @@ export class TestPublishTabComponent implements OnChanges {
   /** True when a Tested correlation exists (auth tested on Connection tab). */
   testedRecently = computed<boolean>(() => !!this.deployment.lastTestCorrelationId);
 
-  /** Gate for Activate: need Connection + at least a template choice + a recent test. */
+  /** Gate for Activate: need Connection + at least a template choice. */
   canActivate = computed<boolean>(() => {
     const d = this.deployment;
     const hasConnection = !!d.connectionId;
-    // Either a forked master or "from scratch" sentinel — either is acceptable.
     const hasTemplate = !!d.forkedFromTemplateId || d.forkedFromTemplateVersion === null;
     return hasConnection && hasTemplate;
   });
 
-  severity = computed<'success' | 'info' | 'warn' | 'secondary' | 'danger'>(() => {
+  statusLabel = computed<string>(() => {
     switch (this.status()) {
-      case 'Active':
-        return 'success';
-      case 'Published':
       case 'Tested':
-        return 'info';
-      case 'Draft':
-        return 'warn';
-      case 'Retired':
+        return 'Draft · tested';
       default:
-        return 'secondary';
+        return this.status();
     }
   });
+
+  statusDescription = computed<string>(() => {
+    switch (this.status()) {
+      case 'Draft':
+        return `No snapshot yet. Publish to capture the current Connection + Mapping as v${this.deployment.snapshotVersion + 1}.`;
+      case 'Tested':
+        return `Tested but not yet published. Publish to capture as v${this.deployment.snapshotVersion + 1}.`;
+      case 'Published':
+        return 'Snapshot is ready. Activate to make it live for this customer.';
+      case 'Active':
+        return 'This deployment is live and processing customer traffic.';
+      case 'Retired':
+        return 'This deployment is offline. Reactivate to publish a new snapshot and bring it back.';
+    }
+  });
+
+  /** Relative "Published 3 days ago" — driven by deployment.updatedAt for the mock. */
+  publishedRelative = computed<string | null>(() => {
+    if (this.deployment.snapshotVersion === 0) return null;
+    const updated = new Date(this.deployment.updatedAt);
+    if (Number.isNaN(updated.getTime())) return null;
+    const days = Math.floor((Date.now() - updated.getTime()) / 86400000);
+    if (days <= 0) return 'Published today';
+    if (days === 1) return 'Published yesterday';
+    if (days < 30) return `Published ${days} days ago`;
+    const months = Math.floor(days / 30);
+    if (months === 1) return 'Published 1 month ago';
+    return `Published ${months} months ago`;
+  });
+
+  /** Returns the single forward step the user can take from the current status. */
+  nextAction = computed<NextAction | null>(() => {
+    const s = this.status();
+    if (s === 'Draft' || s === 'Tested') {
+      return {
+        label: 'Publish snapshot',
+        icon: 'pi pi-bookmark',
+        busyKey: 'publish',
+        disabled: false,
+        handler: () => this.publish(),
+      };
+    }
+    if (s === 'Published') {
+      return {
+        label: 'Activate',
+        icon: 'pi pi-arrow-right',
+        busyKey: 'activate',
+        disabled: !this.canActivate(),
+        handler: () => this.activate(),
+      };
+    }
+    if (s === 'Retired') {
+      return {
+        label: 'Reactivate',
+        icon: 'pi pi-refresh',
+        busyKey: 'reactivate',
+        disabled: false,
+        handler: () => this.reactivate(),
+      };
+    }
+    // Active is a terminal "happy" state — no forward action, manage via menu.
+    return null;
+  });
+
+  /** Status-dependent Manage menu. Destructive actions sit below a separator. */
+  manageMenuItems = computed<MenuItem[]>(() => {
+    const s = this.status();
+    const items: MenuItem[] = [];
+
+    if (this.canPromote()) {
+      items.push({
+        label: 'Send to master templates',
+        icon: 'pi pi-share-alt',
+        command: () => this.sendToMasterTemplates(),
+      });
+    }
+
+    if (s === 'Active') {
+      items.push({
+        label: 'Roll back to previous version',
+        icon: 'pi pi-undo',
+        command: () => this.rollback(),
+      });
+      items.push({ separator: true });
+      items.push({
+        label: 'Retire deployment',
+        icon: 'pi pi-pause',
+        styleClass: 'menu-item--danger',
+        command: () => this.retire(),
+      });
+    }
+
+    if (items.length === 0) {
+      items.push({ label: 'No actions available', disabled: true });
+    }
+
+    return items;
+  });
+
+  /** Stepper progression. Retired is rendered with a special class on the <ol>. */
+  stepState(step: StepKey): StepState {
+    const s = this.status();
+    if (s === 'Retired') {
+      // All three steps show as completed but visually muted via stepper--retired.
+      return 'done';
+    }
+    if (step === 'draft') {
+      if (s === 'Draft' || s === 'Tested') return 'current';
+      return 'done';
+    }
+    if (step === 'published') {
+      if (s === 'Draft' || s === 'Tested') return 'pending';
+      if (s === 'Published') return 'current';
+      return 'done';
+    }
+    // active
+    if (s === 'Active') return 'current';
+    return 'pending';
+  }
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes['deployment']) {
@@ -328,6 +482,7 @@ export class TestPublishTabComponent implements OnChanges {
     }
   }
 
+  // ── Actions ───────────────────────────────────────────────────────
   sendToMasterTemplates() {
     if (this.busyAction() || !this.canPromote()) return;
     this.gen
@@ -343,8 +498,6 @@ export class TestPublishTabComponent implements OnChanges {
       .then((result) => {
         if (!result.isConfirmed) return;
         this.busyAction.set('promote');
-        // Mock: pretend we POSTed a new master template. Real impl would call
-        // api.createTemplateFromDeployment(deploymentId) and refresh the library.
         setTimeout(() => {
           this.promotedAt.set(new Date());
           this.busyAction.set(null);
