@@ -1,7 +1,7 @@
 {
   "buildCommand": "npm run build -- --configuration production",
   "outputDirectory": "dist/field-mapping-app-v2/browser",
-  "installCommand": "npm install",
+  "installCommand": "npm install --include=dev",
   "framework": null,
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
