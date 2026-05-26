@@ -8,14 +8,15 @@ type Stage = 'Draft' | 'Published' | 'Activated';
 /**
  * Lifecycle chevron — the primary lifecycle control for one version.
  *
- * Visually shows three forward stages: Draft → Published → Activated.
- * Click is always forward. The chevron emits an `advance` event with the
- * target stage; the parent runs the confirmation dialog and commits the
- * transition. When the version is Activated (or Archived), the chevron
- * is rendered inert — no stage is clickable.
+ * Three arrow-shaped segments (Draft / Publish→Published / Activate→Activated)
+ * styled per Figma component 116. Click is always forward; the chevron emits
+ * an `advance` event with the target stage and the parent runs the confirm
+ * + commit. When the version is Activated or Archived the chevron is inert.
  *
- * Uses Angular signal inputs so the computeds stay reactive when the
- * parent re-binds `current` or `inert`.
+ * Archived versions render a separate pink "Archived" pill instead of the
+ * three-stage chevron — see the archived branch in the template below.
+ *
+ * Signal inputs so the computeds stay reactive across @Input changes.
  *
  * See DESIGN-STATUS-VERSIONING.md §3 for the full spec.
  */
@@ -23,154 +24,217 @@ type Stage = 'Draft' | 'Published' | 'Activated';
   selector: 'app-lifecycle-chevron',
   imports: [CommonModule],
   template: `
-    <div class="chevron" [class.chevron--inert]="inert()">
-      <button
-        type="button"
-        class="chevron__stage"
-        [attr.data-state]="stageState('Draft')"
-        [disabled]="!isClickable('Draft')"
-        (click)="onClick('Draft')"
-      >
-        <span class="stage__bullet">
-          @if (stageState('Draft') === 'done') {
-            <i class="pi pi-check" aria-hidden="true"></i>
-          }
-        </span>
-        <span class="stage__label">Draft</span>
-      </button>
+    @if (current() === 'Archived') {
+      <div class="archived-bar" aria-label="Archived">
+        <i class="pi pi-inbox" aria-hidden="true"></i>
+        <span class="archived-bar__label">Archived</span>
+      </div>
+    } @else {
+      <div class="chev" [class.chev--inert]="inert()">
+        <button
+          type="button"
+          class="chev__stage chev__stage--first"
+          [attr.data-stage]="'Draft'"
+          [attr.data-state]="stageState('Draft')"
+          [disabled]="!isClickable('Draft')"
+          (click)="onClick('Draft')"
+        >
+          <span class="chev__bullet">
+            @if (showCheck('Draft')) {
+              <i class="pi pi-check" aria-hidden="true"></i>
+            }
+          </span>
+          <span class="chev__label">Draft</span>
+        </button>
 
-      <span class="chevron__sep" [attr.data-state]="sepState('Published')"></span>
+        <button
+          type="button"
+          class="chev__stage"
+          [attr.data-stage]="'Published'"
+          [attr.data-state]="stageState('Published')"
+          [disabled]="!isClickable('Published')"
+          (click)="onClick('Published')"
+        >
+          <span class="chev__bullet">
+            @if (showCheck('Published')) {
+              <i class="pi pi-check" aria-hidden="true"></i>
+            }
+          </span>
+          <span class="chev__label">{{ labelFor('Published') }}</span>
+        </button>
 
-      <button
-        type="button"
-        class="chevron__stage"
-        [attr.data-state]="stageState('Published')"
-        [disabled]="!isClickable('Published')"
-        (click)="onClick('Published')"
-      >
-        <span class="stage__bullet">
-          @if (stageState('Published') === 'done') {
-            <i class="pi pi-check" aria-hidden="true"></i>
-          }
-        </span>
-        <span class="stage__label">Published</span>
-      </button>
-
-      <span class="chevron__sep" [attr.data-state]="sepState('Activated')"></span>
-
-      <button
-        type="button"
-        class="chevron__stage"
-        [attr.data-state]="stageState('Activated')"
-        [disabled]="!isClickable('Activated')"
-        (click)="onClick('Activated')"
-      >
-        <span class="stage__bullet">
-          @if (stageState('Activated') === 'done') {
-            <i class="pi pi-check" aria-hidden="true"></i>
-          }
-        </span>
-        <span class="stage__label">Activated</span>
-      </button>
-    </div>
+        <button
+          type="button"
+          class="chev__stage chev__stage--last"
+          [attr.data-stage]="'Activated'"
+          [attr.data-state]="stageState('Activated')"
+          [disabled]="!isClickable('Activated')"
+          (click)="onClick('Activated')"
+        >
+          <span class="chev__bullet">
+            @if (showCheck('Activated')) {
+              <i class="pi pi-check" aria-hidden="true"></i>
+            }
+          </span>
+          <span class="chev__label">{{ labelFor('Activated') }}</span>
+        </button>
+      </div>
+    }
   `,
   styles: [
     `
-      .chevron {
-        display: inline-flex;
-        align-items: center;
-        gap: 0;
+      :host {
+        display: block;
       }
 
-      .chevron__stage {
+      /* ── Three-stage chevron ────────────────────────────────────── */
+      .chev {
+        display: flex;
+        align-items: stretch;
+        width: 100%;
+        font-size: var(--tf-text-body);
+        font-weight: 600;
+      }
+
+      .chev__stage {
+        flex: 1 1 0;
+        min-width: 0;
         display: inline-flex;
         align-items: center;
-        gap: 8px;
-        background: transparent;
+        gap: 10px;
+        padding: 12px 28px 12px 36px;
+        background: #f3f4f6;
+        color: #9ca3af;
         border: 0;
-        padding: 6px 10px;
-        margin: -6px -2px;
-        border-radius: var(--tf-radius-sm);
-        cursor: pointer;
         font-family: inherit;
-        font-size: var(--tf-text-meta);
-        font-weight: 600;
-        color: var(--tf-text-muted);
-        transition: background 0.12s ease;
+        font-size: inherit;
+        font-weight: inherit;
+        cursor: pointer;
+        transition: filter 0.12s ease;
+        /* Arrow shape: notch on left, point on right */
+        clip-path: polygon(
+          0 0,
+          calc(100% - 14px) 0,
+          100% 50%,
+          calc(100% - 14px) 100%,
+          0 100%,
+          14px 50%
+        );
+        margin-left: -14px;
       }
-      .chevron__stage:disabled {
+      .chev__stage--first {
+        padding-left: 22px;
+        margin-left: 0;
+        /* First stage: no left notch */
+        clip-path: polygon(
+          0 0,
+          calc(100% - 14px) 0,
+          100% 50%,
+          calc(100% - 14px) 100%,
+          0 100%
+        );
+        border-top-left-radius: 6px;
+        border-bottom-left-radius: 6px;
+      }
+
+      .chev__stage:disabled {
         cursor: not-allowed;
       }
-      .chevron__stage:not(:disabled):hover {
-        background: var(--tf-blue-50, #f0f7ff);
+      .chev__stage:not(:disabled):hover {
+        filter: brightness(0.96);
       }
-      .chevron__stage:not(:disabled):focus-visible {
+      .chev__stage:not(:disabled):focus-visible {
         outline: 2px solid #1d6fc0;
-        outline-offset: 2px;
+        outline-offset: -4px;
       }
 
-      .stage__bullet {
+      /* Bullet */
+      .chev__bullet {
         display: inline-flex;
         align-items: center;
         justify-content: center;
         width: 22px;
         height: 22px;
         border-radius: 50%;
-        background: var(--tf-slate-200);
-        color: white;
+        background: transparent;
+        border: 2px solid currentColor;
         font-size: 10px;
         flex-shrink: 0;
       }
-      .chevron__stage[data-state='done'] .stage__bullet {
-        background: #1d6fc0;
+
+      /* ── Per-stage color palette (per Figma component 116) ─────── */
+      /* Draft — cream/amber */
+      .chev__stage[data-stage='Draft'][data-state='current'],
+      .chev__stage[data-stage='Draft'][data-state='done'] {
+        background: #fef3d7;
+        color: #8b5d00;
       }
-      .chevron__stage[data-state='current'] .stage__bullet {
-        background: white;
-        border: 2px solid #1d6fc0;
-        box-shadow: 0 0 0 4px rgba(29, 111, 192, 0.18);
-      }
-      .chevron__stage[data-state='next'] .stage__bullet {
-        background: white;
-        border: 2px dashed #94a3b8;
-      }
-      .chevron__stage:not(:disabled)[data-state='next']:hover .stage__bullet {
-        border-color: #1d6fc0;
-        border-style: solid;
+      .chev__stage[data-stage='Draft'][data-state='current'] .chev__bullet,
+      .chev__stage[data-stage='Draft'][data-state='done'] .chev__bullet {
+        background: #8b5d00;
+        border-color: #8b5d00;
+        color: #fef3d7;
       }
 
-      .chevron__stage[data-state='done'] .stage__label,
-      .chevron__stage[data-state='current'] .stage__label {
-        color: var(--tf-text-strong);
+      /* Published — light green */
+      .chev__stage[data-stage='Published'][data-state='current'],
+      .chev__stage[data-stage='Published'][data-state='done'] {
+        background: #c5e6ce;
+        color: #1b6b3a;
       }
-      .chevron__stage[data-state='next'] .stage__label {
-        color: var(--tf-text-muted);
-      }
-      .chevron__stage:not(:disabled)[data-state='next']:hover .stage__label {
-        color: #1d6fc0;
-      }
-
-      .chevron__sep {
-        display: inline-block;
-        flex: 0 0 36px;
-        height: 2px;
-        margin: 0 6px;
-        background: var(--tf-slate-200);
-      }
-      .chevron__sep[data-state='done'] {
-        background: #1d6fc0;
+      .chev__stage[data-stage='Published'][data-state='current'] .chev__bullet,
+      .chev__stage[data-stage='Published'][data-state='done'] .chev__bullet {
+        background: #1b6b3a;
+        border-color: #1b6b3a;
+        color: #c5e6ce;
       }
 
-      /* Inert mode — all stages locked, no hover, dimmed. Used for
-         Activated (terminal) and on Archived containers' history view. */
-      .chevron--inert .chevron__stage {
+      /* Activated — deep green */
+      .chev__stage[data-stage='Activated'][data-state='current'] {
+        background: #1b6b3a;
+        color: #ffffff;
+      }
+      .chev__stage[data-stage='Activated'][data-state='current'] .chev__bullet {
+        background: #ffffff;
+        border-color: #ffffff;
+        color: #1b6b3a;
+      }
+
+      /* Pending / next-up — neutral gray */
+      .chev__stage[data-state='pending'],
+      .chev__stage[data-state='next'] {
+        background: #f3f4f6;
+        color: #9ca3af;
+      }
+      .chev__stage:not(:disabled)[data-state='next']:hover {
+        background: #e5e7eb;
+      }
+
+      /* Inert mode — Activated terminal state. Same colors, no hover. */
+      .chev--inert .chev__stage {
         cursor: default;
       }
-      .chevron--inert .chevron__stage:hover {
-        background: transparent;
+      .chev--inert .chev__stage:hover {
+        filter: none;
       }
-      .chevron--inert .chevron__stage[data-state='done'] .stage__bullet,
-      .chevron--inert .chevron__sep[data-state='done'] {
-        background: #6b8aa8;
+
+      /* ── Archived bar ───────────────────────────────────────────── */
+      .archived-bar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 14px 24px;
+        background: #fbe9ea;
+        color: #83131a;
+        border-radius: 6px;
+        font-size: var(--tf-text-body);
+        font-weight: 700;
+      }
+      .archived-bar i {
+        font-size: 16px;
+      }
+      .archived-bar__label {
+        letter-spacing: 0.2px;
       }
     `,
   ],
@@ -184,13 +248,12 @@ export class LifecycleChevronComponent {
 
   @Output() advance = new EventEmitter<Stage>();
 
-  /** Translates the version's state into where the chevron should sit. */
+  /** Translates the version's state into where the chevron should sit.
+   *  Archived is handled separately in the template. */
   private currentStage = computed<Stage>(() => {
     const c = this.current();
     if (c === 'Activated') return 'Activated';
     if (c === 'Published') return 'Published';
-    // Archived renders the chevron full + inert (treated like Activated for stages).
-    if (c === 'Archived') return 'Activated';
     return 'Draft';
   });
 
@@ -205,8 +268,19 @@ export class LifecycleChevronComponent {
     return 'pending';
   }
 
-  sepState(rightOf: Stage): 'done' | 'pending' {
-    return this.stageState(rightOf) === 'done' ? 'done' : 'pending';
+  /** Show the checkmark icon when the stage is done or current. */
+  showCheck(stage: Stage): boolean {
+    const s = this.stageState(stage);
+    return s === 'done' || s === 'current';
+  }
+
+  /** Per-Figma: stage label morphs to past-tense when CURRENT.
+   *  Draft is always "Draft" (state == action). */
+  labelFor(stage: Stage): string {
+    if (stage === 'Draft') return 'Draft';
+    const cur = this.currentStage();
+    if (stage === 'Published') return cur === 'Published' ? 'Published' : 'Publish';
+    return cur === 'Activated' ? 'Activated' : 'Activate';
   }
 
   isClickable(stage: Stage): boolean {

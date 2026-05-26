@@ -227,21 +227,22 @@ type ChevronStage = 'Draft' | 'Published' | 'Activated';
         flex-direction: column;
         gap: var(--tf-space-3);
       }
+      /* Containers use white background — the chevron bar is the visual
+         hero. Borders pick up a faint state tint so containers still
+         feel grouped at a glance without competing with the chevron. */
       .version[data-state='Draft'] {
         border-color: #f5cf94;
-        background: linear-gradient(135deg, #fff8eb 0%, white 70%);
       }
       .version[data-state='Published'] {
-        border-color: #9ec5ec;
-        background: linear-gradient(135deg, #f0f7ff 0%, white 70%);
+        border-color: #a3d9b1;
       }
       .version[data-state='Activated'] {
-        border-color: #a3d9b1;
-        background: linear-gradient(135deg, #f0fdf4 0%, white 70%);
+        border-color: #1b6b3a;
+        border-width: 1px;
+        box-shadow: 0 1px 3px rgba(27, 107, 58, 0.08);
       }
       .version[data-state='Archived'] {
         border-color: var(--tf-slate-300);
-        background: white;
       }
       .version--collapsed {
         padding: var(--tf-space-3) var(--tf-space-5);
