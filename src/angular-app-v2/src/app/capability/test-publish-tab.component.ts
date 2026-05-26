@@ -10,6 +10,7 @@ import {
   signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { MenuModule } from 'primeng/menu';
 import { MenuItem } from 'primeng/api';
@@ -19,6 +20,7 @@ import { Deployment } from '../models/deployment.model';
 import { Version, VersionState } from '../models/version.model';
 import { mockVersions } from '../mocks/mock-data';
 import { LifecycleChevronComponent } from './lifecycle-chevron.component';
+import { AutofocusDirective } from './autofocus.directive';
 
 type ChevronStage = 'Draft' | 'Published' | 'Activated';
 
@@ -39,7 +41,7 @@ type ChevronStage = 'Draft' | 'Published' | 'Activated';
  */
 @Component({
   selector: 'app-test-publish-tab',
-  imports: [CommonModule, ButtonModule, MenuModule, LifecycleChevronComponent],
+  imports: [CommonModule, FormsModule, ButtonModule, MenuModule, LifecycleChevronComponent, AutofocusDirective],
   template: `
     <div class="versions">
       <!-- ── Drafts ───────────────────────────────────────────────── -->
@@ -64,8 +66,37 @@ type ChevronStage = 'Draft' | 'Published' | 'Activated';
             />
           </header>
           <div class="version__body">
-            @if (v.notes) {
-              <p class="version__notes">{{ v.notes }}</p>
+            @if (editingNotesId() === v.id) {
+              <textarea
+                class="version__notes-edit"
+                rows="2"
+                appAutofocus
+                [ngModel]="notesDraft()"
+                (ngModelChange)="notesDraft.set($event)"
+                (blur)="saveNotes(v)"
+                (keydown.enter)="onNotesEnter($event, v)"
+                (keydown.escape)="cancelNotesEdit()"
+                placeholder="Describe this version — what changed, why, who reviewed it…"
+              ></textarea>
+            } @else if (v.notes) {
+              <button
+                type="button"
+                class="version__notes"
+                (click)="startNotesEdit(v)"
+                aria-label="Edit description"
+              >
+                <span>{{ v.notes }}</span>
+                <i class="pi pi-pencil version__notes-pencil" aria-hidden="true"></i>
+              </button>
+            } @else {
+              <button
+                type="button"
+                class="version__notes-add"
+                (click)="startNotesEdit(v)"
+              >
+                <i class="pi pi-plus" aria-hidden="true"></i>
+                Add description
+              </button>
             }
             <app-lifecycle-chevron
               [current]="v.state"
@@ -97,8 +128,37 @@ type ChevronStage = 'Draft' | 'Published' | 'Activated';
             />
           </header>
           <div class="version__body">
-            @if (v.notes) {
-              <p class="version__notes">{{ v.notes }}</p>
+            @if (editingNotesId() === v.id) {
+              <textarea
+                class="version__notes-edit"
+                rows="2"
+                appAutofocus
+                [ngModel]="notesDraft()"
+                (ngModelChange)="notesDraft.set($event)"
+                (blur)="saveNotes(v)"
+                (keydown.enter)="onNotesEnter($event, v)"
+                (keydown.escape)="cancelNotesEdit()"
+                placeholder="Describe this version — what changed, why, who reviewed it…"
+              ></textarea>
+            } @else if (v.notes) {
+              <button
+                type="button"
+                class="version__notes"
+                (click)="startNotesEdit(v)"
+                aria-label="Edit description"
+              >
+                <span>{{ v.notes }}</span>
+                <i class="pi pi-pencil version__notes-pencil" aria-hidden="true"></i>
+              </button>
+            } @else {
+              <button
+                type="button"
+                class="version__notes-add"
+                (click)="startNotesEdit(v)"
+              >
+                <i class="pi pi-plus" aria-hidden="true"></i>
+                Add description
+              </button>
             }
             <app-lifecycle-chevron
               [current]="v.state"
@@ -130,8 +190,37 @@ type ChevronStage = 'Draft' | 'Published' | 'Activated';
             />
           </header>
           <div class="version__body">
-            @if (v.notes) {
-              <p class="version__notes">{{ v.notes }}</p>
+            @if (editingNotesId() === v.id) {
+              <textarea
+                class="version__notes-edit"
+                rows="2"
+                appAutofocus
+                [ngModel]="notesDraft()"
+                (ngModelChange)="notesDraft.set($event)"
+                (blur)="saveNotes(v)"
+                (keydown.enter)="onNotesEnter($event, v)"
+                (keydown.escape)="cancelNotesEdit()"
+                placeholder="Describe this version — what changed, why, who reviewed it…"
+              ></textarea>
+            } @else if (v.notes) {
+              <button
+                type="button"
+                class="version__notes"
+                (click)="startNotesEdit(v)"
+                aria-label="Edit description"
+              >
+                <span>{{ v.notes }}</span>
+                <i class="pi pi-pencil version__notes-pencil" aria-hidden="true"></i>
+              </button>
+            } @else {
+              <button
+                type="button"
+                class="version__notes-add"
+                (click)="startNotesEdit(v)"
+              >
+                <i class="pi pi-plus" aria-hidden="true"></i>
+                Add description
+              </button>
             }
             <app-lifecycle-chevron [current]="v.state" [inert]="true" />
             <div class="version__activated-actions">
@@ -309,12 +398,86 @@ type ChevronStage = 'Draft' | 'Published' | 'Activated';
         gap: var(--tf-space-3);
         padding-left: 2px;
       }
+      /* Click-to-edit notes — rendered as a button so it's keyboard reachable. */
       .version__notes {
         margin: 0;
+        padding: 6px 8px;
+        background: transparent;
+        border: 1px dashed transparent;
+        border-radius: var(--tf-radius-sm);
         color: var(--tf-text-muted);
         font-size: var(--tf-text-body);
         font-style: italic;
+        font-family: inherit;
+        text-align: left;
         max-width: 70ch;
+        cursor: text;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: background 0.12s ease, border-color 0.12s ease;
+      }
+      .version__notes:hover,
+      .version__notes:focus-visible {
+        background: var(--tf-slate-50, #f8fafc);
+        border-color: var(--tf-slate-300, #cbd5e1);
+        outline: 0;
+      }
+      .version__notes-pencil {
+        font-size: 11px;
+        opacity: 0;
+        transition: opacity 0.12s ease;
+      }
+      .version__notes:hover .version__notes-pencil,
+      .version__notes:focus-visible .version__notes-pencil {
+        opacity: 0.6;
+      }
+
+      .version__notes-add {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: transparent;
+        border: 1px dashed var(--tf-slate-300, #cbd5e1);
+        border-radius: var(--tf-radius-sm);
+        color: var(--tf-text-muted);
+        font-size: var(--tf-text-meta);
+        font-weight: 500;
+        font-family: inherit;
+        padding: 6px 10px;
+        cursor: pointer;
+        align-self: flex-start;
+      }
+      .version__notes-add:hover,
+      .version__notes-add:focus-visible {
+        background: var(--tf-slate-50, #f8fafc);
+        color: var(--tf-text-strong);
+        border-color: var(--tf-slate-400, #94a3b8);
+        outline: 0;
+      }
+      .version__notes-add i {
+        font-size: 10px;
+      }
+
+      .version__notes-edit {
+        width: 100%;
+        max-width: 70ch;
+        padding: 8px 10px;
+        border: 1px solid var(--tf-blue-400, #5b9bd5);
+        border-radius: var(--tf-radius-sm);
+        background: white;
+        color: var(--tf-text-strong);
+        font-family: inherit;
+        font-size: var(--tf-text-body);
+        font-style: italic;
+        line-height: 1.5;
+        resize: vertical;
+        min-height: 50px;
+      }
+      .version__notes-edit:focus-visible {
+        outline: 2px solid #1d6fc0;
+        outline-offset: -1px;
+        border-color: #1d6fc0;
       }
       .version__activated-actions {
         margin-top: 4px;
@@ -364,6 +527,11 @@ export class TestPublishTabComponent implements OnChanges {
 
   /** Per-version action busy state. */
   busyAction = signal<{ versionId: string; action: string } | null>(null);
+
+  /** Inline notes editor state — which version is currently being edited
+   *  and the in-progress draft text. Editable on every version per Q-set. */
+  editingNotesId = signal<string | null>(null);
+  notesDraft = signal<string>('');
 
   /** Author display name for newly forked drafts. */
   private currentAuthor = 'Jake Cummings';
@@ -444,7 +612,38 @@ export class TestPublishTabComponent implements OnChanges {
       this.expandedSet.set(new Set());
       this.busyAction.set(null);
       this.menuVersionId.set(null);
+      this.editingNotesId.set(null);
+      this.notesDraft.set('');
     }
+  }
+
+  // ── Notes inline editor ──────────────────────────────────────────
+  startNotesEdit(v: Version) {
+    this.editingNotesId.set(v.id);
+    this.notesDraft.set(v.notes ?? '');
+  }
+
+  saveNotes(v: Version) {
+    if (this.editingNotesId() !== v.id) return;
+    const value = this.notesDraft().trim();
+    this.versions.update((list) =>
+      list.map((x) => (x.id === v.id ? { ...x, notes: value || undefined } : x)),
+    );
+    this.editingNotesId.set(null);
+    this.notesDraft.set('');
+  }
+
+  cancelNotesEdit() {
+    this.editingNotesId.set(null);
+    this.notesDraft.set('');
+  }
+
+  /** Enter saves; Shift+Enter inserts a newline (default browser behavior). */
+  onNotesEnter(event: Event, v: Version) {
+    const kb = event as KeyboardEvent;
+    if (kb.shiftKey) return;
+    event.preventDefault();
+    this.saveNotes(v);
   }
 
   // ── Helpers used in the template ─────────────────────────────────
