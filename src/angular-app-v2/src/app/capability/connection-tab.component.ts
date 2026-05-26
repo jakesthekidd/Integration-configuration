@@ -174,8 +174,7 @@ import {
       <p-button
         label="Test Authentication"
         icon="pi pi-bolt"
-        severity="secondary"
-        [outlined]="true"
+        severity="primary"
         size="small"
         [disabled]="!isComplete()"
         [loading]="testing()"
