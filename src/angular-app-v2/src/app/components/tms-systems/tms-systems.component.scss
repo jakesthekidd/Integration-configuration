@@ -138,3 +138,13 @@
   font-weight: 500;
 }
 
+.active-count--hoverable {
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.active-count--hoverable:hover {
+  background: #1b6b3a;
+  color: #fff;
+}
+

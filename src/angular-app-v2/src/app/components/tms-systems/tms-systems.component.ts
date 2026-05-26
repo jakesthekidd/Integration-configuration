@@ -1,23 +1,26 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { TooltipModule } from 'primeng/tooltip';
 import { forkJoin } from 'rxjs';
 import { ApiService } from '../../services/api.service';
 import { GeneralService } from '../../services/general.service';
 import { TmsSystem, CreateTmsSystemRequest } from '../../models/tms-system.model';
 import { Application } from '../../models/application.model';
 import { Capability } from '../../models/capability.model';
+import { Customer } from '../../models/customer.model';
 import { Deployment } from '../../models/deployment.model';
 
 interface ConnectionUsageSummary {
   applications: string[];
   capabilities: string[];
   totalActive: number;
+  activeCustomers: string[];
 }
 
 @Component({
     selector: 'app-tms-systems',
-    imports: [CommonModule, FormsModule],
+    imports: [CommonModule, FormsModule, TooltipModule],
     templateUrl: './tms-systems.component.html',
     styleUrl: './tms-systems.component.scss'
 })
@@ -60,6 +63,7 @@ export class TmsSystemsComponent implements OnInit {
       deployments: this.apiService.getDeployments(),
       applications: this.apiService.getApplications(),
       capabilities: this.apiService.getCapabilities(),
+      customers: this.apiService.getCustomers(),
     }).subscribe({
       next: (res) => {
         if (res.systems.success && res.systems.data) this.systems = res.systems.data.systems;
@@ -69,7 +73,9 @@ export class TmsSystemsComponent implements OnInit {
           res.applications.success && res.applications.data ? res.applications.data.applications : [];
         const capabilities: Capability[] =
           res.capabilities.success && res.capabilities.data ? res.capabilities.data.capabilities : [];
-        this.usage = this.buildUsageMap(deployments, applications, capabilities);
+        const customers: Customer[] =
+          res.customers.success && res.customers.data ? res.customers.data.customers : [];
+        this.usage = this.buildUsageMap(deployments, applications, capabilities, customers);
         this.loading = false;
       },
       error: (err) => {
@@ -80,24 +86,31 @@ export class TmsSystemsComponent implements OnInit {
     });
   }
 
-  /** Build a connectionId → { applications, capabilities, totalActive } lookup. */
+  /** Build a connectionId → { applications, capabilities, totalActive, activeCustomers } lookup. */
   private buildUsageMap(
     deployments: Deployment[],
     applications: Application[],
     capabilities: Capability[],
+    customers: Customer[],
   ): Record<string, ConnectionUsageSummary> {
     const appById = new Map(applications.map((a) => [a.id, a.displayName]));
     const capById = new Map(capabilities.map((c) => [c.id, c.displayName]));
+    const custById = new Map(customers.map((c) => [c.id, c.name]));
     const out: Record<string, ConnectionUsageSummary> = {};
     for (const d of deployments) {
       if (!d.connectionId) continue;
       const entry =
-        out[d.connectionId] ?? (out[d.connectionId] = { applications: [], capabilities: [], totalActive: 0 });
+        out[d.connectionId] ??
+        (out[d.connectionId] = { applications: [], capabilities: [], totalActive: 0, activeCustomers: [] });
       const appName = appById.get(d.applicationId);
       const capName = capById.get(d.capabilityId);
       if (appName && !entry.applications.includes(appName)) entry.applications.push(appName);
       if (capName && !entry.capabilities.includes(capName)) entry.capabilities.push(capName);
-      if (d.status === 'Active') entry.totalActive += 1;
+      if (d.status === 'Active') {
+        entry.totalActive += 1;
+        const custName = custById.get(d.customerId) ?? d.customerId;
+        if (!entry.activeCustomers.includes(custName)) entry.activeCustomers.push(custName);
+      }
     }
     return out;
   }
@@ -113,6 +126,11 @@ export class TmsSystemsComponent implements OnInit {
   }
   totalActiveFor(systemId: string): number {
     return this.usage[systemId]?.totalActive ?? 0;
+  }
+  activeCustomerTooltip(systemId: string): string {
+    const list = this.usage[systemId]?.activeCustomers ?? [];
+    if (!list.length) return '';
+    return list.sort().join('\n');
   }
 
   createSystem() {
