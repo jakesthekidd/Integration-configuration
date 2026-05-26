@@ -186,3 +186,18 @@ textarea {
   font-size: var(--tf-text-body);
   padding: var(--tf-space-3) var(--tf-space-4);
 }
+
+/* ── Customer tooltip on Total Active badge ───────────────────────── */
+.customer-tip.p-tooltip .p-tooltip-text {
+  background: #1e293b;
+  color: #f1f5f9;
+  font-size: 12px;
+  line-height: 1.7;
+  padding: 10px 14px;
+  border-radius: 8px;
+  min-width: 180px;
+  white-space: nowrap;
+}
+.customer-tip.p-tooltip .p-tooltip-arrow {
+  border-left-color: #1e293b;
+}

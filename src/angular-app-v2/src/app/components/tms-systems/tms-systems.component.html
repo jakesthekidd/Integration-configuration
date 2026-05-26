@@ -68,9 +68,10 @@
                 class="active-count"
                 [class.active-count--zero]="totalActiveFor(system.id) === 0"
                 [class.active-count--hoverable]="totalActiveFor(system.id) > 0"
-                [pTooltip]="activeCustomerTooltip(system.id)"
+                [pTooltip]="activeCustomerTooltip(system.id) || undefined"
                 tooltipPosition="left"
                 [escape]="false"
+                tooltipStyleClass="customer-tip"
               >
                 {{ totalActiveFor(system.id) }}
               </span>
