@@ -13,492 +13,359 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { MenuModule } from 'primeng/menu';
+import { TableModule } from 'primeng/table';
+import { TagModule } from 'primeng/tag';
 import { MenuItem } from 'primeng/api';
 
 import { GeneralService } from '../services/general.service';
 import { Deployment } from '../models/deployment.model';
 import { Version, VersionState } from '../models/version.model';
 import { mockVersions } from '../mocks/mock-data';
-import { LifecycleChevronComponent } from './lifecycle-chevron.component';
 import { AutofocusDirective } from './autofocus.directive';
 
-type ChevronStage = 'Draft' | 'Published' | 'Activated';
-
 /**
- * Status tab — version stack home for one deployment.
+ * Publish & Activate tab — implements PUBLISH-ACTIVATE-PLAN.md.
  *
- * Implements DESIGN-STATUS-VERSIONING.md. Every deployment has a stack of
- * versions:
+ * Layout:
+ *   1. Conditional draft banner at top (singleton uncommitted state)
+ *   2. PrimeNG p-table of all published versions (Active / Published / Archived)
  *
- *   Drafts (newest first, expanded)
- *   ─ Published (if any, expanded)
- *   ─ Activated (one, expanded, with "+ New draft from this")
- *   ─ Archived (collapsed by default, history)
- *
- * The chevron on each container is the primary lifecycle control. Click
- * advance → confirm → commit. Secondary actions (Archive, Rollback,
- * Duplicate, Delete) live in each container's ⋯ Manage menu.
+ * Rules:
+ *   - Exactly one Active per deployment.
+ *   - Activating a Published or Archived row auto-archives the previous Active.
+ *   - Undo banner appears for 5s after auto-archive, restores both rows on click.
  */
 @Component({
   selector: 'app-test-publish-tab',
-  imports: [CommonModule, FormsModule, ButtonModule, MenuModule, LifecycleChevronComponent, AutofocusDirective],
+  imports: [
+    CommonModule,
+    FormsModule,
+    ButtonModule,
+    MenuModule,
+    TableModule,
+    TagModule,
+    AutofocusDirective,
+  ],
   template: `
-    <div class="versions">
-      <!-- ── Drafts ───────────────────────────────────────────────── -->
-      @for (v of draftVersions(); track v.id) {
-        <article class="version" data-state="Draft">
-          <header class="version__header">
-            <div class="version__id">
-              <span class="version__chip" data-state="Draft">Draft</span>
-              <strong>v{{ v.versionNumber }}</strong>
-              <span class="version__meta">
-                Created {{ v.createdAt | date: 'MMM d, y \\'·\\' h:mm a' }} · {{ v.createdBy }}
-              </span>
-            </div>
+    <!-- ── Draft banner ─────────────────────────────────────────── -->
+    @if (currentDraft(); as draft) {
+      <section class="draft-banner">
+        <div class="draft-banner__head">
+          <div>
+            <span class="draft-banner__chip">
+              <i class="pi pi-pencil"></i>
+              Unsaved draft
+            </span>
+            <span class="draft-banner__meta">
+              based on v{{ draft.basedOnVersionNumber ?? '—' }} ·
+              edited {{ draft.createdAt | date: 'MMM d, y · h:mm a' }} ·
+              {{ draft.createdBy }}
+            </span>
+          </div>
+          <div class="draft-banner__actions">
             <p-button
-              icon="pi pi-ellipsis-h"
+              label="Discard"
+              icon="pi pi-trash"
               severity="secondary"
-              [text]="true"
-              [rounded]="true"
+              [outlined]="true"
               size="small"
-              ariaLabel="Manage version"
-              (onClick)="openMenu(v.id, $event, sharedMenu)"
+              (onClick)="discardDraft()"
             />
-          </header>
-          <div class="version__body">
-            @if (editingNotesId() === v.id) {
-              <textarea
-                class="version__notes-edit"
-                rows="2"
-                appAutofocus
-                [ngModel]="notesDraft()"
-                (ngModelChange)="notesDraft.set($event)"
-                (blur)="saveNotes(v)"
-                (keydown.enter)="onNotesEnter($event, v)"
-                (keydown.escape)="cancelNotesEdit()"
-                placeholder="Describe this version — what changed, why, who reviewed it…"
-              ></textarea>
-            } @else if (v.notes) {
-              <button
-                type="button"
-                class="version__notes"
-                (click)="startNotesEdit(v)"
-                aria-label="Edit description"
-              >
-                <span>{{ v.notes }}</span>
-                <i class="pi pi-pencil version__notes-pencil" aria-hidden="true"></i>
-              </button>
-            } @else {
-              <button
-                type="button"
-                class="version__notes-add"
-                (click)="startNotesEdit(v)"
-              >
-                <i class="pi pi-plus" aria-hidden="true"></i>
-                Add description
-              </button>
-            }
-            <app-lifecycle-chevron
-              [current]="v.state"
-              (advance)="onAdvance(v, $event)"
+            <p-button
+              label="Publish"
+              icon="pi pi-cloud-upload"
+              severity="primary"
+              size="small"
+              [loading]="busy() === 'publish'"
+              (onClick)="publishDraft()"
             />
           </div>
-        </article>
-      }
+        </div>
+        <label class="draft-banner__notes">
+          <span class="draft-banner__notes-label">Notes</span>
+          <textarea
+            rows="2"
+            placeholder="What changed in this draft?"
+            [ngModel]="draft.notes ?? ''"
+            (ngModelChange)="updateDraftNotes($event)"
+          ></textarea>
+        </label>
+      </section>
+    }
 
-      <!-- ── Published (the in-between, if any) ────────────────────── -->
-      @for (v of publishedVersions(); track v.id) {
-        <article class="version" data-state="Published">
-          <header class="version__header">
-            <div class="version__id">
-              <span class="version__chip" data-state="Published">Published</span>
-              <strong>v{{ v.versionNumber }}</strong>
-              <span class="version__meta">
-                Published {{ v.publishedAt | date: 'MMM d, y' }} · {{ v.createdBy }}
-              </span>
-            </div>
-            <p-button
-              icon="pi pi-ellipsis-h"
-              severity="secondary"
-              [text]="true"
-              [rounded]="true"
-              size="small"
-              ariaLabel="Manage version"
-              (onClick)="openMenu(v.id, $event, sharedMenu)"
-            />
-          </header>
-          <div class="version__body">
-            @if (editingNotesId() === v.id) {
-              <textarea
-                class="version__notes-edit"
-                rows="2"
-                appAutofocus
-                [ngModel]="notesDraft()"
-                (ngModelChange)="notesDraft.set($event)"
-                (blur)="saveNotes(v)"
-                (keydown.enter)="onNotesEnter($event, v)"
-                (keydown.escape)="cancelNotesEdit()"
-                placeholder="Describe this version — what changed, why, who reviewed it…"
-              ></textarea>
-            } @else if (v.notes) {
-              <button
-                type="button"
-                class="version__notes"
-                (click)="startNotesEdit(v)"
-                aria-label="Edit description"
-              >
-                <span>{{ v.notes }}</span>
-                <i class="pi pi-pencil version__notes-pencil" aria-hidden="true"></i>
-              </button>
-            } @else {
-              <button
-                type="button"
-                class="version__notes-add"
-                (click)="startNotesEdit(v)"
-              >
-                <i class="pi pi-plus" aria-hidden="true"></i>
-                Add description
-              </button>
-            }
-            <app-lifecycle-chevron
-              [current]="v.state"
-              (advance)="onAdvance(v, $event)"
-            />
-          </div>
-        </article>
-      }
+    <!-- ── Undo banner (auto-archive feedback) ─────────────────── -->
+    @if (undoSnapshot(); as snap) {
+      <section class="undo-banner">
+        <i class="pi pi-info-circle"></i>
+        <span>
+          v{{ snap.archived.versionNumber }} was auto-archived to activate
+          v{{ snap.activated.versionNumber }}.
+        </span>
+        <button type="button" class="undo-banner__btn" (click)="undoActivate()">
+          Undo
+        </button>
+      </section>
+    }
 
-      <!-- ── Activated (zero or one) ───────────────────────────────── -->
-      @if (activatedVersion(); as v) {
-        <article class="version version--activated" data-state="Activated">
-          <header class="version__header">
-            <div class="version__id">
-              <span class="version__chip" data-state="Activated">Activated</span>
-              <strong>v{{ v.versionNumber }}</strong>
-              <span class="version__meta">
-                Active since {{ v.activatedAt | date: 'MMM d, y' }} · {{ v.createdBy }}
-              </span>
-            </div>
-            <p-button
-              icon="pi pi-ellipsis-h"
-              severity="secondary"
-              [text]="true"
-              [rounded]="true"
-              size="small"
-              ariaLabel="Manage version"
-              (onClick)="openMenu(v.id, $event, sharedMenu)"
-            />
-          </header>
-          <div class="version__body">
-            @if (editingNotesId() === v.id) {
-              <textarea
-                class="version__notes-edit"
-                rows="2"
-                appAutofocus
-                [ngModel]="notesDraft()"
-                (ngModelChange)="notesDraft.set($event)"
-                (blur)="saveNotes(v)"
-                (keydown.enter)="onNotesEnter($event, v)"
-                (keydown.escape)="cancelNotesEdit()"
-                placeholder="Describe this version — what changed, why, who reviewed it…"
-              ></textarea>
-            } @else if (v.notes) {
-              <button
-                type="button"
-                class="version__notes"
-                (click)="startNotesEdit(v)"
-                aria-label="Edit description"
-              >
-                <span>{{ v.notes }}</span>
-                <i class="pi pi-pencil version__notes-pencil" aria-hidden="true"></i>
-              </button>
-            } @else {
-              <button
-                type="button"
-                class="version__notes-add"
-                (click)="startNotesEdit(v)"
-              >
-                <i class="pi pi-plus" aria-hidden="true"></i>
-                Add description
-              </button>
-            }
-            <app-lifecycle-chevron [current]="v.state" [inert]="true" />
-            <div class="version__activated-actions">
-              <p-button
-                label="+ New draft from this"
-                icon="pi pi-plus"
-                severity="primary"
-                [outlined]="true"
-                size="small"
-                (onClick)="forkNewDraft(v)"
-              />
-            </div>
-          </div>
-        </article>
-      }
-
-      <!-- ── Archived (history, collapsed) ─────────────────────────── -->
-      @if (archivedVersions().length > 0) {
-        <div class="archived-header">History</div>
-      }
-      @for (v of archivedVersions(); track v.id) {
-        <article
-          class="version version--archived"
-          data-state="Archived"
-          [class.version--collapsed]="!isExpanded(v.id)"
-        >
-          <header class="version__header version__header--clickable" (click)="toggleExpanded(v.id)">
-            <div class="version__id">
-              <i
-                class="pi"
-                [class.pi-chevron-right]="!isExpanded(v.id)"
-                [class.pi-chevron-down]="isExpanded(v.id)"
-                aria-hidden="true"
-              ></i>
-              <span class="version__chip" data-state="Archived">Archived</span>
-              <strong>v{{ v.versionNumber }}</strong>
-              <span class="version__meta">
-                Archived {{ v.archivedAt | date: 'MMM d, y' }} · {{ v.createdBy }}
-              </span>
-            </div>
-            <p-button
-              icon="pi pi-ellipsis-h"
-              severity="secondary"
-              [text]="true"
-              [rounded]="true"
-              size="small"
-              ariaLabel="Manage version"
-              (onClick)="openMenu(v.id, $event, sharedMenu); $event.stopPropagation()"
-            />
-          </header>
-          @if (isExpanded(v.id)) {
-            <div class="version__body">
-              @if (v.notes) {
-                <p class="version__notes">{{ v.notes }}</p>
+    <!-- ── Versions table ──────────────────────────────────────── -->
+    <p-table
+      [value]="tableRows()"
+      [tableStyle]="{ 'min-width': '720px' }"
+      styleClass="p-datatable-sm versions-table"
+      [paginator]="false"
+      dataKey="id"
+    >
+      <ng-template pTemplate="caption">
+        <div class="versions-table__caption">
+          <h4>Versions</h4>
+          <span class="muted">
+            {{ tableRows().length }} {{ tableRows().length === 1 ? 'version' : 'versions' }}
+          </span>
+        </div>
+      </ng-template>
+      <ng-template pTemplate="header">
+        <tr>
+          <th style="width: 70px">Version</th>
+          <th style="width: 140px">Status</th>
+          <th style="width: 140px">Published</th>
+          <th style="width: 180px">Activated</th>
+          <th>Notes</th>
+          <th style="width: 56px"></th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-v>
+        <tr [class.row--active]="v.state === 'Activated'">
+          <td><strong>v{{ v.versionNumber }}</strong></td>
+          <td>
+            @switch (v.state) {
+              @case ('Activated') {
+                <p-tag value="Active" severity="success" icon="pi pi-check-circle" />
               }
-              <app-lifecycle-chevron [current]="v.state" [inert]="true" />
-              <div class="version__lineage">
-                Published {{ v.publishedAt | date: 'MMM d, y' }}
-                @if (v.activatedAt) {
-                  · Was Active {{ v.activatedAt | date: 'MMM d' }} – {{ v.archivedAt | date: 'MMM d, y' }}
-                }
-              </div>
-            </div>
-          }
-        </article>
-      }
+              @case ('Published') {
+                <p-tag value="Published" severity="info" />
+              }
+              @case ('Archived') {
+                <p-tag value="Archived" severity="secondary" />
+              }
+            }
+          </td>
+          <td>
+            @if (v.publishedAt) {
+              {{ v.publishedAt | date: 'MMM d, y' }}
+            } @else {
+              <span class="muted">—</span>
+            }
+          </td>
+          <td>
+            @if (v.state === 'Activated' && v.activatedAt) {
+              {{ v.activatedAt | date: 'MMM d, y' }}
+            } @else if (v.state === 'Archived' && v.activatedAt && v.archivedAt) {
+              {{ v.activatedAt | date: 'MMM d' }} – {{ v.archivedAt | date: 'MMM d, y' }}
+            } @else {
+              <span class="muted">—</span>
+            }
+          </td>
+          <td class="notes-cell">
+            @if (editingNotesId() === v.id) {
+              <textarea
+                appAutofocus
+                rows="2"
+                [ngModel]="notesDraft()"
+                (ngModelChange)="notesDraft.set($event)"
+                (blur)="saveNotes(v)"
+                (keydown.enter)="saveNotes(v); $event.preventDefault()"
+                (keydown.escape)="cancelNotesEdit()"
+              ></textarea>
+            } @else {
+              <button
+                type="button"
+                class="notes-display"
+                (click)="startNotesEdit(v)"
+                [title]="v.notes || 'Click to add notes'"
+              >
+                {{ v.notes || 'Add notes…' }}
+              </button>
+            }
+          </td>
+          <td>
+            <p-button
+              icon="pi pi-ellipsis-h"
+              severity="secondary"
+              [text]="true"
+              [rounded]="true"
+              size="small"
+              (onClick)="openMenu(v.id, $event, rowMenu)"
+              aria-label="Row actions"
+            />
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="6" class="empty">
+            <i class="pi pi-inbox"></i>
+            No published versions yet. Publish the current draft to seed this list.
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
 
-      <!-- Single shared p-menu — model is rebuilt per-version on toggle -->
-      <p-menu #sharedMenu [model]="currentMenuItems()" [popup]="true" appendTo="body" />
-    </div>
+    <!-- Shared row menu (model rebuilt per click) -->
+    <p-menu #rowMenu [popup]="true" [model]="currentMenuItems()" appendTo="body" />
   `,
   styles: [
     `
       :host {
         display: flex;
         flex-direction: column;
-        gap: var(--tf-space-4);
+        gap: var(--tf-space-5);
       }
 
-      .versions {
-        display: flex;
-        flex-direction: column;
-        gap: var(--tf-space-3);
-      }
+      .muted { color: var(--tf-text-muted); }
 
-      /* ── Version container ──────────────────────────────────────── */
-      .version {
-        background: white;
-        border: 1px solid var(--tf-slate-300);
+      /* ── Draft banner ────────────────────────────────────────── */
+      .draft-banner {
+        background: #fff8e1;
+        border: 1px solid #f1c40f;
         border-radius: var(--tf-radius-md);
         padding: var(--tf-space-4) var(--tf-space-5);
         display: flex;
         flex-direction: column;
         gap: var(--tf-space-3);
       }
-      /* Containers use white background — the chevron bar is the visual
-         hero. Borders pick up a faint state tint so containers still
-         feel grouped at a glance without competing with the chevron. */
-      .version[data-state='Draft'] {
-        border-color: #f5cf94;
-      }
-      .version[data-state='Published'] {
-        border-color: #a3d9b1;
-      }
-      .version[data-state='Activated'] {
-        border-color: #1b6b3a;
-        border-width: 1px;
-        box-shadow: 0 1px 3px rgba(27, 107, 58, 0.08);
-      }
-      .version[data-state='Archived'] {
-        border-color: var(--tf-slate-300);
-      }
-      .version--collapsed {
-        padding: var(--tf-space-3) var(--tf-space-5);
-      }
-      .version--collapsed .version__body {
-        display: none;
-      }
-
-      .version__header {
+      .draft-banner__head {
         display: flex;
         align-items: center;
         justify-content: space-between;
         gap: var(--tf-space-3);
+        flex-wrap: wrap;
       }
-      .version__header--clickable {
-        cursor: pointer;
-      }
-      .version__id {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        font-size: var(--tf-text-body);
-        color: var(--tf-text-strong);
-      }
-      .version__id strong {
-        font-weight: 700;
-      }
-      .version__meta {
-        color: var(--tf-text-muted);
-        font-size: var(--tf-text-meta);
-        font-weight: 400;
-      }
-
-      .version__chip {
-        display: inline-flex;
-        align-items: center;
-        padding: 2px 10px;
-        border-radius: var(--tf-radius-pill);
-        font-size: 11px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.4px;
-      }
-      .version__chip[data-state='Draft'] {
-        background: #fff6e5;
-        color: #92510a;
-      }
-      .version__chip[data-state='Published'] {
-        background: #e6f0fb;
-        color: #1d4e89;
-      }
-      .version__chip[data-state='Activated'] {
-        background: #e5f9ea;
-        color: #1b6b3a;
-      }
-      .version__chip[data-state='Archived'] {
-        background: var(--tf-slate-200);
-        color: var(--tf-text-muted);
-      }
-
-      .version__body {
-        display: flex;
-        flex-direction: column;
-        gap: var(--tf-space-3);
-        padding-left: 2px;
-      }
-      /* Click-to-edit notes — rendered as a button so it's keyboard reachable. */
-      .version__notes {
-        margin: 0;
-        padding: 6px 8px;
-        background: transparent;
-        border: 1px dashed transparent;
-        border-radius: var(--tf-radius-sm);
-        color: var(--tf-text-muted);
-        font-size: var(--tf-text-body);
-        font-style: italic;
-        font-family: inherit;
-        text-align: left;
-        max-width: 70ch;
-        cursor: text;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        transition: background 0.12s ease, border-color 0.12s ease;
-      }
-      .version__notes:hover,
-      .version__notes:focus-visible {
-        background: var(--tf-slate-50, #f8fafc);
-        border-color: var(--tf-slate-300, #cbd5e1);
-        outline: 0;
-      }
-      .version__notes-pencil {
-        font-size: 11px;
-        opacity: 0;
-        transition: opacity 0.12s ease;
-      }
-      .version__notes:hover .version__notes-pencil,
-      .version__notes:focus-visible .version__notes-pencil {
-        opacity: 0.6;
-      }
-
-      .version__notes-add {
+      .draft-banner__chip {
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        background: transparent;
-        border: 1px dashed var(--tf-slate-300, #cbd5e1);
-        border-radius: var(--tf-radius-sm);
-        color: var(--tf-text-muted);
-        font-size: var(--tf-text-meta);
-        font-weight: 500;
-        font-family: inherit;
-        padding: 6px 10px;
-        cursor: pointer;
-        align-self: flex-start;
-      }
-      .version__notes-add:hover,
-      .version__notes-add:focus-visible {
-        background: var(--tf-slate-50, #f8fafc);
-        color: var(--tf-text-strong);
-        border-color: var(--tf-slate-400, #94a3b8);
-        outline: 0;
-      }
-      .version__notes-add i {
-        font-size: 10px;
-      }
-
-      .version__notes-edit {
-        width: 100%;
-        max-width: 70ch;
-        padding: 8px 10px;
-        border: 1px solid var(--tf-blue-400, #5b9bd5);
-        border-radius: var(--tf-radius-sm);
-        background: white;
-        color: var(--tf-text-strong);
-        font-family: inherit;
-        font-size: var(--tf-text-body);
-        font-style: italic;
-        line-height: 1.5;
-        resize: vertical;
-        min-height: 50px;
-      }
-      .version__notes-edit:focus-visible {
-        outline: 2px solid #1d6fc0;
-        outline-offset: -1px;
-        border-color: #1d6fc0;
-      }
-      .version__activated-actions {
-        margin-top: 4px;
-      }
-      .version__lineage {
-        color: var(--tf-text-muted);
-        font-size: var(--tf-text-meta);
-        font-style: italic;
-      }
-
-      .archived-header {
-        margin-top: var(--tf-space-3);
+        background: #92510a;
+        color: #fff;
         font-size: var(--tf-text-meta);
         font-weight: 700;
+        padding: 4px 10px;
+        border-radius: var(--tf-radius-pill);
         text-transform: uppercase;
-        letter-spacing: 0.5px;
-        color: var(--tf-text-muted);
-        padding: 0 var(--tf-space-2);
+        letter-spacing: .03em;
+      }
+      .draft-banner__meta {
+        font-size: var(--tf-text-meta);
+        color: #92510a;
+        margin-left: var(--tf-space-2);
+      }
+      .draft-banner__actions {
+        display: flex;
+        gap: var(--tf-space-2);
+      }
+      .draft-banner__notes {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .draft-banner__notes-label {
+        font-size: var(--tf-text-meta);
+        font-weight: 600;
+        color: #92510a;
+      }
+      .draft-banner__notes textarea {
+        width: 100%;
+        font-family: inherit;
+        font-size: var(--tf-text-body);
+        padding: var(--tf-space-2) var(--tf-space-3);
+        border: 1px solid #e5b800;
+        border-radius: var(--tf-radius-sm);
+        resize: vertical;
+        background: #fff;
       }
 
-      /* PrimeNG menu danger item styling */
+      /* ── Undo banner ─────────────────────────────────────────── */
+      .undo-banner {
+        display: flex;
+        align-items: center;
+        gap: var(--tf-space-2);
+        background: #eef2ff;
+        border: 1px solid #c7d2fe;
+        color: #3730a3;
+        padding: var(--tf-space-2) var(--tf-space-4);
+        border-radius: var(--tf-radius-md);
+        font-size: var(--tf-text-body);
+      }
+      .undo-banner__btn {
+        margin-left: auto;
+        background: none;
+        border: 1px solid #3730a3;
+        color: #3730a3;
+        font-weight: 600;
+        padding: 4px 12px;
+        border-radius: var(--tf-radius-pill);
+        cursor: pointer;
+        font-size: var(--tf-text-meta);
+      }
+      .undo-banner__btn:hover {
+        background: #3730a3;
+        color: #fff;
+      }
+
+      /* ── Versions table ──────────────────────────────────────── */
+      .versions-table__caption {
+        display: flex;
+        align-items: baseline;
+        gap: var(--tf-space-3);
+        padding: var(--tf-space-2) 0;
+      }
+      .versions-table__caption h4 {
+        margin: 0;
+        font-size: var(--tf-text-heading);
+      }
+
+      :host ::ng-deep tr.row--active td {
+        background: #eafaf0;
+      }
+
+      .notes-cell {
+        max-width: 360px;
+      }
+      .notes-display {
+        background: none;
+        border: 1px dashed transparent;
+        text-align: left;
+        cursor: text;
+        color: var(--tf-text-strong);
+        font-size: var(--tf-text-body);
+        padding: 4px 6px;
+        border-radius: var(--tf-radius-sm);
+        width: 100%;
+        white-space: normal;
+      }
+      .notes-display:hover {
+        border-color: var(--tf-slate-400);
+        background: var(--tf-slate-100);
+      }
+      .notes-cell textarea {
+        width: 100%;
+        font-family: inherit;
+        font-size: var(--tf-text-body);
+        padding: 4px 6px;
+        border: 1px solid var(--tf-primary, #1a56db);
+        border-radius: var(--tf-radius-sm);
+        resize: vertical;
+      }
+
+      .empty {
+        text-align: center;
+        color: var(--tf-text-muted);
+        padding: var(--tf-space-5);
+        font-size: var(--tf-text-body);
+      }
+      .empty i {
+        margin-right: 6px;
+      }
+
       :host ::ng-deep .p-menu .menu-item--danger .p-menuitem-link {
         color: #83131a;
       }
@@ -510,56 +377,46 @@ type ChevronStage = 'Draft' | 'Published' | 'Activated';
 })
 export class TestPublishTabComponent implements OnChanges {
   @Input({ required: true }) deployment!: Deployment;
-  /** Customer display name — used to make confirm copy specific
-   *  ("apply the new mapping to {customerName}'s integration"). */
   @Input() customerName = 'this customer';
   @Output() statusChanged = new EventEmitter<void>();
 
   private gen = inject(GeneralService);
 
-  /** Local version stack — seeded from mockVersions per deployment, then
-   *  mutated locally as the user works. Lives in component state so the
-   *  parent's rail-refresh logic doesn't reset the demo. */
   versions = signal<Version[]>([]);
+  busy = signal<string | null>(null);
 
-  /** Which archived versions are expanded by the user. */
-  private expandedSet = signal<Set<string>>(new Set());
-
-  /** Per-version action busy state. */
-  busyAction = signal<{ versionId: string; action: string } | null>(null);
-
-  /** Inline notes editor state — which version is currently being edited
-   *  and the in-progress draft text. Editable on every version per Q-set. */
+  /** Inline notes editor state (for table rows). */
   editingNotesId = signal<string | null>(null);
   notesDraft = signal<string>('');
 
-  /** Author display name for newly forked drafts. */
+  /** Active undo snapshot for the most recent auto-archive (5s window). */
+  undoSnapshot = signal<{ archived: Version; activated: Version } | null>(null);
+  private undoTimer: ReturnType<typeof setTimeout> | null = null;
+
   private currentAuthor = 'Jake Cummings';
 
-  // ── Bucketed views (sorted within each group) ────────────────────
-  draftVersions = computed<Version[]>(() =>
-    this.versions()
-      .filter((v) => v.state === 'Draft')
-      .sort((a, b) => b.versionNumber - a.versionNumber),
+  // ── Computed views ────────────────────────────────────────────
+  currentDraft = computed<Version | null>(
+    () => this.versions().find((v) => v.state === 'Draft') ?? null,
   );
 
-  publishedVersions = computed<Version[]>(() =>
-    this.versions()
-      .filter((v) => v.state === 'Published')
-      .sort((a, b) => b.versionNumber - a.versionNumber),
-  );
+  /** Rows shown in the p-table: everything except the singleton draft. */
+  tableRows = computed<Version[]>(() => {
+    const order: Record<VersionState, number> = {
+      Activated: 0,
+      Published: 1,
+      Archived: 2,
+      Draft: 99,
+    };
+    return this.versions()
+      .filter((v) => v.state !== 'Draft')
+      .sort((a, b) => {
+        if (order[a.state] !== order[b.state]) return order[a.state] - order[b.state];
+        return b.versionNumber - a.versionNumber;
+      });
+  });
 
-  activatedVersion = computed<Version | null>(
-    () => this.versions().find((v) => v.state === 'Activated') ?? null,
-  );
-
-  archivedVersions = computed<Version[]>(() =>
-    this.versions()
-      .filter((v) => v.state === 'Archived')
-      .sort((a, b) => b.versionNumber - a.versionNumber),
-  );
-
-  // ── Manage menu (one shared p-menu, model rebuilt per click) ─────
+  // ── Manage menu (one shared p-menu, model rebuilt per click) ──
   private menuVersionId = signal<string | null>(null);
   currentMenuItems = computed<MenuItem[]>(() => {
     const id = this.menuVersionId();
@@ -571,53 +428,212 @@ export class TestPublishTabComponent implements OnChanges {
 
   private buildMenuItems(v: Version): MenuItem[] {
     const items: MenuItem[] = [];
-    if (v.state === 'Activated') {
+
+    items.push({
+      label: 'View field mappings',
+      icon: 'pi pi-eye',
+      command: () => this.viewFieldMappings(v),
+    });
+
+    if (v.state === 'Published') {
       items.push({
-        label: 'Archive this version',
-        icon: 'pi pi-pause',
-        styleClass: 'menu-item--danger',
+        label: 'Activate',
+        icon: 'pi pi-check-circle',
+        command: () => this.activate(v),
+      });
+      items.push({
+        label: 'Archive',
+        icon: 'pi pi-box',
         command: () => this.archive(v),
       });
     }
+
     if (v.state === 'Archived') {
       items.push({
-        label: 'Rollback (reactivate)',
+        label: 'Reactivate',
         icon: 'pi pi-undo',
-        command: () => this.rollback(v),
+        command: () => this.activate(v),
       });
     }
-    items.push({
-      label: 'Duplicate as new draft',
-      icon: 'pi pi-copy',
-      command: () => this.duplicate(v),
-    });
-    if (v.state === 'Draft') {
+
+    if (v.state !== 'Activated') {
+      items.push({
+        label: 'Edit as new draft',
+        icon: 'pi pi-pencil',
+        command: () => this.editAsDraft(v),
+      });
+    }
+
+    if (v.state === 'Archived') {
       items.push({ separator: true });
       items.push({
-        label: 'Delete draft',
+        label: 'Delete permanently',
         icon: 'pi pi-trash',
         styleClass: 'menu-item--danger',
-        command: () => this.deleteDraft(v),
+        command: () => this.deleteArchived(v),
       });
     }
+
     return items;
   }
 
+  openMenu(versionId: string, event: MouseEvent | Event, menu: { toggle: (e: Event) => void }) {
+    this.menuVersionId.set(versionId);
+    menu.toggle(event);
+  }
+
+  // ── Lifecycle ────────────────────────────────────────────────
   ngOnChanges(changes: SimpleChanges) {
     if (changes['deployment']) {
       const id = this.deployment?.id;
-      // Deep-clone the seed so per-deployment mutations don't bleed back.
       const seed = id ? mockVersions[id] ?? [] : [];
       this.versions.set(seed.map((v) => ({ ...v })));
-      this.expandedSet.set(new Set());
-      this.busyAction.set(null);
+      this.busy.set(null);
       this.menuVersionId.set(null);
       this.editingNotesId.set(null);
       this.notesDraft.set('');
+      this.clearUndo();
     }
   }
 
-  // ── Notes inline editor ──────────────────────────────────────────
+  // ── Draft actions ────────────────────────────────────────────
+  updateDraftNotes(value: string) {
+    this.versions.update((list) =>
+      list.map((v) => (v.state === 'Draft' ? { ...v, notes: value } : v)),
+    );
+  }
+
+  publishDraft() {
+    const draft = this.currentDraft();
+    if (!draft) return;
+    this.busy.set('publish');
+    setTimeout(() => {
+      const now = new Date().toISOString();
+      this.versions.update((list) =>
+        list.map((v) =>
+          v.id === draft.id
+            ? { ...v, state: 'Published' as VersionState, publishedAt: now }
+            : v,
+        ),
+      );
+      this.busy.set(null);
+      this.gen.success(`v${draft.versionNumber} published.`);
+      this.statusChanged.emit();
+    }, 400);
+  }
+
+  discardDraft() {
+    const draft = this.currentDraft();
+    if (!draft) return;
+    this.versions.update((list) => list.filter((v) => v.id !== draft.id));
+    this.gen.success(`Draft v${draft.versionNumber} discarded.`);
+  }
+
+  // ── Row actions ──────────────────────────────────────────────
+  activate(v: Version) {
+    if (v.state === 'Activated') return;
+    const now = new Date().toISOString();
+    const prevActive = this.versions().find((x) => x.state === 'Activated') ?? null;
+
+    this.versions.update((list) =>
+      list.map((x) => {
+        if (x.id === v.id) {
+          return { ...x, state: 'Activated' as VersionState, activatedAt: now, archivedAt: undefined };
+        }
+        if (prevActive && x.id === prevActive.id) {
+          return { ...x, state: 'Archived' as VersionState, archivedAt: now };
+        }
+        return x;
+      }),
+    );
+
+    if (prevActive) {
+      this.armUndo(prevActive, v);
+      this.gen.success(`v${v.versionNumber} activated · v${prevActive.versionNumber} auto-archived.`);
+    } else {
+      this.gen.success(`v${v.versionNumber} activated.`);
+    }
+    this.statusChanged.emit();
+  }
+
+  archive(v: Version) {
+    if (v.state === 'Activated') {
+      this.gen.success('Activate another version first to archive the current Active.');
+      return;
+    }
+    const now = new Date().toISOString();
+    this.versions.update((list) =>
+      list.map((x) =>
+        x.id === v.id ? { ...x, state: 'Archived' as VersionState, archivedAt: now } : x,
+      ),
+    );
+    this.gen.success(`v${v.versionNumber} archived.`);
+  }
+
+  editAsDraft(v: Version) {
+    // Forking from a non-Draft version: spawn a new singleton draft based on this one.
+    if (this.currentDraft()) {
+      this.gen.success('A draft already exists. Publish or discard it before forking a new one.');
+      return;
+    }
+    const nextNumber = Math.max(0, ...this.versions().map((x) => x.versionNumber)) + 1;
+    const newDraft: Version = {
+      id: `v-${Date.now()}`,
+      deploymentId: this.deployment.id,
+      versionNumber: nextNumber,
+      state: 'Draft',
+      createdAt: new Date().toISOString(),
+      createdBy: this.currentAuthor,
+      notes: v.notes ? `Forked from v${v.versionNumber}: ${v.notes}` : `Forked from v${v.versionNumber}`,
+      basedOnVersionNumber: v.versionNumber,
+    };
+    this.versions.update((list) => [newDraft, ...list]);
+  }
+
+  deleteArchived(v: Version) {
+    this.versions.update((list) => list.filter((x) => x.id !== v.id));
+    this.gen.success(`v${v.versionNumber} deleted.`);
+  }
+
+  viewFieldMappings(v: Version) {
+    // Wired in step 5 of PUBLISH-ACTIVATE-PLAN.md — for now just toast.
+    this.gen.success(`Viewing field mappings for v${v.versionNumber} (read-only view coming soon).`);
+  }
+
+  // ── Undo plumbing ────────────────────────────────────────────
+  private armUndo(archived: Version, activated: Version) {
+    this.clearUndo();
+    this.undoSnapshot.set({ archived, activated });
+    this.undoTimer = setTimeout(() => this.clearUndo(), 5000);
+  }
+
+  undoActivate() {
+    const snap = this.undoSnapshot();
+    if (!snap) return;
+    this.versions.update((list) =>
+      list.map((x) => {
+        if (x.id === snap.archived.id) {
+          return { ...snap.archived };
+        }
+        if (x.id === snap.activated.id) {
+          return { ...snap.activated };
+        }
+        return x;
+      }),
+    );
+    this.clearUndo();
+    this.gen.success(`Reverted: v${snap.archived.versionNumber} is Active again.`);
+  }
+
+  private clearUndo() {
+    if (this.undoTimer) {
+      clearTimeout(this.undoTimer);
+      this.undoTimer = null;
+    }
+    this.undoSnapshot.set(null);
+  }
+
+  // ── Notes inline editor (row-level) ──────────────────────────
   startNotesEdit(v: Version) {
     this.editingNotesId.set(v.id);
     this.notesDraft.set(v.notes ?? '');
@@ -637,238 +653,4 @@ export class TestPublishTabComponent implements OnChanges {
     this.editingNotesId.set(null);
     this.notesDraft.set('');
   }
-
-  /** Enter saves; Shift+Enter inserts a newline (default browser behavior). */
-  onNotesEnter(event: Event, v: Version) {
-    const kb = event as KeyboardEvent;
-    if (kb.shiftKey) return;
-    event.preventDefault();
-    this.saveNotes(v);
-  }
-
-  // ── Helpers used in the template ─────────────────────────────────
-  isExpanded(versionId: string): boolean {
-    return this.expandedSet().has(versionId);
-  }
-
-  toggleExpanded(versionId: string) {
-    this.expandedSet.update((s) => {
-      const next = new Set(s);
-      if (next.has(versionId)) next.delete(versionId);
-      else next.add(versionId);
-      return next;
-    });
-  }
-
-  /** Bound to the per-row "⋯" button — sets which version's menu items
-   *  to render, then toggles the shared p-menu. The menu reference is
-   *  passed in directly from the template via #sharedMenu. */
-  openMenu(versionId: string, event: Event, menu: { toggle: (e: Event) => void }) {
-    this.menuVersionId.set(versionId);
-    menu.toggle(event);
-  }
-
-  // ── Lifecycle transitions ────────────────────────────────────────
-  /** Chevron advance click. */
-  onAdvance(v: Version, target: ChevronStage) {
-    if (target === 'Published') {
-      this.publishDraft(v);
-    } else if (target === 'Activated') {
-      this.activatePublished(v);
-    }
-  }
-
-  /** Draft → Published. */
-  private publishDraft(v: Version) {
-    if (this.busyAction()) return;
-    this.gen
-      .confirm({
-        title: `Publish v${v.versionNumber}?`,
-        text:
-          'This locks the current Connection + Mapping into a versioned snapshot. The version is not ' +
-          'live yet — activate it next when you are ready.',
-        confirmText: 'Yes, publish',
-        confirmColor: '#1d6fc0',
-        icon: 'info',
-      })
-      .then((result) => {
-        if (!result.isConfirmed) return;
-        this.busyAction.set({ versionId: v.id, action: 'publish' });
-        setTimeout(() => {
-          this.versions.update((list) =>
-            list.map((x) =>
-              x.id === v.id
-                ? { ...x, state: 'Published' as VersionState, publishedAt: new Date().toISOString() }
-                : x,
-            ),
-          );
-          this.busyAction.set(null);
-          this.gen.success(`v${v.versionNumber} published.`);
-          this.statusChanged.emit();
-        }, 500);
-      });
-  }
-
-  /** Published → Activated. Auto-archives any prior Activated. */
-  private activatePublished(v: Version) {
-    if (this.busyAction()) return;
-    const currentActive = this.activatedVersion();
-    const archiveCopy = currentActive
-      ? `Activating v${v.versionNumber} will archive v${currentActive.versionNumber} and apply the new mapping to ${this.customerName}'s integration. Continue?`
-      : `Activating v${v.versionNumber} will apply the new mapping to ${this.customerName}'s integration. Continue?`;
-
-    this.gen
-      .confirm({
-        title: `Activate v${v.versionNumber}?`,
-        text: archiveCopy,
-        confirmText: 'Yes, activate',
-        confirmColor: '#28a745',
-        icon: 'warning',
-      })
-      .then((result) => {
-        if (!result.isConfirmed) return;
-        this.busyAction.set({ versionId: v.id, action: 'activate' });
-        setTimeout(() => {
-          const now = new Date().toISOString();
-          this.versions.update((list) =>
-            list.map((x) => {
-              if (x.id === v.id) {
-                return { ...x, state: 'Activated' as VersionState, activatedAt: now };
-              }
-              if (x.state === 'Activated') {
-                return { ...x, state: 'Archived' as VersionState, archivedAt: now };
-              }
-              return x;
-            }),
-          );
-          this.busyAction.set(null);
-          this.gen.success(`v${v.versionNumber} is live.`);
-          this.statusChanged.emit();
-        }, 600);
-      });
-  }
-
-  /** Activated → Archived (manual archive via Manage menu). */
-  archive(v: Version) {
-    if (this.busyAction()) return;
-    this.gen
-      .confirm({
-        title: `Archive v${v.versionNumber}?`,
-        text: `This deployment goes offline until another version is activated. ${this.customerName}'s integration stops processing traffic immediately.`,
-        confirmText: 'Yes, archive',
-        confirmColor: '#83131a',
-        icon: 'warning',
-      })
-      .then((result) => {
-        if (!result.isConfirmed) return;
-        this.busyAction.set({ versionId: v.id, action: 'archive' });
-        setTimeout(() => {
-          const now = new Date().toISOString();
-          this.versions.update((list) =>
-            list.map((x) => (x.id === v.id ? { ...x, state: 'Archived' as VersionState, archivedAt: now } : x)),
-          );
-          this.busyAction.set(null);
-          this.gen.success(`v${v.versionNumber} archived.`);
-          this.statusChanged.emit();
-        }, 500);
-      });
-  }
-
-  /** Archived → Activated. Auto-archives the currently-Activated version. */
-  rollback(v: Version) {
-    if (this.busyAction()) return;
-    const currentActive = this.activatedVersion();
-    const text = currentActive
-      ? `Reactivating v${v.versionNumber} will archive v${currentActive.versionNumber} and apply v${v.versionNumber}'s mapping to ${this.customerName}'s integration immediately. Continue?`
-      : `Reactivating v${v.versionNumber} will apply its mapping to ${this.customerName}'s integration immediately. Continue?`;
-
-    this.gen
-      .confirm({
-        title: `Rollback to v${v.versionNumber}?`,
-        text,
-        confirmText: 'Yes, rollback',
-        confirmColor: '#1d6fc0',
-        icon: 'warning',
-      })
-      .then((result) => {
-        if (!result.isConfirmed) return;
-        this.busyAction.set({ versionId: v.id, action: 'rollback' });
-        setTimeout(() => {
-          const now = new Date().toISOString();
-          this.versions.update((list) =>
-            list.map((x) => {
-              if (x.id === v.id) {
-                return { ...x, state: 'Activated' as VersionState, activatedAt: now, archivedAt: undefined };
-              }
-              if (x.state === 'Activated') {
-                return { ...x, state: 'Archived' as VersionState, archivedAt: now };
-              }
-              return x;
-            }),
-          );
-          this.busyAction.set(null);
-          this.gen.success(`Rolled back to v${v.versionNumber}.`);
-          this.statusChanged.emit();
-        }, 600);
-      });
-  }
-
-  /** Create a new Draft seeded with this version's notes/config. */
-  duplicate(v: Version) {
-    if (this.busyAction()) return;
-    const next = this.nextVersionNumber();
-    const draft: Version = {
-      id: `${v.deploymentId}-ver-${next}-${Date.now()}`,
-      deploymentId: v.deploymentId,
-      versionNumber: next,
-      state: 'Draft',
-      createdAt: new Date().toISOString(),
-      createdBy: this.currentAuthor,
-      notes: v.notes ? `Duplicated from v${v.versionNumber} — ${v.notes}` : `Duplicated from v${v.versionNumber}`,
-    };
-    this.versions.update((list) => [draft, ...list]);
-    this.gen.success(`v${next} created from v${v.versionNumber}.`);
-  }
-
-  /** Activated container "+ New draft from this" button. */
-  forkNewDraft(v: Version) {
-    if (this.busyAction()) return;
-    const next = this.nextVersionNumber();
-    const draft: Version = {
-      id: `${v.deploymentId}-ver-${next}-${Date.now()}`,
-      deploymentId: v.deploymentId,
-      versionNumber: next,
-      state: 'Draft',
-      createdAt: new Date().toISOString(),
-      createdBy: this.currentAuthor,
-      notes: `Forked from v${v.versionNumber} for new changes`,
-    };
-    this.versions.update((list) => [draft, ...list]);
-    this.gen.success(`v${next} draft created. Edit Connection or Mapping, then publish.`);
-  }
-
-  /** Permanently remove an unpublished draft. */
-  deleteDraft(v: Version) {
-    if (this.busyAction()) return;
-    if (v.state !== 'Draft') return;
-    this.gen
-      .confirm({
-        title: `Delete v${v.versionNumber} draft?`,
-        text: 'The draft and any pending edits will be permanently removed. This cannot be undone.',
-        confirmText: 'Yes, delete',
-        confirmColor: '#83131a',
-        icon: 'warning',
-      })
-      .then((result) => {
-        if (!result.isConfirmed) return;
-        this.versions.update((list) => list.filter((x) => x.id !== v.id));
-        this.gen.success(`v${v.versionNumber} deleted.`);
-      });
-  }
-
-  private nextVersionNumber(): number {
-    const max = this.versions().reduce((acc, v) => Math.max(acc, v.versionNumber), 0);
-    return max + 1;
-  }
-
 }

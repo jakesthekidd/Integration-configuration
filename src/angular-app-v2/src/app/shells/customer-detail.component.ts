@@ -208,7 +208,7 @@ interface AppGroup {
                 [class.tab--active]="activeTab() === 'publish-activate'"
                 (click)="selectTab('publish-activate')"
               >
-                Status
+                Publish &amp; Activate
               </button>
               <button
                 class="tab"

@@ -26,4 +26,6 @@ export interface Version {
   archivedAt?: string;
   /** Optional one-line change summary the author wrote when forking the draft. */
   notes?: string;
+  /** For Drafts: the version number this draft was forked from (Active or Archived). */
+  basedOnVersionNumber?: number;
 }
