@@ -16,6 +16,18 @@ export interface Customer {
   syncBatchSize?: number | null;
   updateOrInsertStatusesList?: string[];
   updateOnlyStatusesList?: string[];
+  /** Developer-curated allowlist code. Used in the Integration Library Customers tab. */
+  expressCustomerCode?: string;
+  /**
+   * When true, this customer is exposed in the Customer Setup app.
+   * Toggled from the Integration Library Customers tab.
+   * New customers default to false (opt-in).
+   */
+  integrationEnabled?: boolean;
+  /** ISO timestamp of the last `integrationEnabled` flip. */
+  integrationStatusChangedAt?: string;
+  /** Applications this customer is wired to (for the Customers-access table pills). */
+  applications?: string[];
 }
 
 export interface Credential {

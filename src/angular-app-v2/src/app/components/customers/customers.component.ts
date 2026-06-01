@@ -10,6 +10,7 @@ import { MenuItem } from 'primeng/api';
 import { ApiService } from '../../services/api.service';
 import { Customer } from '../../models/customer.model';
 import { GeneralService } from '../../services/general.service';
+import { CustomerAccessService } from '../../services/customer-access.service';
 import { TmsName, TmsCredentialKeys, URL_PATTERN, DmsSpecialKeys } from '../../constants/tms.constants';
 import { FieldMappingTemplate } from '../../models/template.model';
 import { ApiClient } from '../../models/api-client.model';
@@ -70,6 +71,8 @@ export class CustomersComponent implements OnInit {
 
   formData: Customer = this.emptyForm();
 
+  private customerAccess = inject(CustomerAccessService);
+
   constructor(
     private apiService: ApiService,
     private generalService: GeneralService,
@@ -94,7 +97,12 @@ export class CustomersComponent implements OnInit {
     this.apiService.getCustomers(this.filterActive ?? undefined).subscribe({
       next: (response) => {
         if (response.success && response.data) {
-          this.customers = response.data.customers;
+          // Filter through CustomerAccessService — only show customers the developer
+          // has Enabled in the Integration Library "Customers" tab.
+          const enabledIds = new Set(
+            this.customerAccess.enabledCustomers().map((c) => c.customerId),
+          );
+          this.customers = response.data.customers.filter((c) => enabledIds.has(c.customerId));
         } else {
           this.customers = [];
         }

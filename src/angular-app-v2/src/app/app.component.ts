@@ -48,6 +48,7 @@ const APPS: IntegrationApp[] = [
 const LIBRARY_TABS: StageTab[] = [
   { id: 'applications', label: 'Applications & Capabilities' },
   { id: 'connections', label: 'Connections' },
+  { id: 'customers', label: 'Customers' },
   { id: 'templates', label: 'Mapping Templates' },
   { id: 'lookups', label: 'Lookup Tables' },
   { id: 'logs', label: 'Logs' },
