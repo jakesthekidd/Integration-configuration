@@ -5,6 +5,7 @@ import { TagModule } from 'primeng/tag';
 import { forkJoin } from 'rxjs';
 
 import { ApiService } from '../services/api.service';
+import { DraftService } from '../services/draft.service';
 import { Customer } from '../models/customer.model';
 import { Application } from '../models/application.model';
 import { Capability } from '../models/capability.model';
@@ -209,6 +210,9 @@ interface AppGroup {
                 (click)="selectTab('publish-activate')"
               >
                 Publish &amp; Activate
+                @if (hasDraftForSelected()) {
+                  <span class="tab__dot" title="Unsaved draft exists"></span>
+                }
               </button>
               <button
                 class="tab"
@@ -220,6 +224,22 @@ interface AppGroup {
               </button>
             </div>
             <div class="tab-body">
+              @if (hasDraftForSelected() && activeTab() !== 'publish-activate') {
+                <div class="draft-cross-tab-banner">
+                  <i class="pi pi-exclamation-triangle"></i>
+                  <span>
+                    This capability has an unsaved draft. Publish it to make the
+                    changes available for activation.
+                  </span>
+                  <button
+                    type="button"
+                    class="draft-cross-tab-banner__link"
+                    (click)="selectTab('publish-activate')"
+                  >
+                    Review draft
+                  </button>
+                </div>
+              }
               @if (selectedDeployment(); as dep) {
                 @switch (activeTab()) {
                   @case ('connection') {
@@ -537,6 +557,43 @@ interface AppGroup {
         color: var(--tf-blue-500);
         border-bottom-color: var(--tf-blue-500);
       }
+      .tab__dot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        margin-left: 6px;
+        border-radius: 50%;
+        background: #f1c40f;
+        box-shadow: 0 0 0 2px rgba(241, 196, 15, 0.25);
+      }
+
+      .draft-cross-tab-banner {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: #fff8e1;
+        border: 1px solid #f1c40f;
+        color: #92510a;
+        padding: 8px 14px;
+        border-radius: var(--tf-radius-md);
+        font-size: var(--tf-text-body);
+        margin-bottom: var(--tf-space-4);
+      }
+      .draft-cross-tab-banner__link {
+        margin-left: auto;
+        background: none;
+        border: 1px solid #92510a;
+        color: #92510a;
+        font-weight: 600;
+        padding: 4px 12px;
+        border-radius: var(--tf-radius-pill);
+        cursor: pointer;
+        font-size: var(--tf-text-meta);
+      }
+      .draft-cross-tab-banner__link:hover {
+        background: #92510a;
+        color: #fff;
+      }
 
       .tab-body {
         padding: var(--tf-space-5) var(--tf-space-6);
@@ -563,6 +620,13 @@ export class CustomerDetailComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private api = inject(ApiService);
+  private draftService = inject(DraftService);
+
+  /** Reactive: does the selected deployment have an uncommitted Draft? */
+  hasDraftForSelected = computed(() => {
+    const id = this.selectedDeployment()?.id;
+    return !!id && this.draftService.hasDraft(id);
+  });
 
   customerId = signal<string>('');
   customer = signal<Customer | null>(null);

@@ -21,8 +21,10 @@ import { TextareaModule } from 'primeng/textarea';
 import { MessageModule } from 'primeng/message';
 import { DialogModule } from 'primeng/dialog';
 
+import { Router, ActivatedRoute } from '@angular/router';
 import { ApiService } from '../services/api.service';
 import { GeneralService } from '../services/general.service';
+import { DraftService } from '../services/draft.service';
 import { Deployment } from '../models/deployment.model';
 import { FieldMappingTemplate } from '../models/template.model';
 import { TransformationTypes } from '../models/field-mapping.model';
@@ -63,6 +65,19 @@ const SCRATCH_ID = '__scratch__';
     DialogModule,
   ],
   template: `
+    <!-- ── Viewing-archived banner (read-only snapshot mode) ───────── -->
+    @if (viewingVersion(); as view) {
+      <div class="view-version-banner">
+        <i class="pi pi-eye"></i>
+        <span>
+          Viewing field mappings for <strong>{{ view.label }}</strong> — read-only snapshot.
+        </span>
+        <button type="button" class="view-version-banner__btn" (click)="returnToCurrent()">
+          Return to current
+        </button>
+      </div>
+    }
+
     <!-- ── Template header ─────────────────────────────────────────── -->
     <section class="block">
       <header class="block__head">
@@ -311,6 +326,33 @@ const SCRATCH_ID = '__scratch__';
         gap: var(--tf-space-5);
       }
 
+      .view-version-banner {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: #eef2ff;
+        border: 1px solid #c7d2fe;
+        color: #3730a3;
+        padding: 8px 14px;
+        border-radius: var(--tf-radius-md);
+        font-size: var(--tf-text-body);
+      }
+      .view-version-banner__btn {
+        margin-left: auto;
+        background: none;
+        border: 1px solid #3730a3;
+        color: #3730a3;
+        font-weight: 600;
+        padding: 4px 12px;
+        border-radius: var(--tf-radius-pill);
+        cursor: pointer;
+        font-size: var(--tf-text-meta);
+      }
+      .view-version-banner__btn:hover {
+        background: #3730a3;
+        color: #fff;
+      }
+
       .block {
         background: white;
         border: 1px solid var(--tf-slate-400);
@@ -511,6 +553,17 @@ export class MappingTabComponent implements OnChanges {
 
   private api = inject(ApiService);
   private gen = inject(GeneralService);
+  private draftService = inject(DraftService);
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
+
+  /** When set, this tab is rendering a snapshot of an archived/published version. */
+  viewingVersion = computed(() => this.draftService.viewVersion(this.deployment?.id ?? ''));
+
+  returnToCurrent() {
+    if (!this.deployment) return;
+    this.draftService.setViewVersion(this.deployment.id, null);
+  }
 
   mappings = signal<MappingRow[]>([]);
   forkedFromId = signal<string>('');

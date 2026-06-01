@@ -6,6 +6,7 @@ import {
   Output,
   SimpleChanges,
   computed,
+  effect,
   inject,
   signal,
 } from '@angular/core';
@@ -17,7 +18,9 @@ import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { MenuItem } from 'primeng/api';
 
+import { Router, ActivatedRoute } from '@angular/router';
 import { GeneralService } from '../services/general.service';
+import { DraftService } from '../services/draft.service';
 import { Deployment } from '../models/deployment.model';
 import { Version, VersionState } from '../models/version.model';
 import { mockVersions } from '../mocks/mock-data';
@@ -381,9 +384,22 @@ export class TestPublishTabComponent implements OnChanges {
   @Output() statusChanged = new EventEmitter<void>();
 
   private gen = inject(GeneralService);
+  private draftService = inject(DraftService);
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
 
   versions = signal<Version[]>([]);
   busy = signal<string | null>(null);
+
+  constructor() {
+    // Keep the shared DraftService in sync so the tab strip can decorate
+    // its "Publish & Activate" label whenever a draft exists.
+    effect(() => {
+      const id = this.deployment?.id;
+      if (!id) return;
+      this.draftService.setDraft(id, !!this.currentDraft());
+    });
+  }
 
   /** Inline notes editor state (for table rows). */
   editingNotesId = signal<string | null>(null);
@@ -596,8 +612,13 @@ export class TestPublishTabComponent implements OnChanges {
   }
 
   viewFieldMappings(v: Version) {
-    // Wired in step 5 of PUBLISH-ACTIVATE-PLAN.md — for now just toast.
-    this.gen.success(`Viewing field mappings for v${v.versionNumber} (read-only view coming soon).`);
+    const label = `v${v.versionNumber} (${v.state})`;
+    this.draftService.setViewVersion(this.deployment.id, { id: v.id, label });
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { tab: 'mapping' },
+      queryParamsHandling: 'merge',
+    });
   }
 
   // ── Undo plumbing ────────────────────────────────────────────
