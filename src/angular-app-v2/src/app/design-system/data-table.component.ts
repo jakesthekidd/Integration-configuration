@@ -75,17 +75,13 @@ export interface DataTableColumn {
                   {{ col.header }}
                 </th>
               } @else {
-                <!--
-                  PrimeNG 21's pSortableColumn renders its own sort indicator,
-                  so we deliberately omit <p-sortIcon>; using both stacks two
-                  arrows side-by-side.
-                -->
                 <th
                   [pSortableColumn]="col.field"
                   [style.width]="col.width"
                   [style.text-align]="col.align ?? 'left'"
                 >
                   {{ col.header }}
+                  <p-sortIcon [field]="col.field" />
                 </th>
               }
             }
