@@ -159,6 +159,14 @@ export interface DataTableColumn {
         letter-spacing: 0.04em;
         border-bottom: 1px solid #e2e8f0;
         padding: 0.65rem 0.85rem;
+        white-space: nowrap;
+      }
+      /* Keep sort arrows on the same line as the header label. */
+      :host ::ng-deep .dt__table .p-datatable-thead > tr > th .p-sortable-column-icon,
+      :host ::ng-deep .dt__table .p-datatable-thead > tr > th .p-icon {
+        display: inline-block;
+        vertical-align: middle;
+        margin-left: 0.35rem;
       }
       :host ::ng-deep .dt__table .p-datatable-tbody > tr > td {
         padding: 0.7rem 0.85rem;

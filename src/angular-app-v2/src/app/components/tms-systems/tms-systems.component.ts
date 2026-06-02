@@ -312,7 +312,7 @@ export class TmsSystemsComponent implements OnInit {
   columns: DataTableColumn[] = [
     { field: 'name', header: 'Name', width: '14rem' },
     { field: 'displayName', header: 'Display Name' },
-    { field: 'version', header: 'Version', width: '5rem' },
+    { field: 'version', header: 'Version', width: '7rem' },
     { field: '', header: 'Application', sortable: false, width: '11rem' },
     { field: '', header: 'Capability', sortable: false, width: '11rem' },
     { field: '', header: 'Total Active', sortable: false, width: '8rem', align: 'center' },
