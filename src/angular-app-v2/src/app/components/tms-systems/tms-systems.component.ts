@@ -1,7 +1,12 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, computed, signal } from '@angular/core';
+import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
+
+import { ButtonModule } from 'primeng/button';
+import { CheckboxModule } from 'primeng/checkbox';
+import { MenuItem } from 'primeng/api';
+
 import { ApiService } from '../../services/api.service';
 import { GeneralService } from '../../services/general.service';
 import { TmsSystem, CreateTmsSystemRequest } from '../../models/tms-system.model';
@@ -10,6 +15,11 @@ import { Capability } from '../../models/capability.model';
 import { Customer } from '../../models/customer.model';
 import { Deployment } from '../../models/deployment.model';
 
+import { DataTableComponent, DataTableColumn } from '../../design-system/data-table.component';
+import { RowActionsComponent } from '../../design-system/row-actions.component';
+import { StatusTagComponent } from '../../design-system/status-tag.component';
+import { SectionHeaderComponent } from '../../design-system/section-header.component';
+
 interface ConnectionUsageSummary {
   applications: string[];
   capabilities: string[];
@@ -17,11 +27,271 @@ interface ConnectionUsageSummary {
   activeCustomers: string[];
 }
 
+/**
+ * Integration Library → "Connections" tab.
+ *
+ * First screen migrated to the unified table stack: app-section-header +
+ * app-data-table + app-status-tag + app-row-actions. Reference implementation
+ * for the remaining migrations.
+ */
 @Component({
-    selector: 'app-tms-systems',
-    imports: [CommonModule, FormsModule],
-    templateUrl: './tms-systems.component.html',
-    styleUrl: './tms-systems.component.scss'
+  selector: 'app-tms-systems',
+  standalone: true,
+  imports: [
+    CommonModule,
+    FormsModule,
+    DatePipe,
+    ButtonModule,
+    CheckboxModule,
+    DataTableComponent,
+    RowActionsComponent,
+    StatusTagComponent,
+    SectionHeaderComponent,
+  ],
+  template: `
+    <section class="conn">
+      <app-section-header
+        title="Connections"
+        subtitle="System-to-system connectors that capabilities use to move data in or out of a customer environment."
+      >
+        <label class="conn__filter">
+          <input
+            type="checkbox"
+            [(ngModel)]="activeOnly"
+            (change)="loadSystems()"
+          />
+          Show active only
+        </label>
+        <button
+          pButton
+          type="button"
+          label="Create Connection"
+          icon="pi pi-plus"
+          severity="primary"
+          (click)="showCreateForm = !showCreateForm"
+        ></button>
+      </app-section-header>
+
+      @if (showCreateForm) {
+        <div class="conn__form">
+          <h3>Create Connection</h3>
+          <form (ngSubmit)="createSystem()">
+            <div class="conn__field">
+              <label for="systemName">Name</label>
+              <input id="systemName" type="text" [(ngModel)]="newSystem.name" name="name" required />
+            </div>
+            <div class="conn__field">
+              <label for="displayName">Display Name</label>
+              <input
+                id="displayName"
+                type="text"
+                [(ngModel)]="newSystem.displayName"
+                name="displayName"
+                required
+              />
+            </div>
+            <div class="conn__field">
+              <label for="sysDescription">Description</label>
+              <textarea
+                id="sysDescription"
+                [(ngModel)]="newSystem.description"
+                name="description"
+              ></textarea>
+            </div>
+            <div class="conn__field">
+              <label for="sysVersion">Version</label>
+              <input id="sysVersion" type="text" [(ngModel)]="newSystem.version" name="version" />
+            </div>
+            <button pButton type="submit" label="Create" severity="success"></button>
+          </form>
+        </div>
+      }
+
+      @if (error) {
+        <div class="conn__error">{{ error }}</div>
+      }
+
+      <app-data-table
+        [rows]="systems"
+        [columns]="columns"
+        [loading]="loading"
+        dataKey="id"
+        emptyIcon="pi-link"
+        emptyHeading="No connections yet"
+        emptyMessage="Create your first connection to wire a customer system to a capability."
+      >
+        <ng-template #row let-system>
+          <tr>
+            <td class="conn__name">{{ system.name }}</td>
+            <td>{{ system.displayName }}</td>
+            <td>{{ system.version }}</td>
+            <td class="conn__usage">{{ applicationsFor(system.id) }}</td>
+            <td class="conn__usage">{{ capabilitiesFor(system.id) }}</td>
+            <td style="text-align: center">
+              <span class="conn__active-wrap">
+                <span
+                  class="conn__active-count"
+                  [class.conn__active-count--zero]="totalActiveFor(system.id) === 0"
+                >
+                  {{ totalActiveFor(system.id) }}
+                </span>
+                @if (activeCustomerList(system.id).length > 0) {
+                  <div class="conn__active-tip">
+                    <div class="conn__active-tip-header">Active customers</div>
+                    @for (name of activeCustomerList(system.id); track name) {
+                      <div class="conn__active-tip-row">• {{ name }}</div>
+                    }
+                  </div>
+                }
+              </span>
+            </td>
+            <td>
+              <app-status-tag [status]="system.isActive ? 'Active' : 'Inactive'" />
+            </td>
+            <td class="conn__date">{{ system.createdAt | date: 'short' }}</td>
+            <td style="text-align: center">
+              <app-row-actions [items]="menuFor(system)" />
+            </td>
+          </tr>
+        </ng-template>
+      </app-data-table>
+    </section>
+  `,
+  styles: [
+    `
+      :host {
+        display: block;
+        height: 100%;
+        overflow: auto;
+      }
+      .conn {
+        padding: 1.5rem 2rem 3rem;
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+      .conn__filter {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 0.875rem;
+        color: #475569;
+        cursor: pointer;
+      }
+      .conn__form {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 1rem 1.25rem;
+        margin-bottom: 1rem;
+      }
+      .conn__form h3 {
+        margin: 0 0 0.75rem;
+        font-size: 1rem;
+        font-weight: 600;
+        color: #0f172a;
+      }
+      .conn__field {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        margin-bottom: 0.75rem;
+      }
+      .conn__field label {
+        font-size: 0.8125rem;
+        color: #475569;
+        font-weight: 500;
+      }
+      .conn__field input,
+      .conn__field textarea {
+        padding: 0.45rem 0.6rem;
+        border: 1px solid #cbd5e1;
+        border-radius: 6px;
+        font-size: 0.875rem;
+      }
+      .conn__error {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        color: #991b1b;
+        padding: 0.6rem 1rem;
+        border-radius: 8px;
+        margin-bottom: 0.75rem;
+        font-size: 0.875rem;
+      }
+      .conn__name {
+        font-weight: 500;
+      }
+      .conn__usage {
+        color: #475569;
+      }
+      .conn__date {
+        color: #64748b;
+        font-size: 0.8125rem;
+        white-space: nowrap;
+      }
+
+      /* Hover tooltip on Total Active count. */
+      .conn__active-wrap {
+        position: relative;
+        display: inline-block;
+      }
+      .conn__active-count {
+        background: #dcfce7;
+        color: #166534;
+        font-weight: 600;
+        padding: 0.15rem 0.6rem;
+        border-radius: 999px;
+        font-size: 0.8125rem;
+        min-width: 1.75rem;
+        display: inline-block;
+        text-align: center;
+        cursor: default;
+      }
+      .conn__active-count--zero {
+        background: #f1f5f9;
+        color: #94a3b8;
+      }
+      .conn__active-tip {
+        display: none;
+        position: absolute;
+        bottom: calc(100% + 8px);
+        left: 50%;
+        transform: translateX(-50%);
+        background: #0f172a;
+        color: #ffffff;
+        border-radius: 6px;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.75rem;
+        white-space: nowrap;
+        z-index: 100;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+        text-align: left;
+        pointer-events: none;
+      }
+      .conn__active-tip::after {
+        content: '';
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        border: 5px solid transparent;
+        border-top-color: #0f172a;
+      }
+      .conn__active-tip-header {
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+        color: #cbd5e1;
+        text-transform: uppercase;
+        font-size: 0.6875rem;
+        letter-spacing: 0.04em;
+      }
+      .conn__active-tip-row {
+        line-height: 1.4;
+      }
+      .conn__active-wrap:hover .conn__active-tip {
+        display: block;
+      }
+    `,
+  ],
 })
 export class TmsSystemsComponent implements OnInit {
   systems: TmsSystem[] = [];
@@ -37,6 +307,19 @@ export class TmsSystemsComponent implements OnInit {
     applicationId: '',
     capabilityId: '',
   };
+
+  /** Column metadata for the unified data table. */
+  columns: DataTableColumn[] = [
+    { field: 'name', header: 'Name', width: '14rem' },
+    { field: 'displayName', header: 'Display Name' },
+    { field: 'version', header: 'Version', width: '5rem' },
+    { field: '', header: 'Application', sortable: false, width: '11rem' },
+    { field: '', header: 'Capability', sortable: false, width: '11rem' },
+    { field: '', header: 'Total Active', sortable: false, width: '8rem', align: 'center' },
+    { field: 'isActive', header: 'Status', width: '7rem' },
+    { field: 'createdAt', header: 'Created', width: '9rem' },
+    { field: '', header: '', sortable: false, width: '4rem', align: 'center' },
+  ];
 
   /** Per-connection-id usage summary, refreshed any time we reload the data. */
   usage: Record<string, ConnectionUsageSummary> = {};
@@ -100,7 +383,12 @@ export class TmsSystemsComponent implements OnInit {
       if (!d.connectionId) continue;
       const entry =
         out[d.connectionId] ??
-        (out[d.connectionId] = { applications: [], capabilities: [], totalActive: 0, activeCustomers: [] });
+        (out[d.connectionId] = {
+          applications: [],
+          capabilities: [],
+          totalActive: 0,
+          activeCustomers: [],
+        });
       const appName = appById.get(d.applicationId);
       const capName = capById.get(d.capabilityId);
       if (appName && !entry.applications.includes(appName)) entry.applications.push(appName);
@@ -128,6 +416,18 @@ export class TmsSystemsComponent implements OnInit {
   }
   activeCustomerList(systemId: string): string[] {
     return (this.usage[systemId]?.activeCustomers ?? []).slice().sort();
+  }
+
+  /** Row kebab menu items. */
+  menuFor(system: TmsSystem): MenuItem[] {
+    return [
+      {
+        label: 'Delete',
+        icon: 'pi pi-trash',
+        styleClass: 'menu-item-danger',
+        command: () => this.deleteSystem(system.id),
+      },
+    ];
   }
 
   createSystem() {
