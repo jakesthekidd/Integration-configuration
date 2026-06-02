@@ -19,6 +19,7 @@ import { MessageModule } from 'primeng/message';
 
 import { ApiService } from '../services/api.service';
 import { GeneralService } from '../services/general.service';
+import { DraftService } from '../services/draft.service';
 import { Deployment } from '../models/deployment.model';
 import { TmsSystem } from '../models/tms-system.model';
 import {
@@ -333,6 +334,23 @@ export class ConnectionTabComponent implements OnChanges {
 
   private api = inject(ApiService);
   private gen = inject(GeneralService);
+  private draftService = inject(DraftService);
+
+  /** One-shot latch so the auto-fork toast only fires once per edit session. */
+  private autoForkedOnce = false;
+
+  /** Forks a Draft from the current Active on the first mutation, if no draft exists. */
+  private ensureDraft(): void {
+    if (!this.deployment) return;
+    if (this.draftService.hasDraft(this.deployment.id)) return;
+    this.draftService.requestSpawnDraft(this.deployment.id);
+    if (!this.autoForkedOnce) {
+      this.autoForkedOnce = true;
+      this.gen.success(
+        'New draft created from the active version. Publish it in Publish & Activate when ready.',
+      );
+    }
+  }
 
   connections = signal<TmsSystem[]>([]);
   connectionId = signal<string>('');
@@ -391,6 +409,7 @@ connectionDescription = computed(() => {
       this.credentials.set({});
       this.snapshot.set({ connectionId: this.deployment.connectionId, credentials: {} });
       this.testResult.set(null);
+      this.autoForkedOnce = false;
       this.loadConnections();
     }
   }
@@ -402,12 +421,14 @@ connectionDescription = computed(() => {
   }
 
 onConnectionChange(id: string) {
+    this.ensureDraft();
     this.connectionId.set(id);
     // Switching connections wipes the credentials since the schema changes.
     this.credentials.set({});
   }
 
   onCredChange(key: string, value: string) {
+    this.ensureDraft();
     this.credentials.update((c) => ({ ...c, [key]: value ?? '' }));
   }
 

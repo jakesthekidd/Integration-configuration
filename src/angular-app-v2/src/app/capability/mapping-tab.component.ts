@@ -565,6 +565,33 @@ export class MappingTabComponent implements OnChanges {
     this.draftService.setViewVersion(this.deployment.id, null);
   }
 
+  /** True if the deployment has an active draft. Drives the inline banner. */
+  hasDraft = computed(() => this.draftService.hasDraft(this.deployment?.id ?? ''));
+
+  /** Latch so we only show the "auto-forked draft" toast once per edit session. */
+  private autoForkedOnce = false;
+
+  /**
+   * Called from every mutation handler. If no Draft exists, request one
+   * (Publish & Activate tab will seed it from the current Active) and pop
+   * a one-time toast so the user knows what happened.
+   */
+  private ensureDraft(): void {
+    if (this.viewingVersion()) {
+      // Read-only snapshot mode — caller should have short-circuited already.
+      return;
+    }
+    if (!this.deployment) return;
+    if (this.hasDraft()) return;
+    this.draftService.requestSpawnDraft(this.deployment.id);
+    if (!this.autoForkedOnce) {
+      this.autoForkedOnce = true;
+      this.gen.success(
+        'New draft created from the active version. Publish it in Publish & Activate when ready.',
+      );
+    }
+  }
+
   mappings = signal<MappingRow[]>([]);
   forkedFromId = signal<string>('');
   forkedVersion = signal<number | null>(null);
@@ -619,7 +646,10 @@ export class MappingTabComponent implements OnChanges {
   });
 
   ngOnChanges(changes: SimpleChanges) {
-    if (changes['deployment']) this.load();
+    if (changes['deployment']) {
+      this.autoForkedOnce = false;
+      this.load();
+    }
   }
 
   private load() {
@@ -704,6 +734,7 @@ export class MappingTabComponent implements OnChanges {
 
   // ─── Mapping rows ───────────────────────────────────────────────
   addRow() {
+    this.ensureDraft();
     this.mappings.update((list) => [
       ...list,
       {
@@ -718,6 +749,7 @@ export class MappingTabComponent implements OnChanges {
   }
 
   updateRow(index: number, change: Partial<MappingRow>) {
+    this.ensureDraft();
     this.mappings.update((list) => {
       const next = [...list];
       next[index] = { ...next[index], ...change };
@@ -726,6 +758,7 @@ export class MappingTabComponent implements OnChanges {
   }
 
   removeRow(index: number) {
+    this.ensureDraft();
     this.mappings.update((list) => list.filter((_, i) => i !== index));
   }
 

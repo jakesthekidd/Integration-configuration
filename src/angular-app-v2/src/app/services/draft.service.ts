@@ -41,4 +41,27 @@ export class DraftService {
   setViewVersion(deploymentId: string, value: { id: string; label: string } | null) {
     this.viewVersionByDeployment.update((m) => ({ ...m, [deploymentId]: value }));
   }
+
+  /**
+   * Auto-fork token: a monotonic counter per deployment.
+   *
+   * Connection/Mapping tabs call `requestSpawnDraft` on the user's first edit when
+   * no draft exists. The Publish & Activate tab effects on this counter and seeds
+   * a Draft row forked from the current Active version. Once the Draft exists,
+   * `hasDraft` flips true and the cross-tab amber dot + warning banner light up.
+   */
+  private spawnRequestByDeployment = signal<Record<string, number>>({});
+
+  spawnRequest = (deploymentId: string): number =>
+    this.spawnRequestByDeployment()[deploymentId] ?? 0;
+
+  spawnRequest$ = (deploymentId: string) =>
+    computed(() => this.spawnRequestByDeployment()[deploymentId] ?? 0);
+
+  requestSpawnDraft(deploymentId: string): void {
+    this.spawnRequestByDeployment.update((m) => ({
+      ...m,
+      [deploymentId]: (m[deploymentId] ?? 0) + 1,
+    }));
+  }
 }

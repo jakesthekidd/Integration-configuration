@@ -391,6 +391,9 @@ export class TestPublishTabComponent implements OnChanges {
   versions = signal<Version[]>([]);
   busy = signal<string | null>(null);
 
+  /** Last-seen spawn request counter — used to ignore stale ticks. */
+  private lastSeenSpawnRequest = 0;
+
   constructor() {
     // Keep the shared DraftService in sync so the tab strip can decorate
     // its "Publish & Activate" label whenever a draft exists.
@@ -398,6 +401,39 @@ export class TestPublishTabComponent implements OnChanges {
       const id = this.deployment?.id;
       if (!id) return;
       this.draftService.setDraft(id, !!this.currentDraft());
+    });
+
+    // Auto-fork: the Mapping/Connection tabs bump `requestSpawnDraft` on the
+    // user's first edit while the deployment has no Draft. We seed a Draft row
+    // from the current Active (or most-recently-published) version. The
+    // currentDraft computed reactively flips and the cross-tab amber dot
+    // lights up.
+    effect(() => {
+      const id = this.deployment?.id;
+      if (!id) return;
+      const ticket = this.draftService.spawnRequest(id);
+      if (ticket === 0 || ticket === this.lastSeenSpawnRequest) return;
+      this.lastSeenSpawnRequest = ticket;
+      // Don't double-spawn if a Draft already exists.
+      if (this.currentDraft()) return;
+      const baseVersion =
+        this.versions().find((v) => v.state === 'Activated') ??
+        this.versions().find((v) => v.state === 'Published') ??
+        this.versions().find((v) => v.state === 'Archived');
+      if (!baseVersion) return;
+      const nextNumber =
+        Math.max(0, ...this.versions().map((x) => x.versionNumber)) + 1;
+      const newDraft: Version = {
+        id: `v-${Date.now()}`,
+        deploymentId: id,
+        versionNumber: nextNumber,
+        state: 'Draft',
+        createdAt: new Date().toISOString(),
+        createdBy: this.currentAuthor,
+        notes: `Auto-forked from v${baseVersion.versionNumber} (${baseVersion.state}) on first edit`,
+        basedOnVersionNumber: baseVersion.versionNumber,
+      };
+      this.versions.update((list) => [newDraft, ...list]);
     });
   }
 
