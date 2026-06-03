@@ -166,8 +166,6 @@ interface ConnectionUsageSummary {
       }
       .conn {
         padding: 1.5rem 2rem 3rem;
-        max-width: 1400px;
-        margin: 0 auto;
       }
       .conn__filter {
         display: inline-flex;

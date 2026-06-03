@@ -252,8 +252,6 @@ type StatusFilter = 'all' | 'enabled' | 'disabled';
       }
       .ca {
         padding: 1.5rem 2rem 3rem;
-        max-width: 1400px;
-        margin: 0 auto;
       }
       .ca__header {
         display: flex;
