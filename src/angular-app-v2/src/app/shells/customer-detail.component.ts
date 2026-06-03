@@ -224,7 +224,7 @@ interface AppGroup {
               </button>
             </div>
             <div class="tab-body">
-              @if (hasDraftForSelected() && activeTab() !== 'publish-activate') {
+              @if (hasDraftForSelected() && activeTab() !== 'publish-activate' && !viewingSnapshotForSelected()) {
                 <div class="draft-cross-tab-banner">
                   <i class="pi pi-exclamation-triangle"></i>
                   <span>
@@ -626,6 +626,12 @@ export class CustomerDetailComponent implements OnInit {
   hasDraftForSelected = computed(() => {
     const id = this.selectedDeployment()?.id;
     return !!id && this.draftService.hasDraft(id);
+  });
+
+  /** Reactive: is the user viewing a historical (Archived/Published-not-current) snapshot? */
+  viewingSnapshotForSelected = computed(() => {
+    const id = this.selectedDeployment()?.id;
+    return !!id && !!this.draftService.viewVersion(id);
   });
 
   customerId = signal<string>('');

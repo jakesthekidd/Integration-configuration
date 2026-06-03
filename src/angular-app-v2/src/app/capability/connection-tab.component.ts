@@ -50,6 +50,19 @@ import {
     MessageModule,
   ],
   template: `
+    <!-- ── Viewing-archived banner (read-only snapshot mode) ───────── -->
+    @if (viewingVersion(); as view) {
+      <div class="view-version-banner">
+        <i class="pi pi-eye"></i>
+        <span>
+          Viewing connection for <strong>{{ view.label }}</strong> — read-only snapshot.
+        </span>
+        <button type="button" class="view-version-banner__btn" (click)="returnToCurrent()">
+          Return to current
+        </button>
+      </div>
+    }
+
     <section class="block">
       <header class="block__head">
         <div>
@@ -66,6 +79,7 @@ import {
           (ngModelChange)="onConnectionChange($event)"
           placeholder="Pick a connection"
           appendTo="body"
+          [disabled]="!!viewingVersion()"
         />
         <small class="hint" *ngIf="connectionId()">
           {{ connectionDescription() }}
@@ -111,6 +125,7 @@ import {
                     [toggleMask]="true"
                     [inputStyle]="{ width: '100%' }"
                     [style]="{ width: '100%' }"
+                    [disabled]="!!viewingVersion()"
                   />
                 }
                 @case ('number') {
@@ -121,6 +136,7 @@ import {
                     (ngModelChange)="onCredChange(field.key, $event)"
                     [name]="field.key"
                     [placeholder]="field.placeholder ?? ''"
+                    [disabled]="!!viewingVersion()"
                   />
                 }
                 @default {
@@ -131,6 +147,7 @@ import {
                     (ngModelChange)="onCredChange(field.key, $event)"
                     [name]="field.key"
                     [placeholder]="field.placeholder ?? ''"
+                    [disabled]="!!viewingVersion()"
                   />
                 }
               }
@@ -159,7 +176,7 @@ import {
       </div>
     }
 
-    <footer class="actions">
+    <footer class="actions" *ngIf="!viewingVersion()">
       @if (!isComplete()) {
         <span class="status-pill status-pill--draft">
           <i class="pi pi-exclamation-circle"></i>
@@ -198,6 +215,33 @@ import {
         display: flex;
         flex-direction: column;
         gap: var(--tf-space-5);
+      }
+
+      .view-version-banner {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: #eef2ff;
+        border: 1px solid #c7d2fe;
+        color: #3730a3;
+        padding: 8px 14px;
+        border-radius: var(--tf-radius-md);
+        font-size: var(--tf-text-body);
+      }
+      .view-version-banner__btn {
+        margin-left: auto;
+        background: none;
+        border: 1px solid #3730a3;
+        color: #3730a3;
+        font-weight: 600;
+        padding: 4px 12px;
+        border-radius: var(--tf-radius-pill);
+        cursor: pointer;
+        font-size: var(--tf-text-meta);
+      }
+      .view-version-banner__btn:hover {
+        background: #3730a3;
+        color: #fff;
       }
 
       .block {
@@ -342,6 +386,7 @@ export class ConnectionTabComponent implements OnChanges {
   /** Forks a Draft from the current Active on the first mutation, if no draft exists. */
   private ensureDraft(): void {
     if (!this.deployment) return;
+    if (this.viewingVersion()) return; // never auto-fork while viewing a snapshot
     if (this.draftService.hasDraft(this.deployment.id)) return;
     this.draftService.requestSpawnDraft(this.deployment.id);
     if (!this.autoForkedOnce) {
@@ -350,6 +395,14 @@ export class ConnectionTabComponent implements OnChanges {
         'New draft created from the active version. Publish it in Publish & Activate when ready.',
       );
     }
+  }
+
+  /** When set, this tab is rendering a snapshot of an archived/published version. */
+  viewingVersion = computed(() => this.draftService.viewVersion(this.deployment?.id ?? ''));
+
+  returnToCurrent(): void {
+    if (!this.deployment) return;
+    this.draftService.setViewVersion(this.deployment.id, null);
   }
 
   connections = signal<TmsSystem[]>([]);

@@ -97,7 +97,7 @@ const SCRATCH_ID = '__scratch__';
         <p-button
           [label]="forkedFromId() ? 'Change template' : 'Fork a master'"
           icon="pi pi-file-import"
-          severity="secondary"
+          severity="primary"
           [outlined]="true"
           size="small"
           (onClick)="openPicker()"
