@@ -1,16 +1,17 @@
 <div class="container">
-  <div class="toolbar">
-    <div class="filter-group">
-      <label>
-        Status:
-        <select [(ngModel)]="filterActive" (change)="loadCustomers()">
-          <option [ngValue]="null">All</option>
-          <option [ngValue]="true">Active</option>
-          <option [ngValue]="false">Inactive</option>
-        </select>
-      </label>
-    </div>
-  </div>
+  <app-section-header
+    title="Customer Setup"
+    subtitle="Manage active customer integrations — sync settings, connection credentials, and per-capability deployments."
+  >
+    <label class="customers-filter">
+      Status:
+      <select [(ngModel)]="filterActive" (change)="loadCustomers()">
+        <option [ngValue]="null">All</option>
+        <option [ngValue]="true">Active</option>
+        <option [ngValue]="false">Inactive</option>
+      </select>
+    </label>
+  </app-section-header>
 
   <!-- Create / Edit form -->
   @if (showCreateForm || editingCustomer) {
@@ -228,29 +229,16 @@
     <div class="alert alert-success">{{ success }}</div>
   }
 
-  <!-- Customers Table (PrimeNG) -->
-  <p-table
-    [value]="customers"
+  <app-data-table
+    [rows]="customers"
+    [columns]="customerColumns"
     [loading]="isInitialLoading"
-    [paginator]="customers.length > 10"
-    [rows]="10"
-    [rowHover]="true"
-    styleClass="p-datatable-sm p-datatable-striped customer-table"
-    responsiveLayout="scroll"
+    dataKey="customerId"
+    emptyIcon="pi-users"
+    emptyHeading="No customers found"
+    emptyMessage="Adjust the status filter or enable a customer in the Integration Library to see them here."
   >
-    <ng-template pTemplate="header">
-      <tr>
-        <th>Name</th>
-        <th>Connection</th>
-        <th>Status</th>
-        <th>Sync (min)</th>
-        <th>Retention (days)</th>
-        <th>Last Sync</th>
-        <th style="width: 56px;"></th>
-      </tr>
-    </ng-template>
-
-    <ng-template pTemplate="body" let-c>
+    <ng-template #row let-c>
       <tr>
         <td>
           <button type="button" class="customer-link" (click)="openCustomer(c)">
@@ -258,36 +246,14 @@
           </button>
         </td>
         <td>{{ c.tmsName }}</td>
-        <td>
-          <p-tag
-            [value]="c.enabled ? 'Active' : 'Inactive'"
-            [severity]="c.enabled ? 'success' : 'secondary'"
-            [rounded]="true"
-          ></p-tag>
-        </td>
+        <td><app-status-tag [status]="c.enabled ? 'Active' : 'Inactive'" /></td>
         <td>{{ c.syncFrequencyMinutes || '—' }}</td>
         <td>{{ c.orderRetentionDays || '—' }}</td>
         <td>{{ c.lastSyncTime | date: 'mediumDate' }}</td>
-        <td class="actions-cell">
-          <p-button
-            icon="pi pi-ellipsis-v"
-            size="small"
-            severity="secondary"
-            [text]="true"
-            [rounded]="true"
-            aria-label="Customer actions"
-            (onClick)="rowMenu.toggle($event); activeRow = c"
-          />
+        <td style="text-align: center">
+          <app-row-actions [items]="menuFor(c)" />
         </td>
       </tr>
     </ng-template>
-
-    <ng-template pTemplate="emptymessage">
-      <tr>
-        <td colspan="7" class="no-data">No customers found.</td>
-      </tr>
-    </ng-template>
-  </p-table>
-
-  <p-menu #rowMenu [model]="rowMenuItems" [popup]="true" appendTo="body" />
+  </app-data-table>
 </div>

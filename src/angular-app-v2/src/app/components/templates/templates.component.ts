@@ -1,11 +1,17 @@
 import { Component, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ButtonModule } from 'primeng/button';
+import { MenuItem } from 'primeng/api';
 import { ApiService } from '../../services/api.service';
 import { GeneralService } from '../../services/general.service';
 import { FieldMappingTemplate, CreateTemplateRequest, UpdateTemplateRequest } from '../../models/template.model';
 import { Partner } from '../../models/partner.model';
 import { FieldMappingsComponent } from '../field-mappings/field-mappings.component';
+import { DataTableComponent, DataTableColumn } from '../../design-system/data-table.component';
+import { RowActionsComponent } from '../../design-system/row-actions.component';
+import { StatusTagComponent } from '../../design-system/status-tag.component';
+import { SectionHeaderComponent } from '../../design-system/section-header.component';
 
 type Screen = 'list' | 'detail' | 'version';
 export type TemplateStatusFilter = 'All' | 'Active' | 'Archived';
@@ -13,7 +19,16 @@ const TEMPLATE_STATUS_FILTERS: readonly TemplateStatusFilter[] = ['All', 'Active
 
 @Component({
     selector: 'app-templates',
-    imports: [CommonModule, FormsModule, FieldMappingsComponent],
+    imports: [
+      CommonModule,
+      FormsModule,
+      ButtonModule,
+      FieldMappingsComponent,
+      DataTableComponent,
+      RowActionsComponent,
+      StatusTagComponent,
+      SectionHeaderComponent,
+    ],
     templateUrl: './templates.component.html',
     styleUrl: './templates.component.scss'
 })
@@ -38,6 +53,29 @@ export class TemplatesComponent implements OnInit {
   currentPage: number = 1;
   pageSize: number = 10;
   totalCount: number = 0;
+
+  /** Column metadata for the unified data-table. */
+  tplColumns: DataTableColumn[] = [
+    { field: 'name', header: 'Name' },
+    { field: 'status', header: 'Status', width: '9rem' },
+    { field: 'version', header: 'Latest Version', width: '11rem' },
+    { field: 'description', header: 'Description' },
+    { field: 'createdAt', header: 'Created', width: '10rem' },
+    { field: '', header: '', sortable: false, width: '4rem', align: 'center' },
+  ];
+
+  /** Build the kebab menu items for a template row. */
+  menuFor(template: FieldMappingTemplate): MenuItem[] {
+    return [
+      { label: 'View', icon: 'pi pi-eye', command: () => this.openDetail(template) },
+      {
+        label: 'Delete',
+        icon: 'pi pi-trash',
+        styleClass: 'menu-item-danger',
+        command: () => this.deleteTemplate(template),
+      },
+    ];
+  }
 
   // --- Detail Screen ---
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

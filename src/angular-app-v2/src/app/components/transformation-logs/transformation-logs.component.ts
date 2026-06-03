@@ -1,9 +1,13 @@
 import { Component, OnInit, Pipe, PipeTransform } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ButtonModule } from 'primeng/button';
 import { ApiService } from '../../services/api.service';
 import { TransformationLogSummary, TransformationLogDetail } from '../../models/transformation-log.model';
 import { TransformationStatus, StatusBadgeClass } from '../../constants/transformation-status.constants';
+import { DataTableComponent, DataTableColumn } from '../../design-system/data-table.component';
+import { StatusTagComponent } from '../../design-system/status-tag.component';
+import { SectionHeaderComponent } from '../../design-system/section-header.component';
 
 @Pipe({ name: 'prettyJson', standalone: true })
 export class PrettyJsonPipe implements PipeTransform {
@@ -19,11 +23,32 @@ export class PrettyJsonPipe implements PipeTransform {
 
 @Component({
     selector: 'app-transformation-logs',
-    imports: [CommonModule, FormsModule, PrettyJsonPipe],
+    imports: [
+      CommonModule,
+      FormsModule,
+      ButtonModule,
+      PrettyJsonPipe,
+      DataTableComponent,
+      StatusTagComponent,
+      SectionHeaderComponent,
+    ],
     templateUrl: './transformation-logs.component.html',
     styleUrl: './transformation-logs.component.scss'
 })
 export class TransformationLogsComponent implements OnInit {
+  /** Column metadata for the unified data table. */
+  logColumns: DataTableColumn[] = [
+    { field: '', header: '', sortable: false, width: '2.5rem' },
+    { field: 'status', header: 'Status', width: '9rem' },
+    { field: 'templateName', header: 'Template' },
+    { field: 'messageSummary', header: 'Message' },
+    { field: 'correlationId', header: 'Correlation ID', width: '11rem' },
+    { field: 'timestamp', header: 'Timestamp', width: '12rem' },
+    { field: 'durationMs', header: 'Duration', width: '7rem', align: 'right' },
+    { field: 'source', header: 'Source', width: '7rem' },
+    { field: 'expiresAt', header: 'Expires', width: '8rem' },
+  ];
+
   logs: TransformationLogSummary[] = [];
   detail: TransformationLogDetail | null = null;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

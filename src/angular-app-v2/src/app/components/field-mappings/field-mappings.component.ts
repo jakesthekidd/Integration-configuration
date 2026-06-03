@@ -1,14 +1,23 @@
 import { Component, OnInit, Input, OnChanges, SimpleChanges } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
+import { ButtonModule } from 'primeng/button';
+import { MenuItem } from 'primeng/api';
 import { ApiService } from '../../services/api.service';
 import { GeneralService } from '../../services/general.service';
 import { FieldMapping, CreateFieldMappingRequest, TransformationTypes } from '../../models/field-mapping.model';
 import { LookupTable } from '../../models/lookup-table.model';
+import { DataTableComponent, DataTableColumn } from '../../design-system/data-table.component';
+import { RowActionsComponent } from '../../design-system/row-actions.component';
 
 @Component({
   selector: 'app-field-mappings',
-  imports: [FormsModule],
+  imports: [
+    FormsModule,
+    ButtonModule,
+    DataTableComponent,
+    RowActionsComponent,
+  ],
   templateUrl: './field-mappings.component.html',
   styleUrl: './field-mappings.component.scss',
 })
@@ -20,6 +29,28 @@ export class FieldMappingsComponent implements OnInit, OnChanges {
   @Input() sourceSchema?: string;
   @Input() targetSchema?: string;
   @Input() isReadonly: boolean = false;
+
+  /** Column metadata for the unified data table. */
+  fmColumns: DataTableColumn[] = [
+    { field: 'sourcePath', header: 'Source Path' },
+    { field: 'targetPath', header: 'Target Path' },
+    { field: 'transformationType', header: 'Type', width: '9rem' },
+    { field: 'isRequired', header: 'Required', width: '7rem', align: 'center' },
+    { field: 'defaultValue', header: 'Default', width: '9rem' },
+    { field: '', header: '', sortable: false, width: '4rem', align: 'center' },
+  ];
+
+  menuFor(mapping: FieldMapping): MenuItem[] {
+    return [
+      { label: 'Edit', icon: 'pi pi-pencil', command: () => this.startEdit(mapping) },
+      {
+        label: 'Delete',
+        icon: 'pi pi-trash',
+        styleClass: 'menu-item-danger',
+        command: () => this.deleteMapping(mapping.id),
+      },
+    ];
+  }
 
   mappings: FieldMapping[] = [];
   transformationTypes = TransformationTypes;

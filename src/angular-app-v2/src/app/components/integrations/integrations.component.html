@@ -5,15 +5,19 @@
 
   <!-- ==================== SCREEN: LIST ==================== -->
   @if (!selectedClient) {
-    <div class="page-header">
-      <div>
-        <h2>Integrations</h2>
-        <p class="page-subtitle">Manage API clients and their template assignments</p>
-      </div>
-      <button class="btn-primary" (click)="showCreateForm = !showCreateForm">
-        {{ showCreateForm ? 'Cancel' : '＋ New API Client' }}
-      </button>
-    </div>
+    <app-section-header
+      title="Integrations"
+      subtitle="API clients and the template versions they're allowed to invoke."
+    >
+      <button
+        pButton
+        type="button"
+        [label]="showCreateForm ? 'Cancel' : 'New API Client'"
+        [icon]="showCreateForm ? 'pi pi-times' : 'pi pi-plus'"
+        severity="primary"
+        (click)="showCreateForm = !showCreateForm"
+      ></button>
+    </app-section-header>
     @if (showCreateForm) {
       <div class="form-container">
         <h3>Create API Client</h3>
@@ -48,44 +52,29 @@
         </form>
       </div>
     }
-    <div class="table-container">
-      <table>
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Status</th>
-            <th>Description</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (client of clients; track client) {
-            <tr class="clickable-row" (click)="selectClient(client)">
-              <td>
-                <strong>{{ client.name }}</strong>
-                <br /><small class="muted">{{ client.id }}</small>
-              </td>
-              <td>
-                <span class="badge" [class.badge-active]="client.isActive" [class.badge-inactive]="!client.isActive">
-                  {{ client.isActive ? 'Active' : 'Inactive' }}
-                </span>
-              </td>
-              <td class="description-cell">{{ client.description || '—' }}</td>
-              <td class="actions-cell" (click)="$event.stopPropagation()">
-                <button class="btn-small btn-info" (click)="selectClient(client)">View</button>
-                <button class="btn-small btn-danger" (click)="deleteClient(client.id)">Delete</button>
-              </td>
-            </tr>
-          }
-          @if (clients.length === 0 && !loading) {
-            <tr>
-              <td colspan="4" class="no-data">No API clients found. Click "New API Client" to get started.</td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
-    <div class="total">{{ clients.length }} client(s) shown</div>
+    <app-data-table
+      [rows]="clients"
+      [columns]="clientColumns"
+      [loading]="loading"
+      dataKey="id"
+      emptyIcon="pi-key"
+      emptyHeading="No API clients found"
+      emptyMessage='Click "New API Client" to get started.'
+    >
+      <ng-template #row let-client>
+        <tr class="clickable-row" (click)="selectClient(client)">
+          <td>
+            <strong>{{ client.name }}</strong>
+            <br /><small class="muted">{{ client.id }}</small>
+          </td>
+          <td><app-status-tag [status]="client.isActive ? 'Active' : 'Inactive'" /></td>
+          <td class="description-cell">{{ client.description || '—' }}</td>
+          <td style="text-align: center" (click)="$event.stopPropagation()">
+            <app-row-actions [items]="menuFor(client)" />
+          </td>
+        </tr>
+      </ng-template>
+    </app-data-table>
   }
 
   <!-- ==================== SCREEN: DETAIL ==================== -->

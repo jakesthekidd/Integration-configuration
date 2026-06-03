@@ -11,6 +11,10 @@ import { ApiService } from '../../services/api.service';
 import { Customer } from '../../models/customer.model';
 import { GeneralService } from '../../services/general.service';
 import { CustomerAccessService } from '../../services/customer-access.service';
+import { DataTableComponent, DataTableColumn } from '../../design-system/data-table.component';
+import { RowActionsComponent } from '../../design-system/row-actions.component';
+import { StatusTagComponent } from '../../design-system/status-tag.component';
+import { SectionHeaderComponent } from '../../design-system/section-header.component';
 import { TmsName, TmsCredentialKeys, URL_PATTERN, DmsSpecialKeys } from '../../constants/tms.constants';
 import { FieldMappingTemplate } from '../../models/template.model';
 import { ApiClient } from '../../models/api-client.model';
@@ -18,7 +22,18 @@ import { environment } from '../../../environments/environment';
 
 @Component({
     selector: 'app-customers',
-    imports: [CommonModule, FormsModule, TableModule, ButtonModule, TagModule, MenuModule],
+    imports: [
+      CommonModule,
+      FormsModule,
+      TableModule,
+      ButtonModule,
+      TagModule,
+      MenuModule,
+      DataTableComponent,
+      RowActionsComponent,
+      StatusTagComponent,
+      SectionHeaderComponent,
+    ],
     templateUrl: './customers.component.html',
     styleUrl: './customers.component.scss'
 })
@@ -52,6 +67,11 @@ export class CustomersComponent implements OnInit {
   get rowMenuItems(): MenuItem[] {
     const c = this.activeRow;
     if (!c) return [];
+    return this.menuFor(c);
+  }
+
+  /** Build the kebab menu for any customer row. Reused by app-row-actions. */
+  menuFor(c: Customer): MenuItem[] {
     return [
       { label: 'Edit', icon: 'pi pi-pencil', command: () => this.startEdit(c) },
       {
@@ -68,6 +88,17 @@ export class CustomersComponent implements OnInit {
       },
     ];
   }
+
+  /** Column metadata for the unified data table. */
+  customerColumns: DataTableColumn[] = [
+    { field: 'customerName', header: 'Name' },
+    { field: 'tmsName', header: 'Connection' },
+    { field: 'enabled', header: 'Status', width: '9rem' },
+    { field: 'syncFrequencyMinutes', header: 'Sync (min)', width: '9rem' },
+    { field: 'orderRetentionDays', header: 'Retention (days)', width: '11rem' },
+    { field: 'lastSyncTime', header: 'Last Sync', width: '11rem' },
+    { field: '', header: '', sortable: false, width: '4rem', align: 'center' },
+  ];
 
   formData: Customer = this.emptyForm();
 

@@ -1,8 +1,17 @@
 <div class="container">
-  <div class="page-header">
-    <h2>Transformation History</h2>
-    <button class="btn-refresh" (click)="load()" [class.spinning]="loading">&#8635; Refresh</button>
-  </div>
+  <app-section-header
+    title="Transformation History"
+    subtitle="Every transformation run with its status, timing, and (on expand) the input and output payloads."
+  >
+    <button
+      pButton
+      type="button"
+      label="Refresh"
+      icon="pi pi-refresh"
+      severity="primary"
+      (click)="load()"
+    ></button>
+  </app-section-header>
 
   <!-- Filters -->
   <div class="filter-bar">
@@ -78,126 +87,97 @@
   }
 
   <!-- Grid -->
-  <div class="table-container">
-    <table>
-      <thead>
-        <tr>
-          <th></th>
-          <th>Status</th>
-          <th>Template</th>
-          <th>Message</th>
-          <th>Correlation ID</th>
-          <th>Timestamp</th>
-          <th>Duration</th>
-          <th>Source</th>
-          <th>Expires</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (log of logs; track log) {
-          <tr class="summary-row" (click)="toggleDetail(log)" [class.expanded]="selectedId === log.id">
-            <td class="expand-cell">
-              <span class="expand-icon">{{ selectedId === log.id ? '▼' : '▶' }}</span>
-            </td>
-            <td>
-              <span class="badge" [ngClass]="statusClass(log.status)">{{ statusLabel(log.status) }}</span>
-            </td>
-            <td class="template-id-cell">
-              {{ log.templateName || log.templateId }}
-            </td>
-            <td class="message-cell" [title]="log.messageSummary || ''">{{ log.messageSummary || '—' }}</td>
-            <td class="correlation-cell">
-              <code>{{ log.correlationId || '—' }}</code>
-            </td>
-            <td>{{ log.timestamp | date: 'MMM d, y HH:mm:ss' }}</td>
-            <td class="ms-cell">{{ log.durationMs }} ms</td>
-            <td>{{ log.source || '—' }}</td>
-            <td class="muted">{{ log.expiresAt | date: 'mediumDate' }}</td>
-          </tr>
-          <!-- Expanded detail row -->
-          @if (selectedId === log.id) {
-            <tr class="detail-row">
-              <td colspan="9">
-                @if (!detailLoading) {
-                  <div class="detail-panel">
-                    @if (detailError) {
-                      <div class="alert alert-error">{{ detailError }}</div>
-                    }
-                    @if (detail) {
-                      <div class="detail-grid">
-                        <!-- Errors panel -->
-                        @if (parsedErrors.length > 0) {
-                          <div class="detail-section error-section">
-                            <div class="section-title error-title">Errors ({{ parsedErrors.length }})</div>
-                            <div class="error-list">
-                              @for (e of parsedErrors; track e) {
-                                <div class="error-item">
-                                  <strong>{{ e.errorCode }}</strong>
-                                  @if (e.sourcePath) {
-                                    <span class="path-chip">{{ e.sourcePath }} → {{ e.fieldPath }}</span>
-                                  }
-                                  <span class="error-msg">{{ e.message }}</span>
-                                </div>
+  <app-data-table
+    [rows]="logs"
+    [columns]="logColumns"
+    [loading]="loading"
+    dataKey="id"
+    emptyIcon="pi-history"
+    emptyHeading="No transformation logs"
+    emptyMessage='Run a transformation on the "Test Transform" tab to generate logs.'
+  >
+    <ng-template #row let-log>
+      <tr class="summary-row" (click)="toggleDetail(log)" [class.expanded]="selectedId === log.id">
+        <td class="expand-cell">
+          <span class="expand-icon">{{ selectedId === log.id ? '▼' : '▶' }}</span>
+        </td>
+        <td><app-status-tag [status]="statusLabel(log.status)" /></td>
+        <td class="template-id-cell">{{ log.templateName || log.templateId }}</td>
+        <td class="message-cell" [title]="log.messageSummary || ''">
+          {{ log.messageSummary || '—' }}
+        </td>
+        <td class="correlation-cell"><code>{{ log.correlationId || '—' }}</code></td>
+        <td>{{ log.timestamp | date: 'MMM d, y HH:mm:ss' }}</td>
+        <td class="ms-cell">{{ log.durationMs }} ms</td>
+        <td>{{ log.source || '—' }}</td>
+        <td class="muted">{{ log.expiresAt | date: 'mediumDate' }}</td>
+      </tr>
+      <!-- Expanded detail row -->
+      @if (selectedId === log.id) {
+        <tr class="detail-row">
+          <td colspan="9">
+            @if (!detailLoading) {
+              <div class="detail-panel">
+                @if (detailError) {
+                  <div class="alert alert-error">{{ detailError }}</div>
+                }
+                @if (detail) {
+                  <div class="detail-grid">
+                    @if (parsedErrors.length > 0) {
+                      <div class="detail-section error-section">
+                        <div class="section-title error-title">Errors ({{ parsedErrors.length }})</div>
+                        <div class="error-list">
+                          @for (e of parsedErrors; track e) {
+                            <div class="error-item">
+                              <strong>{{ e.errorCode }}</strong>
+                              @if (e.sourcePath) {
+                                <span class="path-chip">{{ e.sourcePath }} → {{ e.fieldPath }}</span>
                               }
+                              <span class="error-msg">{{ e.message }}</span>
                             </div>
-                          </div>
-                        }
-                        <!-- Warnings panel -->
-                        @if (parsedWarnings.length > 0) {
-                          <div class="detail-section warning-section">
-                            <div class="section-title warning-title">Warnings ({{ parsedWarnings.length }})</div>
-                            <div class="error-list">
-                              @for (w of parsedWarnings; track w) {
-                                <div class="error-item">
-                                  <strong>{{ w.code }}</strong>
-                                  @if (w.sourcePath) {
-                                    <span class="path-chip warning-chip">{{ w.sourcePath }} → {{ w.targetPath }}</span>
-                                  }
-                                  <span class="error-msg">{{ w.message }}</span>
-                                </div>
-                              }
-                            </div>
-                          </div>
-                        }
-                        <!-- Input / Output JSON -->
-                        <div class="detail-section">
-                          <div class="section-title">Input JSON</div>
-                          <pre class="json-block">{{ detail.inputData | prettyJson }}</pre>
-                        </div>
-                        <div class="detail-section">
-                          <div class="section-title">Output JSON</div>
-                          @if (detail.outputData) {
-                            <pre class="json-block">{{ detail.outputData | prettyJson }}</pre>
-                          }
-                          @if (!detail.outputData) {
-                            <span class="muted">No output produced</span>
                           }
                         </div>
                       </div>
                     }
+                    @if (parsedWarnings.length > 0) {
+                      <div class="detail-section warning-section">
+                        <div class="section-title warning-title">Warnings ({{ parsedWarnings.length }})</div>
+                        <div class="error-list">
+                          @for (w of parsedWarnings; track w) {
+                            <div class="error-item">
+                              <strong>{{ w.code }}</strong>
+                              @if (w.sourcePath) {
+                                <span class="path-chip warning-chip">{{ w.sourcePath }} → {{ w.targetPath }}</span>
+                              }
+                              <span class="error-msg">{{ w.message }}</span>
+                            </div>
+                          }
+                        </div>
+                      </div>
+                    }
+                    <div class="detail-section">
+                      <div class="section-title">Input JSON</div>
+                      <pre class="json-block">{{ detail.inputData | prettyJson }}</pre>
+                    </div>
+                    <div class="detail-section">
+                      <div class="section-title">Output JSON</div>
+                      @if (detail.outputData) {
+                        <pre class="json-block">{{ detail.outputData | prettyJson }}</pre>
+                      }
+                      @if (!detail.outputData) {
+                        <span class="muted">No output produced</span>
+                      }
+                    </div>
                   </div>
                 }
-                @if (detailLoading) {
-                  <div class="loading-detail">Loading…</div>
-                }
-              </td>
-            </tr>
-          }
-        }
-
-        @if (logs.length === 0 && !loading) {
-          <tr>
-            <td colspan="9" class="no-data">
-              No transformation logs found. Run a transformation on the "Test Transform" tab to generate logs.
-            </td>
-          </tr>
-        }
-        @if (loading) {
-          <tr>
-            <td colspan="9" class="no-data">Loading…</td>
-          </tr>
-        }
-      </tbody>
-    </table>
-  </div>
+              </div>
+            }
+            @if (detailLoading) {
+              <div class="loading-detail">Loading…</div>
+            }
+          </td>
+        </tr>
+      }
+    </ng-template>
+  </app-data-table>
 </div>

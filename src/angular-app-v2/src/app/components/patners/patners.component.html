@@ -1,11 +1,17 @@
 <div class="container">
-  <h2>Partners</h2>
-
-  <div class="actions">
-    <button (click)="showCreateForm = !showCreateForm; error = null" class="btn btn-primary">
-      {{ showCreateForm ? 'Cancel' : '+ Add Partner' }}
-    </button>
-  </div>
+  <app-section-header
+    title="Partners"
+    subtitle="Source and target partners referenced by transformation templates."
+  >
+    <button
+      pButton
+      type="button"
+      [label]="showCreateForm ? 'Cancel' : 'Add Partner'"
+      [icon]="showCreateForm ? 'pi pi-times' : 'pi pi-plus'"
+      severity="primary"
+      (click)="showCreateForm = !showCreateForm; error = null"
+    ></button>
+  </app-section-header>
 
   @if (showCreateForm) {
     <div class="form-container">
@@ -52,46 +58,24 @@
     <div class="error">{{ error }}</div>
   }
 
-  <div class="table-wrapper">
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th>Partner Name</th>
-          <th>Description</th>
-          <th>Created</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-
-      <tbody>
-        @for (partner of partners; track partner) {
-          <tr>
-            <td>{{ partner.name }}</td>
-            <td>{{ partner.description }}</td>
-            <td>{{ partner.createdAt | date: 'short' }}</td>
-            <td class="actions-cell">
-              <button
-                class="btn btn-danger btn-sm"
-                (click)="deletePartner(partner.id, partner.name)"
-                [disabled]="deleting[partner.id]"
-              >
-                @if (deleting[partner.id]) {
-                  <span class="spinner spinner-sm"></span>
-                }
-                {{ deleting[partner.id] ? 'Deleting...' : 'Delete' }}
-              </button>
-            </td>
-          </tr>
-        }
-      </tbody>
-    </table>
-
-    @if (partners.length === 0 && !loading) {
-      <div class="table-state">No partners found.</div>
-    }
-
-    @if (loading) {
-      <div class="table-state">Loading...</div>
-    }
-  </div>
+  <app-data-table
+    [rows]="partners"
+    [columns]="partnerColumns"
+    [loading]="loading"
+    dataKey="id"
+    emptyIcon="pi-users"
+    emptyHeading="No partners yet"
+    emptyMessage='Click "Add Partner" to add the first one.'
+  >
+    <ng-template #row let-partner>
+      <tr>
+        <td>{{ partner.name }}</td>
+        <td>{{ partner.description }}</td>
+        <td>{{ partner.createdAt | date: 'short' }}</td>
+        <td style="text-align: center">
+          <app-row-actions [items]="menuFor(partner)" />
+        </td>
+      </tr>
+    </ng-template>
+  </app-data-table>
 </div>

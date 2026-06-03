@@ -1,14 +1,25 @@
 import { Component, OnInit } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
+import { ButtonModule } from 'primeng/button';
+import { MenuItem } from 'primeng/api';
 import { ApiService } from '../../services/api.service';
 import { GeneralService } from '../../services/general.service';
 import { LookupTable, CreateLookupTableRequest } from '../../models/lookup-table.model';
 import { TmsSystem } from '../../models/tms-system.model';
+import { DataTableComponent, DataTableColumn } from '../../design-system/data-table.component';
+import { RowActionsComponent } from '../../design-system/row-actions.component';
+import { SectionHeaderComponent } from '../../design-system/section-header.component';
 
 @Component({
   selector: 'app-lookup-tables',
-  imports: [FormsModule],
+  imports: [
+    FormsModule,
+    ButtonModule,
+    DataTableComponent,
+    RowActionsComponent,
+    SectionHeaderComponent,
+  ],
   templateUrl: './lookup-tables.component.html',
   styleUrl: './lookup-tables.component.scss',
 })
@@ -21,6 +32,30 @@ export class LookupTablesComponent implements OnInit {
   success: string = '';
   selectedLookup: LookupTable | null = null;
   parsedMappings: Array<{ key: string; value: string }> = [];
+  isInitialLoading = false;
+
+  /** Column metadata for the unified data-table. */
+  lookupColumns: DataTableColumn[] = [
+    { field: '', header: 'TMS System', sortable: false },
+    { field: 'fieldName', header: 'Field Name', width: '10rem' },
+    { field: 'name', header: 'Name' },
+    { field: 'description', header: 'Description' },
+    { field: 'defaultValue', header: 'Default Value', width: '9rem' },
+    { field: 'isCaseSensitive', header: 'Case Sensitive', width: '9rem', align: 'center' },
+    { field: '', header: '', sortable: false, width: '4rem', align: 'center' },
+  ];
+
+  menuFor(lookup: LookupTable): MenuItem[] {
+    return [
+      { label: 'View', icon: 'pi pi-eye', command: () => this.viewMappings(lookup) },
+      {
+        label: 'Delete',
+        icon: 'pi pi-trash',
+        styleClass: 'menu-item-danger',
+        command: () => this.deleteLookupTable(lookup.id),
+      },
+    ];
+  }
 
   newLookup: CreateLookupTableRequest = this.getEmptyLookup();
 

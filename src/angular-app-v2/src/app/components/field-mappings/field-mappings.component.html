@@ -149,48 +149,27 @@
     <div class="success">{{ success }}</div>
   }
 
-  <div class="table-container">
-    <table>
-      <thead>
-        <tr>
-          <th>Source Path</th>
-          <th>Target Path</th>
-          <th>Type</th>
-          <th>Required</th>
-          <th>Default</th>
+  <app-data-table
+    [rows]="mappings"
+    [columns]="fmColumns"
+    dataKey="id"
+    emptyIcon="pi-link"
+    emptyHeading="No field mappings yet"
+    emptyMessage="Click 'Add New Mapping' to start mapping fields."
+  >
+    <ng-template #row let-mapping>
+      <tr>
+        <td><code>{{ mapping.sourcePath }}</code></td>
+        <td><code>{{ mapping.targetPath }}</code></td>
+        <td><span class="badge">{{ mapping.transformationType }}</span></td>
+        <td style="text-align: center">{{ mapping.isRequired ? 'Yes' : 'No' }}</td>
+        <td>{{ mapping.defaultValue || '—' }}</td>
+        <td style="text-align: center">
           @if (!isReadonly) {
-            <th>Actions</th>
+            <app-row-actions [items]="menuFor(mapping)" />
           }
-        </tr>
-      </thead>
-      <tbody>
-        @for (mapping of mappings; track mapping) {
-          <tr>
-            <td>
-              <code>{{ mapping.sourcePath }}</code>
-            </td>
-            <td>
-              <code>{{ mapping.targetPath }}</code>
-            </td>
-            <td>
-              <span class="badge">{{ mapping.transformationType }}</span>
-            </td>
-            <td>{{ mapping.isRequired ? 'Yes' : 'No' }}</td>
-            <td>{{ mapping.defaultValue || '-' }}</td>
-            @if (!isReadonly) {
-              <td>
-                <button class="btn-small btn-info" (click)="startEdit(mapping)">Edit</button>
-                <button class="btn-small btn-danger" (click)="deleteMapping(mapping.id)">Delete</button>
-              </td>
-            }
-          </tr>
-        }
-        @if (mappings.length === 0) {
-          <tr>
-            <td colspan="8" class="no-data">No field mappings found</td>
-          </tr>
-        }
-      </tbody>
-    </table>
-  </div>
+        </td>
+      </tr>
+    </ng-template>
+  </app-data-table>
 </div>

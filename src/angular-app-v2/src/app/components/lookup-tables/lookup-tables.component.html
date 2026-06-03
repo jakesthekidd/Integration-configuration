@@ -1,22 +1,26 @@
 <div class="container">
-  <h2>Lookup Tables Management</h2>
-
-  <div class="filters">
-    <label>
+  <app-section-header
+    title="Lookup Tables"
+    subtitle="Reusable key-value maps used by mappings to normalize values (e.g. status codes, equipment types)."
+  >
+    <label class="filters__tms">
       Filter by TMS:
       <select [(ngModel)]="selectedTmsId" (change)="onTmsChange()">
         <option value="">All TMS Systems</option>
         @for (tms of tmsSystems; track tms) {
-          <option [value]="tms.id">
-            {{ tms.displayName }}
-          </option>
+          <option [value]="tms.id">{{ tms.displayName }}</option>
         }
       </select>
     </label>
-    <button class="btn-primary" (click)="showCreateForm = !showCreateForm">
-      {{ showCreateForm ? 'Cancel' : 'Add New Lookup Table' }}
-    </button>
-  </div>
+    <button
+      pButton
+      type="button"
+      [label]="showCreateForm ? 'Cancel' : 'Add Lookup Table'"
+      [icon]="showCreateForm ? 'pi pi-times' : 'pi pi-plus'"
+      severity="primary"
+      (click)="showCreateForm = !showCreateForm"
+    ></button>
+  </app-section-header>
 
   @if (showCreateForm) {
     <div class="form-container">
@@ -108,44 +112,29 @@
     <div class="success">{{ success }}</div>
   }
 
-  <div class="table-container">
-    <table>
-      <thead>
-        <tr>
-          <th>TMS System</th>
-          <th>Field Name</th>
-          <th>Name</th>
-          <th>Description</th>
-          <th>Default Value</th>
-          <th>Case Sensitive</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (lookup of lookupTables; track lookup) {
-          <tr>
-            <td>{{ getTmsName(lookup.tmsSystemId) }}</td>
-            <td>
-              <code>{{ lookup.fieldName }}</code>
-            </td>
-            <td>{{ lookup.name }}</td>
-            <td>{{ lookup.description || '-' }}</td>
-            <td>{{ lookup.defaultValue || '-' }}</td>
-            <td>{{ lookup.isCaseSensitive ? 'Yes' : 'No' }}</td>
-            <td>
-              <button class="btn-small btn-info" (click)="viewMappings(lookup)">View</button>
-              <button class="btn-small btn-danger" (click)="deleteLookupTable(lookup.id)">Delete</button>
-            </td>
-          </tr>
-        }
-        @if (lookupTables.length === 0) {
-          <tr>
-            <td colspan="7" class="no-data">No lookup tables found</td>
-          </tr>
-        }
-      </tbody>
-    </table>
-  </div>
+  <app-data-table
+    [rows]="lookupTables"
+    [columns]="lookupColumns"
+    [loading]="isInitialLoading"
+    dataKey="id"
+    emptyIcon="pi-list"
+    emptyHeading="No lookup tables found"
+    emptyMessage='Click "Add Lookup Table" to create your first mapping.'
+  >
+    <ng-template #row let-lookup>
+      <tr>
+        <td>{{ getTmsName(lookup.tmsSystemId) }}</td>
+        <td><code class="lookup__code">{{ lookup.fieldName }}</code></td>
+        <td>{{ lookup.name }}</td>
+        <td>{{ lookup.description || '—' }}</td>
+        <td>{{ lookup.defaultValue || '—' }}</td>
+        <td style="text-align: center">{{ lookup.isCaseSensitive ? 'Yes' : 'No' }}</td>
+        <td style="text-align: center">
+          <app-row-actions [items]="menuFor(lookup)" />
+        </td>
+      </tr>
+    </ng-template>
+  </app-data-table>
 
   @if (selectedLookup) {
     <div

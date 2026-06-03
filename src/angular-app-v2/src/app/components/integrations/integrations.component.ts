@@ -1,20 +1,54 @@
 import { Component, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ButtonModule } from 'primeng/button';
+import { MenuItem } from 'primeng/api';
 import { ApiService } from '../../services/api.service';
 import { GeneralService } from '../../services/general.service';
 import { ApiClient, CreateApiClientRequest, UpdateApiClientRequest } from '../../models/api-client.model';
 import { TemplateVersionResponse } from '../../models/template.model';
 import { environment } from '../../../environments/environment';
+import { DataTableComponent, DataTableColumn } from '../../design-system/data-table.component';
+import { RowActionsComponent } from '../../design-system/row-actions.component';
+import { StatusTagComponent } from '../../design-system/status-tag.component';
+import { SectionHeaderComponent } from '../../design-system/section-header.component';
 
 @Component({
     selector: 'app-integrations',
-    imports: [CommonModule, FormsModule],
+    imports: [
+      CommonModule,
+      FormsModule,
+      ButtonModule,
+      DataTableComponent,
+      RowActionsComponent,
+      StatusTagComponent,
+      SectionHeaderComponent,
+    ],
     templateUrl: './integrations.component.html',
     styleUrl: './integrations.component.scss'
 })
 export class IntegrationsComponent implements OnInit {
   clients: ApiClient[] = [];
+
+  /** Column metadata for the unified data table. */
+  clientColumns: DataTableColumn[] = [
+    { field: 'name', header: 'Name' },
+    { field: 'isActive', header: 'Status', width: '9rem' },
+    { field: 'description', header: 'Description' },
+    { field: '', header: '', sortable: false, width: '4rem', align: 'center' },
+  ];
+
+  menuFor(client: ApiClient): MenuItem[] {
+    return [
+      { label: 'View', icon: 'pi pi-eye', command: () => this.selectClient(client) },
+      {
+        label: 'Delete',
+        icon: 'pi pi-trash',
+        styleClass: 'menu-item-danger',
+        command: () => this.deleteClient(client.id),
+      },
+    ];
+  }
   loading = false;
   error: string | null = null;
   showCreateForm = false;

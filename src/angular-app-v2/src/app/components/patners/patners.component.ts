@@ -1,15 +1,27 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ButtonModule } from 'primeng/button';
+import { MenuItem } from 'primeng/api';
 import { ApiService } from '../../services/api.service';
 import { GeneralService } from '../../services/general.service';
 import { CreatePartnerRequest, Partner } from '../../models/partner.model';
 import { catchError, finalize, tap } from 'rxjs/operators';
 import { of } from 'rxjs';
+import { DataTableComponent, DataTableColumn } from '../../design-system/data-table.component';
+import { RowActionsComponent } from '../../design-system/row-actions.component';
+import { SectionHeaderComponent } from '../../design-system/section-header.component';
 
 @Component({
     selector: 'app-patners',
-    imports: [CommonModule, FormsModule],
+    imports: [
+      CommonModule,
+      FormsModule,
+      ButtonModule,
+      DataTableComponent,
+      RowActionsComponent,
+      SectionHeaderComponent,
+    ],
     templateUrl: './patners.component.html',
     styleUrls: ['./patners.component.scss']
 })
@@ -20,6 +32,24 @@ export class PatnersComponent implements OnInit {
   error: string | null = null;
   showCreateForm = false;
   deleting: { [id: string]: boolean } = {};
+
+  partnerColumns: DataTableColumn[] = [
+    { field: 'name', header: 'Partner Name' },
+    { field: 'description', header: 'Description' },
+    { field: 'createdAt', header: 'Created', width: '10rem' },
+    { field: '', header: '', sortable: false, width: '4rem', align: 'center' },
+  ];
+
+  menuFor(partner: Partner): MenuItem[] {
+    return [
+      {
+        label: 'Delete',
+        icon: 'pi pi-trash',
+        styleClass: 'menu-item-danger',
+        command: () => this.deletePartner(partner.id, partner.name),
+      },
+    ];
+  }
 
   newPartner: CreatePartnerRequest = { name: '', description: '' };
 

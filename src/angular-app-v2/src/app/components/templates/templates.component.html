@@ -1,15 +1,19 @@
 <div class="container">
   <!-- ==================== SCREEN: LIST ==================== -->
   @if (currentScreen === 'list') {
-    <div class="page-header">
-      <div>
-        <h2>Templates</h2>
-        <p class="page-subtitle">Manage transformation templates and their versions</p>
-      </div>
-      <button class="btn-primary" (click)="showCreateForm = !showCreateForm">
-        {{ showCreateForm ? 'Back' : '＋ New Template' }}
-      </button>
-    </div>
+    <app-section-header
+      title="Templates"
+      subtitle="Manage transformation templates and their versions."
+    >
+      <button
+        pButton
+        type="button"
+        [label]="showCreateForm ? 'Back' : 'New Template'"
+        [icon]="showCreateForm ? 'pi pi-arrow-left' : 'pi pi-plus'"
+        severity="primary"
+        (click)="showCreateForm = !showCreateForm"
+      ></button>
+    </app-section-header>
     @if (error) {
       <div class="error">{{ error }}</div>
     }
@@ -158,65 +162,37 @@
       }
     </div>
     <!-- Templates Table -->
-    <div class="table-container">
-      <table>
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Status</th>
-            <th>Latest Version</th>
-            <th>Description</th>
-            <th>Created</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (template of templates; track template) {
-            <tr class="clickable-row" [class.row-archived]="isArchived(template)" (click)="openDetail(template)">
-              <td>
-                <strong>{{ template.name }}</strong>
-                <br /><small class="muted">{{ template.id }}</small>
-              </td>
-              <td>
-                <span class="badge" [ngClass]="getStatusClass(template.status)">{{ template.status }}</span>
-              </td>
-              <td>
-                <span class="badge badge-version">v{{ template.version }}</span>
-                &nbsp;
-                <span class="badge" [ngClass]="getVersionStatusClass(template.latestVersionStatus)">
-                  {{ template.latestVersionStatus || 'Draft' }}
-                </span>
-              </td>
-              <td class="description-cell">{{ template.description || '—' }}</td>
-              <td>{{ formatDate(template.createdAt) }}</td>
-              <td class="actions-cell" (click)="$event.stopPropagation()">
-                <button class="btn-small btn-info" (click)="openDetail(template)" title="View Template Details">
-                  View
-                </button>
-                <button class="btn-small btn-danger" (click)="deleteTemplate(template)" title="Delete">Delete</button>
-              </td>
-            </tr>
-          }
-          @if (isInitialLoading) {
-            <tr>
-              <td colspan="6" class="no-data">Loading templates...</td>
-            </tr>
-          }
-          @if (templates.length === 0 && !isInitialLoading) {
-            <tr>
-              <td colspan="6" class="no-data">
-                @if (statusFilter === 'All') {
-                  No templates found. Click "New Template" to get started.
-                }
-                @if (statusFilter !== 'All') {
-                  No {{ statusFilter.toLowerCase() }} templates found.
-                }
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
+    <app-data-table
+      [rows]="templates"
+      [columns]="tplColumns"
+      [loading]="isInitialLoading"
+      dataKey="id"
+      emptyIcon="pi-file"
+      emptyHeading="No templates found"
+      [emptyMessage]="statusFilter === 'All'
+        ? 'Click “New Template” to get started.'
+        : 'No ' + statusFilter.toLowerCase() + ' templates match this filter.'"
+    >
+      <ng-template #row let-template>
+        <tr class="clickable-row" [class.row-archived]="isArchived(template)" (click)="openDetail(template)">
+          <td>
+            <strong>{{ template.name }}</strong>
+            <br /><small class="muted">{{ template.id }}</small>
+          </td>
+          <td><app-status-tag [status]="template.status" /></td>
+          <td>
+            <span class="badge badge-version">v{{ template.version }}</span>
+            &nbsp;
+            <app-status-tag [status]="template.latestVersionStatus || 'Draft'" />
+          </td>
+          <td class="description-cell">{{ template.description || '—' }}</td>
+          <td>{{ formatDate(template.createdAt) }}</td>
+          <td style="text-align: center" (click)="$event.stopPropagation()">
+            <app-row-actions [items]="menuFor(template)" />
+          </td>
+        </tr>
+      </ng-template>
+    </app-data-table>
     <div class="pagination-bar">
       <div class="pagination-info">
         Showing {{ templates.length ? (currentPage - 1) * pageSize + 1 : 0 }}–{{
