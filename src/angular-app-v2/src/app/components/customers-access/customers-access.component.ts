@@ -11,6 +11,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { CustomerAccessService } from '../../services/customer-access.service';
 import { GeneralService } from '../../services/general.service';
 import { Customer } from '../../models/customer.model';
+import { FilterChipsComponent, FilterChipOption } from '../../design-system/filter-chips.component';
 
 type StatusFilter = 'all' | 'enabled' | 'disabled';
 
@@ -36,6 +37,7 @@ type StatusFilter = 'all' | 'enabled' | 'disabled';
     InputTextModule,
     CheckboxModule,
     TooltipModule,
+    FilterChipsComponent,
   ],
   template: `
     <section class="ca">
@@ -64,32 +66,14 @@ type StatusFilter = 'all' | 'enabled' | 'disabled';
       </header>
 
       <!-- Filter chips -->
-      <div class="ca__chips" role="tablist" aria-label="Status filter">
-        <button
-          type="button"
-          class="ca__chip"
-          [class.ca__chip--active]="statusFilter() === 'all'"
-          (click)="setFilter('all')"
-        >
-          All <span class="ca__chip-count">{{ counts().all }}</span>
-        </button>
-        <button
-          type="button"
-          class="ca__chip"
-          [class.ca__chip--active]="statusFilter() === 'enabled'"
-          (click)="setFilter('enabled')"
-        >
-          Enabled <span class="ca__chip-count">{{ counts().enabled }}</span>
-        </button>
-        <button
-          type="button"
-          class="ca__chip"
-          [class.ca__chip--active]="statusFilter() === 'disabled'"
-          (click)="setFilter('disabled')"
-        >
-          Disabled <span class="ca__chip-count">{{ counts().disabled }}</span>
-        </button>
-      </div>
+      <app-filter-chips
+        class="ca__filter"
+        ariaLabel="Status filter"
+        [options]="filterOptions()"
+        [value]="statusFilter()"
+        (valueChange)="setFilter($event)"
+      />
+
 
       <!-- Bulk action bar — appears on selection -->
       @if (selected().length > 0) {
@@ -309,46 +293,9 @@ type StatusFilter = 'all' | 'enabled' | 'disabled';
         padding-left: 2.25rem;
         width: 320px;
       }
-      .ca__chips {
-        display: flex;
-        gap: 0.5rem;
+      .ca__filter {
+        display: block;
         margin: 0.75rem 0 1rem;
-      }
-      .ca__chip {
-        border: 1px solid #e2e8f0;
-        background: #ffffff;
-        color: #334155;
-        padding: 0.4rem 0.85rem;
-        border-radius: 999px;
-        font-size: 0.8125rem;
-        font-weight: 500;
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        transition: background-color 0.15s ease, border-color 0.15s ease;
-      }
-      .ca__chip:hover {
-        background: #f8fafc;
-      }
-      .ca__chip--active {
-        background: #1e3a8a;
-        border-color: #1e3a8a;
-        color: #ffffff;
-      }
-      .ca__chip-count {
-        background: rgba(255, 255, 255, 0.18);
-        color: inherit;
-        font-size: 0.6875rem;
-        font-weight: 600;
-        padding: 0.05rem 0.4rem;
-        border-radius: 999px;
-        min-width: 1.5rem;
-        text-align: center;
-      }
-      .ca__chip:not(.ca__chip--active) .ca__chip-count {
-        background: #f1f5f9;
-        color: #475569;
       }
       .ca__bulk {
         display: flex;
@@ -473,6 +420,16 @@ export class CustomersAccessComponent implements OnDestroy {
 
   // ---- Reactive view bits from the service ----
   counts = this.access.counts;
+
+  /** Filter chip options, decorated with live counts. */
+  filterOptions = computed<FilterChipOption<StatusFilter>[]>(() => {
+    const c = this.counts();
+    return [
+      { label: 'All', value: 'all', count: c.all },
+      { label: 'Enabled', value: 'enabled', count: c.enabled },
+      { label: 'Disabled', value: 'disabled', count: c.disabled },
+    ];
+  });
   pendingUndo = this.access.pendingUndo;
   undoSecondsLeft = signal(0);
   private undoTimer: number | null = null;

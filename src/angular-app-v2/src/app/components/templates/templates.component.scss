@@ -134,50 +134,10 @@
   border-radius: 4px;
 }
 
-.filter-bar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+/* Filter chip styling moved to <app-filter-chips>. */
+.tpl-filter {
+  display: block;
   margin-bottom: 14px;
-  padding: 10px 14px;
-  background: #f8f9fa;
-  border-radius: 6px;
-  border: 1px solid #e9ecef;
-}
-
-.filter-bar .filter-label {
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: #7f8c8d;
-  margin-right: 4px;
-}
-
-.filter-bar .filter-chip {
-  padding: 5px 14px;
-  border-radius: 999px;
-  border: 1px solid #d0d7de;
-  background: #fff;
-  color: #34495e;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition:
-    background 0.15s ease,
-    border-color 0.15s ease,
-    color 0.15s ease;
-}
-
-.filter-bar .filter-chip:hover:not(.active) {
-  background: #ecf3fb;
-  border-color: #b8d4ee;
-}
-
-.filter-bar .filter-chip.active {
-  background: #3498db;
-  border-color: #3498db;
-  color: white;
 }
 
 .form-container {

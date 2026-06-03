@@ -12,6 +12,7 @@ import { DataTableComponent, DataTableColumn } from '../../design-system/data-ta
 import { RowActionsComponent } from '../../design-system/row-actions.component';
 import { StatusTagComponent } from '../../design-system/status-tag.component';
 import { SectionHeaderComponent } from '../../design-system/section-header.component';
+import { FilterChipsComponent, FilterChipOption } from '../../design-system/filter-chips.component';
 
 type Screen = 'list' | 'detail' | 'version';
 export type TemplateStatusFilter = 'All' | 'Active' | 'Archived';
@@ -28,6 +29,7 @@ const TEMPLATE_STATUS_FILTERS: readonly TemplateStatusFilter[] = ['All', 'Active
       RowActionsComponent,
       StatusTagComponent,
       SectionHeaderComponent,
+      FilterChipsComponent,
     ],
     templateUrl: './templates.component.html',
     styleUrl: './templates.component.scss'
@@ -48,6 +50,10 @@ export class TemplatesComponent implements OnInit {
   // --- Filters ---
   readonly statusFilterOptions = TEMPLATE_STATUS_FILTERS;
   statusFilter: TemplateStatusFilter = 'Active';
+
+  /** Options consumed by <app-filter-chips>. */
+  readonly statusChipOptions: FilterChipOption<TemplateStatusFilter>[] =
+    TEMPLATE_STATUS_FILTERS.map((label) => ({ label, value: label }));
 
   // --- Pagination ---
   currentPage: number = 1;

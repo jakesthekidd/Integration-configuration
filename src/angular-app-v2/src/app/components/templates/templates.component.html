@@ -147,20 +147,15 @@
       </div>
     }
     <!-- Status Filter -->
-    <div class="filter-bar" role="group" aria-label="Filter templates by status">
-      <span class="filter-label">Status:</span>
-      @for (option of statusFilterOptions; track option) {
-        <button
-          type="button"
-          class="filter-chip"
-          [class.active]="statusFilter === option"
-          [attr.aria-pressed]="statusFilter === option"
-          (click)="setStatusFilter(option)"
-        >
-          {{ option }}
-        </button>
-      }
-    </div>
+    <app-filter-chips
+      class="tpl-filter"
+      ariaLabel="Filter templates by status"
+      label="Status:"
+      [options]="statusChipOptions"
+      [value]="statusFilter"
+      (valueChange)="setStatusFilter($event)"
+    />
+
     <!-- Templates Table -->
     <app-data-table
       [rows]="templates"
