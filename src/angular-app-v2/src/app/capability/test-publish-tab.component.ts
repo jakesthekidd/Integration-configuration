@@ -420,9 +420,11 @@ export class TestPublishTabComponent implements OnChanges {
         this.versions().find((v) => v.state === 'Activated') ??
         this.versions().find((v) => v.state === 'Published') ??
         this.versions().find((v) => v.state === 'Archived');
-      if (!baseVersion) return;
-      const nextNumber =
-        Math.max(0, ...this.versions().map((x) => x.versionNumber)) + 1;
+      // Brand-new deployment with no version history → seed a v1 Draft from
+      // scratch so the user has something to publish & activate.
+      const nextNumber = baseVersion
+        ? Math.max(0, ...this.versions().map((x) => x.versionNumber)) + 1
+        : 1;
       const newDraft: Version = {
         id: `v-${Date.now()}`,
         deploymentId: id,
@@ -430,8 +432,10 @@ export class TestPublishTabComponent implements OnChanges {
         state: 'Draft',
         createdAt: new Date().toISOString(),
         createdBy: this.currentAuthor,
-        notes: `Auto-forked from v${baseVersion.versionNumber} (${baseVersion.state}) on first edit`,
-        basedOnVersionNumber: baseVersion.versionNumber,
+        notes: baseVersion
+          ? `Auto-forked from v${baseVersion.versionNumber} (${baseVersion.state}) on first edit`
+          : 'New draft — first configuration for this capability',
+        basedOnVersionNumber: baseVersion?.versionNumber,
       };
       this.versions.update((list) => [newDraft, ...list]);
     });
