@@ -388,6 +388,10 @@ export class ConnectionTabComponent implements OnChanges {
     if (!this.deployment) return;
     if (this.viewingVersion()) return; // never auto-fork while viewing a snapshot
     if (this.draftService.hasDraft(this.deployment.id)) return;
+    // Flip draft-exists immediately so the cross-tab banner + dot appear
+    // even before the user navigates to Publish & Activate. The spawn-request
+    // counter still drives the actual Draft row seed when that tab mounts.
+    this.draftService.setDraft(this.deployment.id, true);
     this.draftService.requestSpawnDraft(this.deployment.id);
     if (!this.autoForkedOnce) {
       this.autoForkedOnce = true;

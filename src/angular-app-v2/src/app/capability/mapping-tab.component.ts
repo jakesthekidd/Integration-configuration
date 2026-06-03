@@ -583,6 +583,10 @@ export class MappingTabComponent implements OnChanges {
     }
     if (!this.deployment) return;
     if (this.hasDraft()) return;
+    // Flip draft-exists immediately so the cross-tab banner + dot appear
+    // even before the user navigates to Publish & Activate. The spawn-request
+    // counter still drives the actual Draft row seed when that tab mounts.
+    this.draftService.setDraft(this.deployment.id, true);
     this.draftService.requestSpawnDraft(this.deployment.id);
     if (!this.autoForkedOnce) {
       this.autoForkedOnce = true;
