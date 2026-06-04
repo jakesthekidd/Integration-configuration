@@ -258,6 +258,33 @@ export class ApiService {
     return this.http.post<ApiResponse<any>>(`${this.apiUrl}/json/parse`, { jsonString, includeSampleValues });
   }
 
+  /** Per-deployment saved mappings (mock-backed). */
+  getDeploymentMappings(deploymentId: string): Observable<
+    ApiResponse<{ mappings: FieldMapping[]; totalCount: number }>
+  > {
+    return this.http.get<ApiResponse<{ mappings: FieldMapping[]; totalCount: number }>>(
+      `${this.apiUrl}/deployments/${deploymentId}/mappings`,
+    );
+  }
+
+  /** Persist a deployment's mappings + the template ref it was forked from. */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  saveDeploymentMappings(
+    deploymentId: string,
+    body: {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      mappings: any[];
+      forkedFromTemplateId?: string;
+      forkedFromTemplateVersion?: number | null;
+    },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ): Observable<ApiResponse<any>> {
+    return this.http.put<ApiResponse<unknown>>(
+      `${this.apiUrl}/deployments/${deploymentId}/mappings`,
+      body,
+    );
+  }
+
   // Field Mappings
   getFieldMappings(templateId?: string, templateVersionId?: string): Observable<ApiResponse<FieldMappingListResponse>> {
     let url = templateId ? `${this.apiUrl}/field-mappings?templateId=${templateId}` : `${this.apiUrl}/field-mappings`;

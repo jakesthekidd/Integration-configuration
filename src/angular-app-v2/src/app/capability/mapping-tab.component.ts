@@ -671,34 +671,57 @@ export class MappingTabComponent implements OnChanges {
       }
     });
 
-    // Load the field mappings (in mock these come keyed by template id).
-    if (this.deployment.forkedFromTemplateId) {
-      this.api.getFieldMappings(this.deployment.forkedFromTemplateId).subscribe((res) => {
-        if (res.success && res.data) {
-          const rows: MappingRow[] = res.data.mappings.map((m) => ({
-            id: m.id,
-            sourcePath: m.sourcePath,
-            targetPath: m.targetPath,
-            transformationType: m.transformationType,
-            isRequired: m.isRequired,
-            defaultValue: m.defaultValue ?? '',
-          }));
-          this.mappings.set(rows);
-          this.snapshot.set({
-            forkedFromId: this.forkedFromId(),
-            forkedVersion: this.forkedVersion(),
-            mappings: rows.map((r) => ({ ...r })),
-          });
-        }
-      });
-    } else {
-      this.mappings.set([]);
-      this.snapshot.set({
-        forkedFromId: this.forkedFromId(),
-        forkedVersion: this.forkedVersion(),
-        mappings: [],
-      });
-    }
+    // 1. Deployment-saved mappings are the source of truth once persisted.
+    //    2. If none, fall back to the master template (initial fork preview).
+    //    3. Otherwise, empty.
+    this.api.getDeploymentMappings(this.deployment.id).subscribe((res) => {
+      const saved = res.success && res.data?.mappings ? res.data.mappings : [];
+      if (saved.length > 0) {
+        const rows: MappingRow[] = saved.map((m) => ({
+          id: m.id,
+          sourcePath: m.sourcePath,
+          targetPath: m.targetPath,
+          transformationType: m.transformationType,
+          isRequired: m.isRequired,
+          defaultValue: m.defaultValue ?? '',
+        }));
+        this.mappings.set(rows);
+        this.snapshot.set({
+          forkedFromId: this.forkedFromId(),
+          forkedVersion: this.forkedVersion(),
+          mappings: rows.map((r) => ({ ...r })),
+        });
+        return;
+      }
+
+      if (this.deployment.forkedFromTemplateId) {
+        this.api.getFieldMappings(this.deployment.forkedFromTemplateId).subscribe((tplRes) => {
+          if (tplRes.success && tplRes.data) {
+            const rows: MappingRow[] = tplRes.data.mappings.map((m) => ({
+              id: m.id,
+              sourcePath: m.sourcePath,
+              targetPath: m.targetPath,
+              transformationType: m.transformationType,
+              isRequired: m.isRequired,
+              defaultValue: m.defaultValue ?? '',
+            }));
+            this.mappings.set(rows);
+            this.snapshot.set({
+              forkedFromId: this.forkedFromId(),
+              forkedVersion: this.forkedVersion(),
+              mappings: rows.map((r) => ({ ...r })),
+            });
+          }
+        });
+      } else {
+        this.mappings.set([]);
+        this.snapshot.set({
+          forkedFromId: this.forkedFromId(),
+          forkedVersion: this.forkedVersion(),
+          mappings: [],
+        });
+      }
+    });
   }
 
   // ─── Picker ─────────────────────────────────────────────────────
@@ -795,15 +818,29 @@ export class MappingTabComponent implements OnChanges {
   save() {
     if (!this.dirty() || this.saving()) return;
     this.saving.set(true);
-    setTimeout(() => {
-      this.snapshot.set({
-        forkedFromId: this.forkedFromId(),
-        forkedVersion: this.forkedVersion(),
-        mappings: this.mappings().map((r) => ({ ...r })),
+    const rows = this.mappings().map((r) => ({ ...r }));
+    const tplId = this.forkedFromId() === SCRATCH_ID ? '' : this.forkedFromId();
+    this.api
+      .saveDeploymentMappings(this.deployment.id, {
+        mappings: rows,
+        forkedFromTemplateId: tplId,
+        forkedFromTemplateVersion: this.forkedVersion(),
+      })
+      .subscribe({
+        next: () => {
+          this.snapshot.set({
+            forkedFromId: this.forkedFromId(),
+            forkedVersion: this.forkedVersion(),
+            mappings: rows,
+          });
+          this.saving.set(false);
+          this.gen.success('Mapping saved.');
+          this.saved.emit();
+        },
+        error: () => {
+          this.saving.set(false);
+          this.gen.error('Could not save mapping. Please try again.');
+        },
       });
-      this.saving.set(false);
-      this.gen.success('Mapping saved.');
-      this.saved.emit();
-    }, 400);
   }
 }

@@ -18,6 +18,23 @@ import {
   mockDeployments,
 } from './mock-data';
 
+/**
+ * Per-deployment saved field mappings. Populated by the Mapping tab's Save
+ * action so that subsequent loads see the persisted state instead of
+ * re-reading from the master template. Survives navigation, not reload.
+ */
+const mockDeploymentMappings: Record<
+  string,
+  Array<{
+    id: string;
+    sourcePath: string;
+    targetPath: string;
+    transformationType: string;
+    isRequired: boolean;
+    defaultValue: string;
+  }>
+> = {};
+
 const ok = <T>(data: T) =>
   of(new HttpResponse({ status: 200, body: { success: true, data } })).pipe(delay(120));
 
@@ -42,6 +59,33 @@ export const mockApiInterceptor: HttpInterceptorFn = (req, next) => {
   // Mutations: most are synthetic-success, but a few endpoints DO persist into the
   // module-level fixture arrays so the UI can show optimistic round-trips.
   if (method !== 'GET') {
+    // PUT /deployments/{id}/mappings — persist saved field mappings for a
+    // deployment so re-loading the Mapping tab restores them.
+    if (
+      (method === 'PUT' || method === 'POST') &&
+      segs[0] === 'deployments' &&
+      segs.length === 3 &&
+      segs[2] === 'mappings'
+    ) {
+      const deploymentId = segs[1];
+      const body = (req.body as {
+        mappings?: typeof mockDeploymentMappings[string];
+        forkedFromTemplateId?: string;
+        forkedFromTemplateVersion?: number | null;
+      }) ?? {};
+      mockDeploymentMappings[deploymentId] = (body.mappings ?? []).map((m) => ({ ...m }));
+      // Also stamp the template ref onto the deployment fixture so the
+      // tab can show "Forked from <Master>" on reload.
+      const dep = mockDeployments.find((d) => d.id === deploymentId);
+      if (dep) {
+        if (body.forkedFromTemplateId !== undefined) dep.forkedFromTemplateId = body.forkedFromTemplateId;
+        if (body.forkedFromTemplateVersion !== undefined)
+          dep.forkedFromTemplateVersion = body.forkedFromTemplateVersion;
+        dep.updatedAt = new Date().toISOString();
+      }
+      return ok({ deploymentId, count: mockDeploymentMappings[deploymentId].length });
+    }
+
     // POST /deployments — push the new deployment into the fixture so subsequent
     // GETs include it. Resets on page reload (mock state lives in memory).
     if (method === 'POST' && segs[0] === 'deployments' && segs.length === 1) {
@@ -188,6 +232,11 @@ export const mockApiInterceptor: HttpInterceptorFn = (req, next) => {
     if (segs.length === 2) {
       const d = mockDeployments.find((x) => x.id === segs[1]);
       return d ? ok(d) : notFound();
+    }
+    // GET /deployments/{id}/mappings — saved per-deployment mappings.
+    if (segs.length === 3 && segs[2] === 'mappings') {
+      const list = mockDeploymentMappings[segs[1]] ?? [];
+      return ok({ mappings: list, totalCount: list.length });
     }
   }
 
