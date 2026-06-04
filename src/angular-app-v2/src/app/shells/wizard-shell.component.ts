@@ -54,12 +54,6 @@ const STEP_LABELS = [
   template: `
     @if (mode() === 'list') {
       <div class="customers-view">
-        <div class="tf-section-header">
-          <div>
-            <h2>Customers</h2>
-            <p>Pick a customer to manage their integrations.</p>
-          </div>
-        </div>
         <div class="customers-body">
           <app-customers></app-customers>
         </div>
