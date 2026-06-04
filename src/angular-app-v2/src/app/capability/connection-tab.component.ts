@@ -505,7 +505,7 @@ onConnectionChange(id: string) {
             }
           : {
               success: false,
-              message: 'Authentication failed: invalid credentials or endpoint unreachable. Verify your credentials and try again.',
+              message: `Authentication failed — could not connect to ${conn?.displayName ?? 'the system'}. Verify credentials and try again.`,
             },
       );
       this.testing.set(false);
