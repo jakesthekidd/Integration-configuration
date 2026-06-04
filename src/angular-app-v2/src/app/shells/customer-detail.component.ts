@@ -6,6 +6,7 @@ import { forkJoin } from 'rxjs';
 
 import { ApiService } from '../services/api.service';
 import { DraftService } from '../services/draft.service';
+import { GeneralService } from '../services/general.service';
 import { Customer } from '../models/customer.model';
 import { Application } from '../models/application.model';
 import { Capability } from '../models/capability.model';
@@ -195,6 +196,9 @@ interface AppGroup {
               >
                 Connection
               </button>
+              <span class="tab-chevron" aria-hidden="true">
+                <i class="pi pi-angle-right"></i>
+              </span>
               <button
                 class="tab"
                 type="button"
@@ -203,6 +207,9 @@ interface AppGroup {
               >
                 Mapping
               </button>
+              <span class="tab-chevron" aria-hidden="true">
+                <i class="pi pi-angle-right"></i>
+              </span>
               <button
                 class="tab"
                 type="button"
@@ -214,8 +221,9 @@ interface AppGroup {
                   <span class="tab__dot" title="Unsaved draft exists"></span>
                 }
               </button>
+              <span class="tab-spacer"></span>
               <button
-                class="tab"
+                class="tab tab--aux"
                 type="button"
                 [class.tab--active]="activeTab() === 'activity'"
                 (click)="selectTab('activity')"
@@ -243,10 +251,10 @@ interface AppGroup {
               @if (selectedDeployment(); as dep) {
                 @switch (activeTab()) {
                   @case ('connection') {
-                    <app-connection-tab [deployment]="dep" (saved)="onDeploymentChanged()" />
+                    <app-connection-tab [deployment]="dep" (saved)="onConnectionSaved()" />
                   }
                   @case ('mapping') {
-                    <app-mapping-tab [deployment]="dep" (saved)="onDeploymentChanged()" />
+                    <app-mapping-tab [deployment]="dep" (saved)="onMappingSaved()" />
                   }
                   @case ('publish-activate') {
                     <app-test-publish-tab
@@ -534,10 +542,30 @@ interface AppGroup {
 
       .tab-strip {
         display: flex;
+        align-items: center;
         gap: 0;
         padding: 0 var(--tf-space-6);
         background: var(--tf-slate-50);
         border-bottom: 1px solid var(--tf-slate-300);
+      }
+      .tab-chevron {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--tf-slate-400);
+        font-size: 14px;
+        margin: 0 2px;
+        user-select: none;
+      }
+      .tab-spacer {
+        flex: 1 1 auto;
+      }
+      .tab--aux {
+        font-weight: 500;
+        color: var(--tf-text-muted);
+      }
+      .tab--aux.tab--active {
+        font-weight: 600;
       }
       .tab {
         background: transparent;
@@ -621,6 +649,7 @@ export class CustomerDetailComponent implements OnInit {
   private router = inject(Router);
   private api = inject(ApiService);
   private draftService = inject(DraftService);
+  private gen = inject(GeneralService);
 
   /** Reactive: does the selected deployment have an uncommitted Draft? */
   hasDraftForSelected = computed(() => {
@@ -794,6 +823,20 @@ export class CustomerDetailComponent implements OnInit {
     this.api.getDeployments(id).subscribe((res) => {
       if (res.success && res.data) this.deployments.set(res.data.deployments);
     });
+  }
+
+  /** Connection tab saved → refetch + auto-advance to Mapping (walkthrough). */
+  onConnectionSaved() {
+    this.onDeploymentChanged();
+    this.selectTab('mapping');
+    this.gen.success('Connection saved — moving to Mapping.');
+  }
+
+  /** Mapping tab saved → refetch + auto-advance to Publish & Activate. */
+  onMappingSaved() {
+    this.onDeploymentChanged();
+    this.selectTab('publish-activate');
+    this.gen.success('Mapping saved — moving to Publish & Activate.');
   }
 
   // ─── Add-deployment dialog ────────────────────────────────────────────

@@ -669,6 +669,21 @@ export const mockCustomers: Customer[] = [
     integrationStatusChangedAt: isoDaysAgo(145),
     applications: ['Portal'],
   },
+  // Truck Mate Logistics — disabled by default so the walkthrough demo starts
+  // at Integration Library → Customers → Enable.
+  {
+    customerId: 'cust-truckmate',
+    customerName: 'Truck Mate Logistics',
+    expressCustomerCode: 'TM-001',
+    tmsName: 'mcleod-v22',
+    lastSyncTime: isoDaysAgo(0),
+    enabled: false,
+    outboundEnabled: false,
+    credentials: {},
+    integrationEnabled: false,
+    integrationStatusChangedAt: isoDaysAgo(0),
+    applications: [],
+  },
 ];
 
 export const mockApiClients: ApiClient[] = [
