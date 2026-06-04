@@ -20,6 +20,7 @@ import { TagModule } from 'primeng/tag';
 import { TextareaModule } from 'primeng/textarea';
 import { MessageModule } from 'primeng/message';
 import { DialogModule } from 'primeng/dialog';
+import { TooltipModule } from 'primeng/tooltip';
 
 import { Router, ActivatedRoute } from '@angular/router';
 import { ApiService } from '../services/api.service';
@@ -28,6 +29,7 @@ import { DraftService } from '../services/draft.service';
 import { Deployment } from '../models/deployment.model';
 import { FieldMappingTemplate } from '../models/template.model';
 import { TransformationTypes } from '../models/field-mapping.model';
+import { ReferenceTablesDialogComponent } from './reference-tables-dialog.component';
 
 interface MappingRow {
   id: string;
@@ -63,6 +65,8 @@ const SCRATCH_ID = '__scratch__';
     TextareaModule,
     MessageModule,
     DialogModule,
+    TooltipModule,
+    ReferenceTablesDialogComponent,
   ],
   template: `
     <!-- ── Viewing-archived banner (read-only snapshot mode) ───────── -->
@@ -94,14 +98,26 @@ const SCRATCH_ID = '__scratch__';
             }
           </p>
         </div>
-        <p-button
-          [label]="forkedFromId() ? 'Change template' : 'Fork a master'"
-          icon="pi pi-file-import"
-          severity="primary"
-          [outlined]="true"
-          size="small"
-          (onClick)="openPicker()"
-        />
+        <div class="block__head-actions">
+          <p-button
+            label="Reference tables"
+            icon="pi pi-table"
+            severity="secondary"
+            [outlined]="true"
+            size="small"
+            pTooltip="View pre-configured cross-reference tables for this connection"
+            tooltipPosition="bottom"
+            (onClick)="openXrefDialog()"
+          />
+          <p-button
+            [label]="forkedFromId() ? 'Change template' : 'Fork a master'"
+            icon="pi pi-file-import"
+            severity="primary"
+            [outlined]="true"
+            size="small"
+            (onClick)="openPicker()"
+          />
+        </div>
       </header>
     </section>
 
@@ -317,6 +333,13 @@ const SCRATCH_ID = '__scratch__';
         </li>
       </ul>
     </p-dialog>
+
+    <!-- ── Reference tables (cross-reference) dialog ───────────────── -->
+    <app-reference-tables-dialog
+      [(visible)]="xrefDialogOpen"
+      [connectionId]="deployment?.connectionId ?? null"
+      [tmsName]="customerTmsName()"
+    />
   `,
   styles: [
     `
@@ -365,6 +388,13 @@ const SCRATCH_ID = '__scratch__';
         align-items: flex-start;
         gap: var(--tf-space-3);
         margin-bottom: var(--tf-space-3);
+      }
+      .block__head-actions {
+        display: flex;
+        gap: var(--tf-space-2);
+        align-items: center;
+        flex-wrap: wrap;
+        justify-content: flex-end;
       }
       .block__head h4 {
         margin: 0;
@@ -615,7 +645,13 @@ export class MappingTabComponent implements OnChanges {
   parseError = signal<string>('');
 
   pickerOpen = false;
+  xrefDialogOpen = false;
+  customerTmsName = signal<string | null>(null);
   allTemplates = signal<FieldMappingTemplate[]>([]);
+
+  openXrefDialog() {
+    this.xrefDialogOpen = true;
+  }
 
   /** Templates filtered to the deployment's (App, Capability, Connection).
    *  The mock template model doesn't carry these fields yet, so we show all
@@ -660,6 +696,17 @@ export class MappingTabComponent implements OnChanges {
     if (!this.deployment) return;
     this.forkedFromId.set(this.deployment.forkedFromTemplateId || '');
     this.forkedVersion.set(this.deployment.forkedFromTemplateVersion);
+
+    // Resolve the customer's tmsName so the Reference tables dialog can
+    // surface lookup tables keyed by TMS (in addition to connectionId).
+    this.customerTmsName.set(null);
+    if (this.deployment.customerId) {
+      this.api.getCustomerById(this.deployment.customerId).subscribe((res) => {
+        if (res.success && res.data) {
+          this.customerTmsName.set(res.data.tmsName ?? null);
+        }
+      });
+    }
 
     // Load all templates for the picker.
     this.api.getTemplates().subscribe((res) => {
