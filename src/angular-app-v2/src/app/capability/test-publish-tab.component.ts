@@ -393,6 +393,8 @@ export class TestPublishTabComponent implements OnChanges {
 
   /** Last-seen spawn request counter — used to ignore stale ticks. */
   private lastSeenSpawnRequest = 0;
+  /** Flipped true once ngOnChanges has loaded the initial version seed. */
+  private hydrated = signal<boolean>(false);
 
   constructor() {
     // Keep the shared DraftService in sync so the tab strip can decorate
@@ -401,6 +403,23 @@ export class TestPublishTabComponent implements OnChanges {
       const id = this.deployment?.id;
       if (!id) return;
       this.draftService.setDraft(id, !!this.currentDraft());
+    });
+
+    // Mirror local version state back into the shared mock fixture so that
+    // navigating away from this tab (which destroys the component) and
+    // returning still surfaces the Activated/Published/Archived/Draft rows
+    // the user established. Without this, every remount reads the original
+    // seed and history is lost.
+    //
+    // The `hydrated` gate is essential: an effect runs once synchronously
+    // when registered (with versions() = []), before ngOnChanges has loaded
+    // the seed. Writing then would clobber the fixture with an empty list.
+    effect(() => {
+      const id = this.deployment?.id;
+      if (!id) return;
+      const list = this.versions();
+      if (!this.hydrated()) return;
+      mockVersions[id] = list.map((v) => ({ ...v }));
     });
 
     // Auto-fork: the Mapping/Connection tabs bump `requestSpawnDraft` on the
@@ -543,7 +562,11 @@ export class TestPublishTabComponent implements OnChanges {
     if (changes['deployment']) {
       const id = this.deployment?.id;
       const seed = id ? mockVersions[id] ?? [] : [];
+      this.hydrated.set(false);
       this.versions.set(seed.map((v) => ({ ...v })));
+      // Open the write-back gate now that the seed is loaded. Any subsequent
+      // versions() mutation will mirror to mockVersions[id].
+      this.hydrated.set(true);
       this.busy.set(null);
       this.menuVersionId.set(null);
       this.editingNotesId.set(null);
